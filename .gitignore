@@ -1,0 +1,27 @@
+# --- Material com direitos autorais: nunca publicar ---
+# livro (PDF) e páginas renderizadas dele
+*.pdf
+livro-paginas/
+# partituras e MIDI comprados/baixados
+Partituras/
+*.mid
+*.midi
+*.mxl
+*.musicxml
+
+# --- Arquivos pessoais ---
+# exercícios do livro e músicas próprias (o app funciona sem)
+conteudo-pessoal.js
+# anotações pessoais para o Claude Code (aluno, plano de estudo)
+CLAUDE.md
+# página do livro em que cada pessoa está
+livro-progresso.json
+# configurações locais do Claude Code
+.claude/
+
+# --- Gerados / baixados ---
+# sons de piano: baixe com ferramentas/baixar-sons.sh (o app também busca na internet se faltarem)
+sons/
+
+# --- macOS ---
+.DS_Store
