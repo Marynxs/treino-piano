@@ -16,7 +16,10 @@ Feito para quem está começando: as explicações e os avisos são em portuguê
   - uma mão só (o app pode tocar a outra);
   - uma linha ou um grupo de linhas da partitura;
   - **subir o andamento sozinho**: a cada vez que você acerta 90% ou mais, sobe 5 BPM até o andamento alvo.
+- **Jogo das notas:** uma nota aparece na pauta e você aperta a tecla certa. Tem dois modos, "Uma por vez" (com dica pela nota-guia mais perto) e "Correndo" (as notas andam até a linha). São 9 níveis, das notas do meio até as linhas suplementares das duas claves. As notas que você mais erra voltam mais vezes. Há recordes com comemoração.
 - **Leitura de notas:** sequências novas a cada vez, para ler na pauta e tocar.
+- **Conceitos:** explicações curtas com desenho e som, liberadas conforme a página do livro, e dicas do que fazer e do que evitar ao estudar.
+- **Resultado que diz o que fazer:** um foco por vez (onde, o que aconteceu, como treinar, quando está pronto), com um botão que prepara esse treino. Também compara com a última tentativa, guarda o recorde de cada música e sugere desligar ajudas (som guia, cores, nomes) quando você já não precisa delas.
 - **Dinâmica:** mede a força de cada tecla (pp até ff) e tem um exercício de piano e forte.
 - **Gravar e ouvir:** cada vez que você toca, o app grava. "Ouvir o que eu toquei" toca de volta.
 - **Importar músicas:**
@@ -59,6 +62,8 @@ Sem piano, dá para testar com o teclado do computador: `A S D F G H J K` = Dó 
 | `treino-piano.html` | O app inteiro (HTML + JavaScript, sem etapa de build) |
 | `celular.html` | A tela do iPhone |
 | `queda.js` | Desenho da queda de notas (usado pelo Mac e pelo iPhone) |
+| `fontes/` | Fonte do app (Atkinson Hyperlegible Next, OFL) |
+| `DESIGN.md` | Regras do visual (cores, letra, forma, texto) |
 | `ferramentas/servidor.pl` | Servidor local em Perl: arquivos, tela do iPhone (SSE), comandos, conversão de PDF |
 | `ferramentas/abrir-chrome.applescript` | Abre ou recarrega o app no Chrome sem duplicar abas |
 | `ferramentas/airdrop.js` | Abre o AirDrop com o link do iPhone |
@@ -102,4 +107,5 @@ As músicas que você importa ficam só no seu navegador.
 ## Créditos
 
 - Sons de piano: **FluidR3 GM** (Frank Wen), licença CC BY 3.0, via [gleitz/midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts).
+- Fonte: **Atkinson Hyperlegible Next** (Braille Institute), licença SIL OFL 1.1 (`fontes/OFL.txt`).
 - Leitura de PDF: **[Audiveris](https://github.com/Audiveris/audiveris)** (AGPL-3.0). O app só chama o programa instalado; ele não vem junto.

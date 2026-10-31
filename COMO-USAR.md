@@ -27,7 +27,8 @@
    - **Aquecimento**.
    - **Livro**: no topo, escolha **"Estou na página"**; só aparecem os exercícios até essa página.
    - **Ritmo**.
-   - **Leitura**: notas novas a cada vez.
+   - **Ler notas**: o **Jogo das notas** (veja abaixo) e sequências novas para ler e tocar.
+   - **Conceitos**: o que o livro já ensinou até a sua página, com desenho e som, mais "Como estudar" (o que fazer e o que evitar).
    - **Músicas**.
    - **Histórico**.
 2. Aperte **Abrir** no exercício.
@@ -44,7 +45,12 @@
    - amarelo = pouco fora do tempo;
    - vermelho = errado;
    - cinza = faltou.
-6. **No fim**, aparece o resultado com dicas e botões: **Repetir**, **Repetir mais devagar** e **Treinar só os compassos com erro**.
+6. **No fim**, aparece o resultado:
+   - comparação com a última vez (o que melhorou e o que continua errado);
+   - **um foco para a próxima tentativa**: onde, o que aconteceu, como treinar e quando está pronto, com o botão **Preparar esse treino**, que já ajusta trecho, modo, mão e andamento;
+   - quando você já acerta com uma ajuda (som guia, cores, nomes, nota acesa, cliques), o app sugere tirá-la. Ajuda ligada sempre vira dependência;
+   - recorde batido = comemoração na tela (e no iPhone).
+7. Embaixo do título aparecem o **recorde** da música e o que ficou para treinar da **última vez**. Na aba **Hoje**, "Da última vez" leva direto de onde você parou.
 
 ### O que fica em ⚙ Ajustes
 - **Como praticar:**
@@ -67,6 +73,15 @@ Sugestão para aprender uma música:
 3. Desligue o som guia.
 4. Desligue os cliques.
 5. Suba o andamento.
+
+## Jogo das notas (aba Ler notas)
+
+- Aparece uma nota na pauta: aperte a tecla certa no piano (ou no teclado da tela).
+- **Uma por vez:** sem pressa, rodadas de 20 notas. Errou? O app mostra a tecla certa e o caminho a partir da **nota-guia** mais perto (ex.: "do Fá da clave de Fá, 1 passo para cima: Fá → Sol"). A **Dica** mostra isso antes de responder e não conta como erro.
+- **Correndo:** as notas andam até a linha azul; toque antes que cheguem. 3 vidas, fica mais rápido a cada 10 acertos.
+- **9 níveis**, do meio para fora: Dó a Sol de cada clave, notas-guia, pauta toda, as duas claves, acima e abaixo da pauta e tudo.
+- As notas que você mais erra aparecem mais vezes. Estrelas e recordes por nível.
+- **Qualquer oitava** desligado = tem que ser a tecla exata, na altura certa.
 
 ## 4. Músicas (aba Músicas)
 

@@ -56,7 +56,7 @@ h1{font-size:15px;font-weight:600;margin:0;flex:1;min-width:0;white-space:nowrap
 #res .fbn b{color:inherit}
 /* no iPhone: notas certas viram etiquetas pequenas lado a lado; as com erro ficam grandes, com o motivo */
 .fbm{flex-direction:row;flex-wrap:wrap}.fbm .lb{flex:1 1 100%}.fbn{flex:1 1 100%}
-.fbn.okn{flex:0 0 auto;padding:5px 10px}.fbn.okn small,.fbn.okn br,.fbn.okn .why{display:none}.fbn.okn b::after{content:" ✓"}
+.okms{display:none}.fbn.okn{flex:0 0 auto;padding:5px 10px}.fbn.okn small,.fbn.okn br,.fbn.okn .why{display:none}.fbn.okn .okms{display:inline;font-size:13px;opacity:.8}.fbn.okn b::after{content:" ✓"}
 .fbact{display:flex;flex-direction:column;gap:10px;margin-top:16px}
 .fbact button{font-size:17px;padding:13px;width:100%}
 .fbact button:first-child{background:#378ADD;color:#fff;border-color:#185FA5;font-weight:600}
@@ -119,6 +119,29 @@ button:active{background:var(--fill2)}
 .bpmin input{width:64px;min-height:40px;border:none;border-radius:10px;background:var(--card);color:var(--tx);font:inherit;font-size:18px;font-weight:600;text-align:center;-moz-appearance:textfield}
 .bpmin input::-webkit-inner-spin-button,.bpmin input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 select{padding-right:30px;text-overflow:ellipsis}
+/* ---------- visual "Estante limpa" (30/10/2026), igual ao Mac: veja DESIGN.md ---------- */
+@font-face{font-family:'Atkinson Hyperlegible Next';src:url(fontes/AtkinsonHyperlegibleNext.woff2) format('woff2');font-weight:200 800;font-style:normal;font-display:swap}
+@font-face{font-family:'Atkinson Hyperlegible Next';src:url(fontes/AtkinsonHyperlegibleNext-Italic.woff2) format('woff2');font-weight:200 800;font-style:italic;font-display:swap}
+:root{--bg:#F4F6F9;--card:#FFFFFF;--tx:#1B1E24;--tx2:#535A66;--tx3:#848B97;--bd:#DCE0E7;--fill:rgba(84,96,116,.09);--fill2:rgba(84,96,116,.17)}
+@media (prefers-color-scheme:dark){:root{--bg:#13161B;--card:#1C2026;--tx:#ECEFF3;--tx2:#A9B0BB;--tx3:#7E8692;--bd:#313741;--fill:rgba(170,180,195,.11);--fill2:rgba(170,180,195,.2)}}
+html,body{font-family:'Atkinson Hyperlegible Next',-apple-system,BlinkMacSystemFont,sans-serif}
+button,select,input{font-family:inherit}
+.prog{margin:12px 0 0;line-height:1.5}
+.foco{margin:14px 0;border-radius:14px;padding:14px 16px;background:var(--card);box-shadow:inset 5px 0 0 #378ADD}
+.foco-t{font-size:19px;font-weight:700;margin-bottom:4px}
+.foco p{margin:8px 0;line-height:1.5}
+.foco-ok{color:var(--tx2)}
+.sug{margin:0 0 14px;padding:12px 16px;border-radius:14px;box-shadow:0 0 0 1px var(--bd);line-height:1.5}
+.sug button,.foco button{margin-top:6px}
+.festa{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:50}
+.festa-box{position:relative;background:var(--card);color:var(--tx);border-radius:20px;padding:22px 30px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.25),0 0 0 2px #378ADD;animation:festaIn .45s cubic-bezier(.2,1.4,.4,1);max-width:86vw}
+.festa-box b{display:block;font-size:30px;color:#378ADD}
+.festa-box span{display:block;font-size:17px;color:var(--tx2);margin-top:4px}
+.festa-box i{position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:3px;animation:confete 1.3s ease-out forwards}
+.festa.sai{transition:opacity .45s;opacity:0}
+@keyframes festaIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes confete{0%{transform:translate(-50%,-50%) rotate(0)}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(220deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.festa-box{animation:none}.festa-box i{display:none}}
 </style>
 </head>
 <body>
@@ -145,6 +168,7 @@ select{padding-right:30px;text-overflow:ellipsis}
   <div class="f"><button class="sw" data-k="subir" data-n="Subir o andamento sozinho"></button><span class="lb">Acertou 90% ou mais: sobe 5 BPM e começa de novo, até o alvo.</span></div>
   <div class="f" data-only="subir"><span class="lb">Andamento alvo</span><div class="seg num"><button id="alvoDn">−5</button><b id="alvoV">—</b><button id="alvoUp">+5</button></div></div>
   <div class="f"><button id="ouvirB">▶ Ouvir o que eu toquei (sai no Mac ou no piano)</button></div>
+  <div class="f"><span class="lb">Volume da gravação</span><div class="seg num"><button id="rvDn">−</button><b id="rvV">—</b><button id="rvUp">+</button></div></div>
   <div class="f"><span class="lb">Exigência do ritmo (verde até 150, 100 ou 60 ms fora do tempo)</span><div class="seg"><button class="tol" data-v="ini">Iniciante</button><button class="tol" data-v="nor">Normal</button><button class="tol" data-v="exi">Exigente</button></div></div>
  </section>
  <section class="grp"><h3>👀 O que aparece na tela</h3>
@@ -223,7 +247,12 @@ function paintRes(s){var r=s.res||'';$('repBtn').classList.toggle('has',!!r);
  /* abriu agora: começa no topo (porcentagem e o que errou), depois de o Safari desenhar */
  if(now&&!was){$('res').scrollTop=0;requestAnimationFrame(function(){$('res').scrollTop=0;setTimeout(function(){$('res').scrollTop=0},150)})}}
 function openRes(){RESHID='';if(RES){$('res').classList.add('show');$('res').scrollTop=0}}
+/* recorde batido no Mac: a mesma comemoração aparece aqui (sem som; o som sai no Mac) */
+var FESTA_T=0;function festa(f){if(!f||f.ts===FESTA_T)return;FESTA_T=f.ts;var d=document.createElement('div'),b=document.createElement('div');d.className='festa';b.className='festa-box';b.innerHTML='<b>'+f.t+'</b>'+(f.s?'<span>'+f.s+'</span>':'');d.appendChild(b);
+ var cores=['#378ADD','#639922','#EF9F27','#D4537E','#7F77DD'];for(var k=0;k<24;k++){var p=document.createElement('i'),a=k/24*2*Math.PI,r=110+Math.random()*80;p.style.setProperty('--dx',Math.round(Math.cos(a)*r)+'px');p.style.setProperty('--dy',Math.round(Math.sin(a)*r)+'px');p.style.background=cores[k%5];b.appendChild(p)}
+ document.body.appendChild(d);setTimeout(function(){d.classList.add('sai')},2400);setTimeout(function(){d.remove()},2900)}
 function paint(s){
+ try{festa(s.festa)}catch(e){}
  $('title').textContent=s.title||'';$('cd').innerHTML=s.cd||'';$('errs').innerHTML=s.errs||'';$('midi').innerHTML=s.midi||'';
  var ink=myInk(),fix=function(h){h=h.replace(/ id="(score|kb)"/,'');return s.ink&&s.ink!==ink?h.split(s.ink).join(ink):h};
  var bx=$('score'),st=bx.scrollTop,sl=bx.scrollLeft,rep=false;$('kb').innerHTML=fix(s.kb||'');
@@ -242,7 +271,7 @@ function paint(s){
  if(s.celv&&s.celv!==VIEW&&Date.now()-(paint.cv||0)>2000){paint.cv=Date.now();cmd({cmd:'celvista',v:VIEW})}
  document.querySelectorAll('.mao').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.mao||'ambas'))});
  var only={'pno-piano':s.out==='piano','clk-piano':s.clk==='piano',mao1:!!s.mao&&s.mao!=='ambas',tr:!!s.tr,'pre-sec':s.pre==='sec','pre-clk':s.pre!=='sec',subir:!!(s.opt||{}).subir};
- document.querySelectorAll('.pre').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.pre==='sec'?'sec':'clk'))});$('alvoV').textContent=(s.alvo||'—')+' BPM';$('preNV').textContent=s.preN?s.preN+(s.preN>1?' cliques':' clique'):'Um compasso';$('preV').textContent=(s.preS!=null?s.preS:'—')+' s';
+ document.querySelectorAll('.pre').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.pre==='sec'?'sec':'clk'))});$('rvV').textContent=(s.recv!=null?s.recv:'—')+'%';$('alvoV').textContent=(s.alvo||'—')+' BPM';$('preNV').textContent=s.preN?s.preN+(s.preN>1?' cliques':' clique'):'Um compasso';$('preV').textContent=(s.preS!=null?s.preS:'—')+' s';
  /* trecho: só refaz a lista quando muda (para não fechar a lista enquanto você escolhe) */
  if(s.tr){var tk=JSON.stringify(s.tr);if($('trA').dataset.k!==tk){$('trA').dataset.k=tk;var o=s.tr.l.map(function(t,i){return '<option value="'+(i+1)+'">'+t+'</option>'}).join('');$('trA').innerHTML=o;$('trB').innerHTML=o;$('trA').value=s.tr.v[0];$('trB').value=s.tr.v[1]}}document.querySelectorAll('[data-only]').forEach(function(d){d.style.display=only[d.dataset.only]?'':'none'});
  var go=$('go');go.textContent=s.run?'Parar':'Começar';go.classList.toggle('stop',!!s.run);
@@ -298,6 +327,7 @@ document.querySelectorAll('.pre').forEach(function(b){b.onclick=function(){cmd({
 /* 0 = um compasso (automático), depois 1 a 10 */
 $('alvoDn').onclick=function(){if(S)cmd({cmd:'alvo',v:(+S.alvo||100)-5})};$('alvoUp').onclick=function(){if(S)cmd({cmd:'alvo',v:(+S.alvo||100)+5})};
 $('ouvirB').onclick=function(){cmd({cmd:'ouvir'})};
+$('rvDn').onclick=function(){if(S)cmd({cmd:'recvol',v:(+S.recv||100)-20})};$('rvUp').onclick=function(){if(S)cmd({cmd:'recvol',v:(+S.recv||100)+20})};
 $('preNDn').onclick=function(){if(S)cmd({cmd:'pre',v:'clk',n:Math.max(0,(+S.preN||0)-1)})};
 $('preNUp').onclick=function(){if(S)cmd({cmd:'pre',v:'clk',n:Math.min(10,(+S.preN||0)+1)})};
 $('preDn').onclick=function(){if(S)cmd({cmd:'pre',v:'sec',s:Math.max(0,(+S.preS||0)-1)})};
