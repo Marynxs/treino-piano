@@ -450,7 +450,7 @@ $('zIn').onclick=function(){setZm(ZM*1.25)};$('zOut').onclick=function(){setZm(Z
 /* pinça com dois dedos na partitura inteira: zoom só da partitura (não da página) */
 (function(){var b0=1,box=$('score');box.addEventListener('gesturestart',function(e){if(VIEW!=='tudo')return;e.preventDefault();b0=ZM});
  box.addEventListener('gesturechange',function(e){if(VIEW!=='tudo')return;e.preventDefault();var r=box.getBoundingClientRect();setZm(b0*e.scale,e.clientX-r.left,e.clientY-r.top)})})();
-function setView(v){VIEW=v;try{localStorage.setItem('cel_view',v)}catch(e){}cmd({cmd:'celvista',v:v});paint.cv=Date.now();paintView();if(S)paint(S)}
+function setView(v){VIEW=v;fit.sy=null;try{localStorage.setItem('cel_view',v)}catch(e){}cmd({cmd:'celvista',v:v});paint.cv=Date.now();paintView();if(S)paint(S)}
 $('viewBtn').onclick=function(){setView(VIEW==='linha'?'tudo':'linha')};
 document.querySelectorAll('.view').forEach(function(b){b.onclick=function(){setView(b.dataset.v)}});
 $('perfSel').onchange=function(){cmd({cmd:'perfil',v:this.value});$('sheet').classList.remove('open')};
