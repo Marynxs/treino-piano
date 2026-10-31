@@ -319,7 +319,7 @@ var FULL=null,ZM=1;try{ZM=+localStorage.getItem('cel_zoom')||1}catch(e){}
 /* tamanho visível: com a tela desenhada deitada (celular em pé ou rotação bloqueada), a altura é a largura do aparelho */
 function altura(){return document.documentElement.classList.contains('rodado')?window.innerWidth:window.innerHeight}
 function topo(e){var y=0;while(e){y+=e.offsetTop;e=e.offsetParent}return y-(document.documentElement.classList.contains('rodado')?0:window.scrollY)+window.scrollY}
-function fit(){var bh=$('bar').offsetHeight;document.body.style.paddingBottom=(bh+10)+'px';var zf=$('zoomF');zf.style.display=S&&!S.fall&&VIEW==='tudo'?'flex':'none';$('zV').textContent=Math.round(ZM*100)+'%';
+function fit(){var bh=$('bar').offsetHeight;if(fit.bh!==bh){fit.bh=bh;document.body.style.paddingBottom=(bh+10)+'px'}var zf=$('zoomF');zf.style.display=S&&!S.fall&&VIEW==='tudo'?'flex':'none';$('zV').textContent=Math.round(ZM*100)+'%';
  if(S&&S.fall){var cv=$('fallCv'),fr=altura()-topo(cv)-$('bar').offsetHeight-14;cv.style.height=Math.max(160,fr)+'px';return}
  var sv=$('score').querySelector('svg');if(!sv||!S)return;
  var full=(sv.getAttribute('viewBox')||'0 0 900 240').split(' ').map(Number);
@@ -373,9 +373,9 @@ function paint(s){
  if(s.scoreFull)FULL=s.scoreFull;
  if(VIEW==='tudo'&&s.score){if(!FULL&&s.celv==='tudo'&&Date.now()-(paint.cf||0)>3000){paint.cf=Date.now();cmd({cmd:'celfull'})}
   if(s.scoreFull||bx.dataset.k!==(FULL?'full':'win')){bx.innerHTML=fix(FULL||s.score);bx.dataset.k=FULL?'full':'win';rep=true}
-  if(FULL){var tmp=document.createElement('div');tmp.innerHTML=fix(s.score);Array.prototype.forEach.call(tmp.querySelectorAll('g[data-sy]'),function(g){
+  if(FULL&&(rep||s.score!==paint.ls)){paint.ls=s.score;var tmp=document.createElement('div');tmp.innerHTML=fix(s.score);Array.prototype.forEach.call(tmp.querySelectorAll('g[data-sy]'),function(g){
    var old=bx.querySelector('g[data-sy="'+g.getAttribute('data-sy')+'"]');if(old)old.parentNode.replaceChild(g,old)})}}
- else{bx.innerHTML=fix(s.score||'');bx.dataset.k='';rep=true}
+ else{/* só troca a partitura quando ela mudou (a contagem muda a cada tempo, a partitura não) */var nh=fix(s.score||'');if(nh!==paint.lh||bx.dataset.k!==''){paint.lh=nh;bx.innerHTML=nh;bx.dataset.k='';rep=true}}
  paintRes(s);
  var lsy=relSy(s);if(lsy!=null)s.sy=lsy;S=s;paintFall(s);fit();relLoop();/* só devolve a rolagem quando a partitura foi trocada inteira, e nunca no meio da descida para a linha seguinte */
  if(VIEW==='tudo'&&rep&&!fit.moved){bx.scrollTop=st;bx.scrollLeft=sl}
@@ -611,9 +611,11 @@ function relGrupo(s,nb){var g=null,G=s.rel.g;for(var i=0;i<G.length;i++){if(G[i]
 function relSy(s){var nb=relNb(s);if(nb==null||nb<0)return null;var g=relGrupo(s,nb);return g?g[1]:null}
 function relLoop(){if(relLoop.on)return;relLoop.on=true;(function f(){var nb=relNb(S);if(nb==null||!S||!S.run){relLoop.on=false;var o=document.getElementById('hlLocal');if(o)o.remove();return}
  if(nb>=0){var R=S.rel,g=relGrupo(S,nb),sv=$('score').querySelector('svg');
-  if(g&&sv){var grp=sv.querySelector('g[data-sy="'+g[1]+'"]')||sv,r=document.getElementById('hlLocal');
-   if(!r||r.parentNode!==grp){if(r)r.remove();r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.id='hlLocal';r.setAttribute('rx','6');r.setAttribute('style','fill:#B5D4F4;opacity:0.45');grp.insertBefore(r,grp.firstChild)}
-   var tt=40+g[1]*230;r.setAttribute('x',g[2]-16);r.setAttribute('y',tt-10);r.setAttribute('width','32');r.setAttribute('height','142');
+  /* só mexe na tela quando a nota da vez muda (ou quando a partitura foi trocada por uma mensagem nova do Mac) */
+  if(g&&sv){var r=document.getElementById('hlLocal');
+   if(!r||!sv.contains(r)||relLoop.g!==g){relLoop.g=g;var grp=sv.querySelector('g[data-sy="'+g[1]+'"]')||sv;
+    if(!r||r.parentNode!==grp){if(r)r.remove();r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.id='hlLocal';r.setAttribute('rx','6');r.setAttribute('style','fill:#B5D4F4;opacity:0.45');r.setAttribute('width','32');r.setAttribute('height','142');grp.insertBefore(r,grp.firstChild)}
+    var tt=40+g[1]*230;r.setAttribute('x',g[2]-16);r.setAttribute('y',tt-10)}
    if(S.sy!==g[1]){S.sy=g[1];fit()}}
   var m=Math.floor(nb/R.beats);if(nb<R.fim&&(S.opt||{}).cnt){var txt='Compasso '+(R.mm?R.mm[m]:m+1)+' · tempo '+(Math.floor(nb-m*R.beats)+1);if($('cd').textContent!==txt)$('cd').textContent=txt}}
  requestAnimationFrame(f)})()}
