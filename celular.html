@@ -271,7 +271,8 @@ html,body{overflow-x:hidden}
   <div class="f"><span class="lb">Partitura</span><div class="seg"><button class="view" data-v="linha">Linha atual (grande)</button><button class="view" data-v="tudo">Inteira (rola e tem zoom)</button></div></div>
   <div class="f"><span class="lb">Escrever junto das notas</span><div class="seg"><button class="show" data-v="f">Dedos</button><button class="show" data-v="n">Nomes</button><button class="show" data-v="c">Contagem</button><button class="show" data-v="x">Nada</button></div></div>
   <div class="f"><span class="lb">Nomes das notas</span><div class="seg"><button class="nmb" data-v="en">C D E F G</button><button class="nmb" data-v="pt">Dó Ré Mi Fá Sol</button></div></div>
-  <div class="f"><span class="lb">Ligar e desligar</span><div class="stack"><button class="sw" data-k="cnt" data-n="Contagem"></button><button class="sw" data-k="hl" data-n="Acender a nota da vez"></button><button class="sw" data-k="kb" data-n="Teclado"></button><button class="sw" data-k="live" data-n="Cores enquanto toca"></button></div></div>
+  <div class="f"><button id="cntX"></button><span class="lb">Liga ou desliga o "Compasso 1 · tempo 1…" só no exercício aberto; nos outros continua o padrão abaixo.</span></div>
+  <div class="f"><span class="lb">Ligar e desligar (padrão de todos os exercícios)</span><div class="stack"><button class="sw" data-k="cnt" data-n="Contagem"></button><button class="sw" data-k="hl" data-n="Acender a nota da vez"></button><button class="sw" data-k="kb" data-n="Teclado"></button><button class="sw" data-k="live" data-n="Cores enquanto toca"></button></div></div>
  </section>
  <section class="grp"><h3>🔈 Sons do jogo, dos conceitos e do recorde</h3>
   <div class="f"><span class="lb">Saem por (sem o cabo do piano, saem pelo Mac)</span><div class="seg"><button class="jvs" data-v="piano">Piano</button><button class="jvs" data-v="mac">Mac</button><button class="jvs" data-v="celular">Este celular</button></div></div>
@@ -565,7 +566,7 @@ $('concBody').addEventListener('click',function(e){var b=e.target.closest('butto
 /* jogo: comandos */
 $('jvNivel').onchange=function(){cmd({cmd:'jnivel',v:this.value})};
 document.querySelectorAll('.jvm').forEach(function(b){b.onclick=function(){if(!b.disabled)cmd({cmd:'jmodo',v:b.dataset.v})}});
-$('jvDica').onclick=function(){cmd({cmd:'jdica'})};$('jvTec').onclick=function(){cmd({cmd:'jtec'})};
+$('jvDica').onclick=function(){cmd({cmd:'jdica'})};$('jvTec').onclick=function(){cmd({cmd:'jtec'})};$('cntX').onclick=function(){if(S)cmd({cmd:'ajx',k:'cnt',v:!(S.opt||{}).cnt})};
 document.querySelectorAll('.jvs').forEach(function(b){b.onclick=function(){cmd({cmd:'jsaida',v:b.dataset.v});celAudio()}});$('jvOit').onclick=function(){cmd({cmd:'joit'})};$('jvSom').onclick=function(){cmd({cmd:'jsom'})};$('sairJ').onclick=function(){cmd({cmd:'jsair'})};
 $('jvKb').addEventListener('pointerdown',function(e){var t=e.target,m=t&&t.getAttribute&&+t.getAttribute('data-m');if(!m)return;e.preventDefault();cmd({cmd:'jtecla',v:m})});
 $('jvMsg').addEventListener('click',function(e){var b=e.target.closest('[data-jgniv]');if(b)cmd({cmd:'jnivel',v:b.dataset.jgniv})});
@@ -623,7 +624,7 @@ function celLoad(m){if(CBUF[m])return Promise.resolve(CBUF[m]);if(CLD[m])return 
 var CSRC=[],CTK=0;
 function celCorta(){CTK++;CSRC.forEach(function(x){try{x.g.gain.cancelScheduledValues(CAC.currentTime);x.g.gain.setTargetAtTime(0,CAC.currentTime,0.02);x.s.stop(CAC.currentTime+0.12)}catch(e){}});CSRC=[]}
 function celToca(sm){if(!sm||sm.id===SOMV||ENSAIO)return;SOMV=sm.id;if(!CAC)return;if(sm.corta)celCorta();var tk=CTK;Promise.all(sm.n.map(function(n){return celLoad(n[0])})).then(function(){if(tk!==CTK)return;var t0=CAC.currentTime+0.05;sm.n.forEach(function(n){var b=CBUF[n[0]];if(!b)return;var s=CAC.createBufferSource(),g=CAC.createGain();s.buffer=b;s.connect(g);g.connect(CAC.destination);var t=t0+(n[1]||0);g.gain.setValueAtTime(n[3]||0.8,t);g.gain.setTargetAtTime(0,t+(n[2]||0.8),0.08);s.start(t);s.stop(t+(n[2]||0.8)+0.8);if(sm.corta)CSRC.push({s:s,g:g})})})}
-function paintExtra(s){paintJogo(s);document.querySelectorAll('.jvs').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.saida||'piano'))});if(SOMV===''&&s.som)SOMV=s.som.id;else celToca(s.som);paintUltCel(s);paintIni(s);paintConc(s);
+function paintExtra(s){var cx=$('cntX');if(cx){var on=!!(s.opt||{}).cnt;cx.textContent='Contagem neste exercício: '+(on?'ligada':'desligada');cx.classList.toggle('on',on)}paintJogo(s);document.querySelectorAll('.jvs').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.saida||'piano'))});if(SOMV===''&&s.som)SOMV=s.som.id;else celToca(s.som);paintUltCel(s);paintIni(s);paintConc(s);
  if(EXTRA1){EXTRA1=false;if(CELS){celVolta(s);return}var o=s.opt||{};try{if((o.simples||o.ini!==false)&&!s.run&&!s.res&&!s.jogo)$('iniBtn').click();if(o.tut!==false&&!localStorage.getItem('cel_tutvisto')&&!ENSAIO)setTimeout(function(){tutCel(0)},800)}catch(e){}}}
 
 paintView();listen();
