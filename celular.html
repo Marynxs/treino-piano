@@ -220,7 +220,8 @@ html.rodado .jogoV.comkb .jv-stage svg{max-height:calc(100vw - 128px - 24vw)!imp
 #jvMsg.fim{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:3;width:min(520px,92%);max-height:88%;overflow-y:auto;padding:16px 18px;border-radius:16px;background:var(--card);box-shadow:0 12px 40px rgba(0,0,0,.35),0 0 0 2px #378ADD;font-size:16px;line-height:1.5}
 #jvMsg.fim button{margin-top:10px;min-height:44px;background:#378ADD;color:#fff;font-weight:600}
 /* barra de baixo: "Opções" sempre à vista na direita (os outros botões rolam por baixo dele em tela estreita) */
-.bar #more{position:sticky;right:0;box-shadow:-10px 0 10px -2px var(--card)}
+/* barra de baixo: nunca um botão por cima do outro. Volume do guia fica em Opções; se faltar espaço, a barra vira duas linhas */
+.bar{flex-wrap:wrap;overflow-x:visible;row-gap:6px}.bar .vol{display:none!important}
 #jvRec{display:none}
 #jvKb svg{max-height:24vh!important;width:auto;margin:4px auto 0}
 html.rodado #jvKb svg{max-height:24vw!important}
@@ -318,7 +319,7 @@ var FULL=null,ZM=1;try{ZM=+localStorage.getItem('cel_zoom')||1}catch(e){}
 /* tamanho visível: com a tela desenhada deitada (celular em pé ou rotação bloqueada), a altura é a largura do aparelho */
 function altura(){return document.documentElement.classList.contains('rodado')?window.innerWidth:window.innerHeight}
 function topo(e){var y=0;while(e){y+=e.offsetTop;e=e.offsetParent}return y-(document.documentElement.classList.contains('rodado')?0:window.scrollY)+window.scrollY}
-function fit(){var zf=$('zoomF');zf.style.display=S&&!S.fall&&VIEW==='tudo'?'flex':'none';$('zV').textContent=Math.round(ZM*100)+'%';
+function fit(){var bh=$('bar').offsetHeight;document.body.style.paddingBottom=(bh+10)+'px';var zf=$('zoomF');zf.style.display=S&&!S.fall&&VIEW==='tudo'?'flex':'none';$('zV').textContent=Math.round(ZM*100)+'%';
  if(S&&S.fall){var cv=$('fallCv'),fr=altura()-topo(cv)-$('bar').offsetHeight-14;cv.style.height=Math.max(160,fr)+'px';return}
  var sv=$('score').querySelector('svg');if(!sv||!S)return;
  var full=(sv.getAttribute('viewBox')||'0 0 900 240').split(' ').map(Number);
