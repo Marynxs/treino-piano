@@ -214,7 +214,13 @@ html.rodado .jv-stage svg{max-height:calc(100vw - 128px)!important}
 html.rodado .jogoV.comkb .jv-stage svg{max-height:calc(100vw - 128px - 24vw)!important}
 .jv-st{position:absolute;top:6px;right:10px;font-size:14px;background:color-mix(in srgb,var(--card) 85%,transparent);padding:2px 8px;border-radius:8px;display:flex;gap:8px;align-items:center}
 .jv-st b{font-size:15px}
-#jvMsg{min-height:0;max-height:3.1em;overflow:hidden;font-size:14px;line-height:1.5;padding:4px 4px 0;text-align:center}
+#jvMsg{min-height:0;max-height:3.1em;overflow-y:auto;font-size:14px;line-height:1.5;padding:4px 4px 0;text-align:center}
+/* fim da rodada: um cartão por cima da pauta, com tudo visível (estrelas e o botão do próximo nível) */
+.jogoV.on{position:relative}
+#jvMsg.fim{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:3;width:min(520px,92%);max-height:88%;overflow-y:auto;padding:16px 18px;border-radius:16px;background:var(--card);box-shadow:0 12px 40px rgba(0,0,0,.35),0 0 0 2px #378ADD;font-size:16px;line-height:1.5}
+#jvMsg.fim button{margin-top:10px;min-height:44px;background:#378ADD;color:#fff;font-weight:600}
+/* barra de baixo: "Opções" sempre à vista na direita (os outros botões rolam por baixo dele em tela estreita) */
+.bar #more{position:sticky;right:0;box-shadow:-10px 0 10px -2px var(--card)}
 #jvRec{display:none}
 #jvKb svg{max-height:24vh!important;width:auto;margin:4px auto 0}
 html.rodado #jvKb svg{max-height:24vw!important}
@@ -431,7 +437,7 @@ document.querySelectorAll('.pre').forEach(function(b){b.onclick=function(){cmd({
 /* 0 = um compasso (automático), depois 1 a 10 */
 $('alvoDn').onclick=function(){if(S)cmd({cmd:'alvo',v:(+S.alvo||100)-5})};$('alvoUp').onclick=function(){if(S)cmd({cmd:'alvo',v:(+S.alvo||100)+5})};
 $('ouvirB').onclick=function(){cmd({cmd:'ouvir'})};
-$('rvDn').onclick=function(){if(S)cmd({cmd:'recvol',v:(+S.recv||100)-20})};$('rvUp').onclick=function(){if(S)cmd({cmd:'recvol',v:(+S.recv||100)+20})};
+$('rvDn').onclick=function(){if(S)cmd({cmd:'recvol',v:(+S.recv||100)-50})};$('rvUp').onclick=function(){if(S)cmd({cmd:'recvol',v:(+S.recv||100)+50})};
 $('preNDn').onclick=function(){if(S)cmd({cmd:'pre',v:'clk',n:Math.max(0,(+S.preN||0)-1)})};
 $('preNUp').onclick=function(){if(S)cmd({cmd:'pre',v:'clk',n:Math.min(10,(+S.preN||0)+1)})};
 $('preDn').onclick=function(){if(S)cmd({cmd:'pre',v:'sec',s:Math.max(0,(+S.preS||0)-1)})};

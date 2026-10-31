@@ -365,7 +365,7 @@ body.simples #go{font-size:20px;padding:12px 36px}
   <div class="segc"><button class="tg mode" data-v="time">Com tempo</button><button class="tg mode" data-v="wait">Espera</button></div>
   <div class="segc" title="Mãos"><button class="tg mao" data-v="ambas">Ambas</button><button class="tg mao" data-v="d">Direita</button><button class="tg mao" data-v="e">Esquerda</button></div>
   <div class="stepper" title="Andamento: arraste ou digite"><input type="range" id="bpmR" min="30" max="140" step="1" aria-label="Andamento"><label class="bpmin"><input type="number" id="bv2" min="30" max="140" step="1" inputmode="numeric" value="66" title="Digite o andamento (30 a 140)"> BPM</label></div>
-  <span class="tbsp"></span><button id="ouvirBtn">▶ Ouvir o que eu toquei</button><label class="recvol" title="Volume de &quot;Ouvir o que eu toquei&quot;">🔈<input type="range" id="recVol" min="0" max="300" step="10" value="100" aria-label="Volume da gravação"><b id="recVolV">100%</b></label><button id="ajBtn">⚙ Ajustes</button></div>
+  <span class="tbsp"></span><button id="ouvirBtn">▶ Ouvir o que eu toquei</button><label class="recvol" title="Volume de &quot;Ouvir o que eu toquei&quot;">🔈<input type="range" id="recVol" min="0" max="600" step="10" value="100" aria-label="Volume da gravação"><b id="recVolV">100%</b></label><button id="ajBtn">⚙ Ajustes</button></div>
  <div id="aviso" class="aviso" role="status" style="display:none"></div>
  <div id="cd"><span class="lb">Escolha um exercício e aperte "Começar"</span></div>
  <div class="row" style="justify-content:flex-end;margin:-4px 0 4px"><span id="trBox" class="row" style="gap:6px;margin-right:auto"><span class="lb">Trecho</span><select id="trA" title="Primeira linha"></select><span class="lb">até</span><select id="trB" title="Última linha"></select><button id="trGo">Treinar</button><button id="trAll" title="Voltar para a música toda">Música toda</button></span><span id="zoomBox" class="row" style="display:none;gap:6px"><span class="lb">Zoom</span><button id="zOut" title="Diminuir">−</button><b id="zV">100%</b><button id="zIn" title="Aumentar">+</button><button id="zFit">Largura da tela</button></span><button id="vistaBtn" style="display:none"></button></div>
@@ -598,7 +598,7 @@ function render(){var fall=VIS==='fall';document.getElementById('score').style.d
 var AC=null,BUF={},LD={},GP=null,GA=null,GR=null,GC=null,GL=null,UG=null,COMP=null,base='https://cdn.jsdelivr.net/gh/gleitz/midi-js-soundfonts@gh-pages/FluidR3_GM/acoustic_grand_piano-mp3/';
 function ctx(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();COMP=AC.createDynamicsCompressor();COMP.threshold.value=-10;COMP.knee.value=6;COMP.ratio.value=8;COMP.attack.value=0.003;COMP.release.value=0.2;COMP.connect(AC.destination);
  GP=AC.createGain();GP.connect(COMP);GP.gain.value=OPT.pno?1.5:0;GC=AC.createGain();GC.connect(COMP);GC.gain.value=OPT.clk?(+document.getElementById('clkVol').value)/100:0;
- GL=AC.createGain();GL.connect(COMP);GL.gain.value=(+document.getElementById('liveVol').value)/100;UG=AC.createGain();UG.connect(COMP);UG.gain.value=(+document.getElementById('usbVol').value)/100;GA=AC.createGain();GA.connect(COMP);GA.gain.value=OPT.outra?1.2:0;GR=AC.createGain();GR.connect(COMP);GR.gain.value=recF()}
+ GL=AC.createGain();GL.connect(COMP);GL.gain.value=(+document.getElementById('liveVol').value)/100;UG=AC.createGain();UG.connect(COMP);UG.gain.value=(+document.getElementById('usbVol').value)/100;GA=AC.createGain();GA.connect(COMP);GA.gain.value=OPT.outra?1.2:0;GR=AC.createGain();var LIMR=AC.createDynamicsCompressor();LIMR.threshold.value=-2;LIMR.knee.value=0;LIMR.ratio.value=20;LIMR.attack.value=0.002;LIMR.release.value=0.1;GR.connect(LIMR);LIMR.connect(AC.destination);GR.gain.value=recF()}
  if(AC.state==='suspended')AC.resume();return AC}
 function fnm(m){return['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][m%12]+(Math.floor(m/12)-1)}
 function load(m){if(BUF[m])return Promise.resolve(BUF[m]);if(LD[m])return LD[m];/* primeiro da pasta sons/ do Mac (sem internet, mais rápido); se faltar, da internet */
@@ -623,14 +623,14 @@ function midiTick(){if(!MQ.length||!MOUT)return;var now=performance.now(),keep=[
  MQ.forEach(function(x){if(x.p>now+120){keep.push(x);return}
   if((x.k==='pno'&&!OPT.pno)||(x.k==='acc'&&!OPT.outra)||(x.k==='clk'&&!OPT.clk))return;
   try{MOUT.send(x.d,Math.max(x.p,now));if(x.k==='off')delete MON[(x.d[0]&0x0f)+'_'+x.d[1]];else MON[(x.d[0]&0x0f)+'_'+x.d[1]]=x.d}catch(e){}});MQ=keep}
-function midiStop(){MQ=[];if(!MOUT)return;try{Object.keys(MON).forEach(function(k){var d=MON[k];MOUT.send([0x80|(d[0]&0x0f),d[1],0])});[1,9].forEach(function(ch){MOUT.send([0xB0|ch,123,0])})}catch(e){}MON={}}
+function midiStop(){MQ=[];if(!MOUT)return;try{Object.keys(MON).forEach(function(k){var d=MON[k];MOUT.send([0x80|(d[0]&0x0f),d[1],0])});[1,2,9].forEach(function(ch){MOUT.send([0xB0|ch,123,0])})}catch(e){}MON={}}
 /* acc = a outra mão (quando treina uma mão só): sai pelo GA, que liga e desliga com "O app toca a outra mão" */
-function tone(m,t,d,v,acc){if(viaPiano()){mq(t,acc==='rec'?'rec':acc?'acc':'pno',1,m,v*110*(acc==='rec'?recF():1),d);return}var c=ctx(),g=c.createGain();g.connect(acc==='rec'?GR:acc?GA:GP);
+function tone(m,t,d,v,acc){if(acc==='rec')v=0.35+0.65*Math.min(1,v);if(viaPiano()){mq(t,acc==='rec'?'rec':acc?'acc':'pno',acc==='rec'?2:1,m,acc==='rec'?127*v*recF():v*110,d);return}var c=ctx(),g=c.createGain();g.connect(acc==='rec'?GR:acc?GA:GP);
  if(BUF[m]){var s=c.createBufferSource();s.buffer=BUF[m];s.connect(g);g.gain.setValueAtTime(v,t);g.gain.setTargetAtTime(0,t+d,0.1);s.start(t,OFS[m]||0);s.stop(t+d+1);sched(s,g,t,t+d+1)}
  else{var f=440*Math.pow(2,(m-69)/12),o=c.createOscillator();o.type='triangle';o.frequency.value=f;o.connect(g);g.gain.setValueAtTime(v*0.5,t);g.gain.setTargetAtTime(0,t+d,0.1);o.start(t);o.stop(t+d+0.6);sched(o,g,t,t+d+0.6)}}
 function clickPiano(){return document.getElementById('clkdev').value==='piano'&&MOUT}
 /* volume do que sai no piano: CC7 (volume do canal) muda na hora, mesmo tocando; não mexe no volume das suas teclas */
-function pianoVols(){if(!MOUT)return;try{MOUT.send([0xB1,7,Math.round(1.27*document.getElementById('pnoVol').value)]);MOUT.send([0xB9,7,Math.round(1.27*document.getElementById('pclkVol').value)])}catch(e){}}
+function pianoVols(){if(!MOUT)return;try{MOUT.send([0xB2,7,127]);MOUT.send([0xB1,7,Math.round(1.27*document.getElementById('pnoVol').value)]);MOUT.send([0xB9,7,Math.round(1.27*document.getElementById('pclkVol').value)])}catch(e){}}
 function drumKit(){try{MOUT.send([0xB9,0,127]);MOUT.send([0xB9,32,0]);MOUT.send([0xC9,0])}catch(e){}}/* canal 10 = kit de bateria */
 /* sons da bateria do piano (canal 10): [tempo 1, outros tempos] */
 var CLKS={metro:[33,33],wood:[76,77],claves:[75,75],stick:[37,37]};
@@ -1156,7 +1156,7 @@ var ACTIVE=true;
   else if(c.cmd==='mao')setMao(c.v);
   else if(c.cmd==='alvo'){var al=document.getElementById('alvo');al.value=Math.max(40,Math.min(160,+c.v));al.oninput();ajVis()}
   else if(c.cmd==='ouvir')ouvir();
-  else if(c.cmd==='recvol'){var rv=document.getElementById('recVol');rv.value=Math.max(0,Math.min(300,+c.v));rv.oninput()}
+  else if(c.cmd==='recvol'){var rv=document.getElementById('recVol');rv.value=Math.max(0,Math.min(600,+c.v));rv.oninput()}
   else if(c.cmd==='perfil'&&!run)usarPerfil(c.v);
   /* jogo das notas, conceitos, rotina e facilidades pelo iPhone */
   else if(c.cmd==='jabrir')jAbrir();
@@ -1334,7 +1334,7 @@ var REC=[],RECON=false,RECPLAY=false;
 function recNote(m,v,on){if(RECON)REC.push([m,v,performance.now(),on])}
 function ouvir(){var b=document.getElementById('ouvirBtn');if(RECPLAY){stopSched();RECPLAY=false;paintOuvir();return}
  var ons=REC.filter(function(r){return r[3]});if(!ons.length){show('<span class="lb">Ainda não há gravação: toque um exercício (aperte "Começar").</span>',true);return}
- RECPLAY=true;paintOuvir();var rec=REC.slice();
+ RECPLAY=true;paintOuvir();pianoVols();var rec=REC.slice();
  Promise.race([Promise.all(ons.map(function(r){return load(r[0])})),new Promise(function(x){setTimeout(x,1500)})]).then(function(){if(!RECPLAY)return;var c=ctx(),t0=c.currentTime+0.25,first=ons[0][2],end=0;
   rec.forEach(function(r,i){if(!r[3])return;var off=rec.slice(i+1).filter(function(x){return !x[3]&&x[0]===r[0]})[0],d=Math.max(0.15,((off?off[2]:r[2]+500)-r[2])/1000);
    tone(r[0],t0+(r[2]-first)/1000,d,Math.max(0.15,r[1]/127),'rec');end=Math.max(end,(r[2]-first)/1000+d)});
