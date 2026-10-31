@@ -1362,7 +1362,7 @@ var FESTA=null;
 /* por onde saem os sons do jogo, dos conceitos e do recorde: piano (padrão; sem o cabo, cai para o Mac), Mac ou celular */
 function somSaida(){var s=JG.saida||'piano';return s==='piano'&&!MOUT?'mac':s}
 var SOMCEL=null;
-function celSom(ns){var now=Date.now();if(SOMCEL&&now-SOMCEL.t<5)SOMCEL.n=SOMCEL.n.concat(ns);else SOMCEL={id:now+'_'+Math.random().toString(36).slice(2,6),t:now,n:ns};if(window.CEL_SOON)CEL_SOON()}
+function celSom(ns,corta){var now=Date.now();if(!corta&&SOMCEL&&now-SOMCEL.t<5&&!SOMCEL.corta)SOMCEL.n=SOMCEL.n.concat(ns);else SOMCEL={id:now+'_'+Math.random().toString(36).slice(2,6),t:now,n:ns,corta:corta?1:0};if(window.CEL_SOON)CEL_SOON()}
 function somFesta(){if(!JG.som)return;var sd=somSaida();if(sd!=='mac'){[[72,0],[76,0.09],[79,0.18],[84,0.27]].forEach(function(n){somNota(n[0],n[1],n[1]>0.2?0.9:0.3,0.7)});return}try{var c=ctx(),t=c.currentTime+0.03;[[72,0],[76,0.09],[79,0.18],[84,0.27],[88,0.27]].forEach(function(n){var o=c.createOscillator(),g=c.createGain(),t0=t+n[1];
  o.type='sine';o.frequency.value=440*Math.pow(2,(n[0]-69)/12);o.connect(g);g.connect(COMP);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(0.2,t0+0.01);g.gain.exponentialRampToValueAtTime(0.001,t0+0.9);o.start(t0);o.stop(t0+1)})}catch(e){}}
 function celebrar(tit,sub){var d=document.createElement('div'),b=document.createElement('div');d.className='festa';d.setAttribute('role','status');b.className='festa-box';b.innerHTML='<b>'+tit+'</b>'+(sub?'<span>'+sub+'</span>':'');d.appendChild(b);
@@ -1371,12 +1371,21 @@ function celebrar(tit,sub){var d=document.createElement('div'),b=document.create
 /* melhor nota que este exercício já teve (todos os dias), para saber se bateu o recorde */
 function melhorDe(id){var b=null;Object.keys(H.days).forEach(function(k){var r=H.days[k].done[id];if(r&&(b==null||r.best>b))b=r.best});return b}
 /* toca uma nota com o piano sampleado, direto (não depende do "Som guia" ligado) */
-function somNota(m,when,dur,v){var sd=somSaida();
- if(sd==='piano'){try{pianoVols();mq(ctx().currentTime+(when||0)+0.03,'pno',1,m,(v||0.8)*110,dur||0.8)}catch(e){}return}
+/* sons do jogo/conceitos pelo piano: caminho próprio na fila do MIDI (não depende do "Som guia" ligado), marcado para poder cortar */
+function mqJ(t,note,vel,dur){var p=soundPerf(ctx(),t);vel=Math.max(1,Math.min(127,Math.round(vel)));MQ.push({p:p,k:'jg',d:[0x91,note,vel],jg:1});MQ.push({p:p+dur*1000,k:'off',d:[0x81,note,0],jg:1})}
+/* uma sequência nova ("Ouvir de novo", "▶ Ouvir", a próxima nota do modo De ouvido) corta a anterior: nada toca por cima */
+var SEQ=[],SEQN=[],SEQT=0;
+function pararSeq(){SEQT++;if(AC)SEQ.forEach(function(x){try{x.g.gain.cancelScheduledValues(AC.currentTime);x.g.gain.setTargetAtTime(0,AC.currentTime,0.02);x.s.stop(AC.currentTime+0.12)}catch(e){}});SEQ=[];
+ MQ=MQ.filter(function(x){return !x.jg});if(MOUT)SEQN.forEach(function(nn){try{MOUT.send([0x81,nn,0]);delete MON['1_'+nn]}catch(e){}});SEQN=[]}
+function somNota(m,when,dur,v,seq){var sd=somSaida();
+ if(sd==='piano'){try{pianoVols();mqJ(ctx().currentTime+(when||0)+0.03,m,(v||0.8)*110,dur||0.8);if(seq)SEQN.push(m)}catch(e){}return}
  if(sd==='celular'){celSom([[m,when||0,dur||0.8,v||0.8]]);return}
- var c=ctx();function play(b){var s=c.createBufferSource(),g=c.createGain(),t=c.currentTime+(when||0)+0.02;s.buffer=b;s.connect(g);g.connect(COMP);g.gain.setValueAtTime(v||0.8,t);g.gain.setTargetAtTime(0,t+(dur||0.8),0.08);s.start(t,OFS[m]||0);s.stop(t+(dur||0.8)+0.7)}
+ var c=ctx();function play(b){var s=c.createBufferSource(),g=c.createGain(),t=c.currentTime+(when||0)+0.02;s.buffer=b;s.connect(g);g.connect(COMP);g.gain.setValueAtTime(v||0.8,t);g.gain.setTargetAtTime(0,t+(dur||0.8),0.08);s.start(t,OFS[m]||0);s.stop(t+(dur||0.8)+0.7);if(seq)SEQ.push({s:s,g:g})}
  if(BUF[m])play(BUF[m]);else load(m).then(function(b){if(b)play(b)})}
-function tocarSeq(seq){if(somSaida()!=='mac'){seq.forEach(function(n){somNota(n[0],n[1],n[2],n[3])});return}Promise.all(seq.map(function(n){return load(n[0])})).then(function(){seq.forEach(function(n){somNota(n[0],n[1],n[2],n[3])})})}
+function tocarSeq(seq){pararSeq();var tk=SEQT,sd=somSaida();
+ if(sd==='celular'){celSom(seq.map(function(n){return [n[0],n[1]||0,n[2]||0.8,n[3]||0.8]}),true);return}
+ if(sd==='piano'){seq.forEach(function(n){somNota(n[0],n[1],n[2],n[3],true)});return}
+ Promise.all(seq.map(function(n){return load(n[0])})).then(function(){if(tk!==SEQT)return;seq.forEach(function(n){somNota(n[0],n[1],n[2],n[3],true)})})}
 
 /* ---------- jogo das notas: aparece uma nota na pauta e você aperta a tecla certa ----------
    "Uma por vez": sem pressa; errou, o app mostra a tecla certa e o caminho a partir da nota-guia mais perto.
@@ -1485,7 +1494,7 @@ function jCerto(i,m){var t=wm(i);return JG.oit?m%12===t%12:m===t}
 function jComecar(){if(run)resetAll();if(jNivel().par&&JG.modo==='corre'){JG.modo='calma';jsSave();jogoMontar()}
  JG.on=true;JG.vis=true;JG.n=0;JG.acertos=0;JG.erros=0;JG.combo=0;JG.bestCombo=0;JG.tempos=[];JG.pontos=0;JG.vidas=3;JG.fila=[];JG.ult=null;JKB={};
  if(JG.modo==='corre'){JG.v=34;JG.tl=null;jMsg('Toque a nota mais perto da linha azul antes que ela chegue lá.');jDesenha();jKb();jPainel();jTick()}else jProxima()}
-function jParar(){JG.on=false;JG.alvo=null;JG.fila=[];jMsg('');jDesenha();jKb();jPainel()}
+function jParar(){pararSeq();JG.on=false;JG.alvo=null;JG.fila=[];jMsg('');jDesenha();jKb();jPainel()}
 /* próximo passo do modo Correndo: com a janela do Mac visível, a cada quadro; escondida (o Chrome congela as animações), pelo relógio de fundo do app */
 function jTick(){if(document.hidden&&typeof at==='function'){try{at(ctx().currentTime+0.05,jLoop);return}catch(e){}}requestAnimationFrame(jLoop)}
 function jNova(x){var a=jEscolhe();return {c:a.c,i:a.i,x:x,t0:performance.now()}}
