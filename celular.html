@@ -365,8 +365,8 @@ var FESTA_T=0;function festa(f){if(!f||f.ts===FESTA_T)return;FESTA_T=f.ts;var d=
  document.body.appendChild(d);setTimeout(function(){d.classList.add('sai')},2400);setTimeout(function(){d.remove()},2900)}
 function paint(s){
  try{festa(s.festa)}catch(e){}
- $('title').textContent=s.title||'';$('cd').innerHTML=s.cd||'';$('errs').innerHTML=s.errs||'';$('midi').innerHTML=s.midi||'';
- var ink=myInk(),fix=function(h){h=h.replace(/ id="(score|kb)"/,'');return s.ink&&s.ink!==ink?h.split(s.ink).join(ink):h};
+ $('title').textContent=s.title||'';if(relNb(s)==null||relNb(s)<0)$('cd').innerHTML=s.cd||'';$('errs').innerHTML=s.errs||'';$('midi').innerHTML=s.midi||'';
+ var ink=myInk(),loc=relNb(s)!=null,fix=function(h){h=h.replace(/ id="(score|kb)"/,'');if(loc)h=h.replace(/<rect[^>]*fill:#B5D4F4;opacity:0\.45[^>]*><\/rect>/g,'').split('#185FA5').join(s.ink||ink);return s.ink&&s.ink!==ink?h.split(s.ink).join(ink):h};
  var bx=$('score'),st=bx.scrollTop,sl=bx.scrollLeft,rep=false;$('kb').innerHTML=fix(s.kb||'');
  /* partitura inteira: o Mac manda a inteira (scoreFull) só quando ela muda com o exercício parado; tocando, manda só as linhas da música,
     que entram no lugar das mesmas linhas (<g data-sy>) da inteira guardada aqui */
@@ -377,7 +377,7 @@ function paint(s){
    var old=bx.querySelector('g[data-sy="'+g.getAttribute('data-sy')+'"]');if(old)old.parentNode.replaceChild(g,old)})}}
  else{bx.innerHTML=fix(s.score||'');bx.dataset.k='';rep=true}
  paintRes(s);
- S=s;paintFall(s);fit();/* só devolve a rolagem quando a partitura foi trocada inteira, e nunca no meio da descida para a linha seguinte */
+ var lsy=relSy(s);if(lsy!=null)s.sy=lsy;S=s;paintFall(s);fit();relLoop();/* só devolve a rolagem quando a partitura foi trocada inteira, e nunca no meio da descida para a linha seguinte */
  if(VIEW==='tudo'&&rep&&!fit.moved){bx.scrollTop=st;bx.scrollLeft=sl}
  /* o Mac precisa saber se esta tela quer a partitura inteira (ele desenha à parte para cá) */
  if(s.celv&&s.celv!==VIEW&&Date.now()-(paint.cv||0)>2000){paint.cv=Date.now();cmd({cmd:'celvista',v:VIEW})}
@@ -604,6 +604,19 @@ function tutCel(i){i=i||0;TUTI=i;var o=document.getElementById('tutO');if(o)o.re
  $('tutP').onclick=function(){tutCel(i+1)};$('tutF').onclick=function(){tutCel(TUTC.length)}}
 $('tutVer').onclick=function(){$('sheet').classList.remove('open');tutCel(0)};
 var TUTI=-1;window.addEventListener('resize',function(){if(document.getElementById('tutO')&&TUTI>=0)setTimeout(function(){tutCel(TUTI)},250)});
+/* a música no celular, sem esperar o Wi-Fi: com o início (t0, hora do Mac), o andamento e onde fica cada nota,
+   o celular acende a nota da vez, conta "Compasso · tempo" e troca de linha sozinho */
+function relNb(s){var R=s&&s.run&&s.rel;if(!R||s.fall||OFF==null)return null;return ((Date.now()+OFF)-R.t0)/1000/R.spb}
+function relGrupo(s,nb){var g=null,G=s.rel.g;for(var i=0;i<G.length;i++){if(G[i][0]<=nb+0.03)g=G[i];else break}return g}
+function relSy(s){var nb=relNb(s);if(nb==null||nb<0)return null;var g=relGrupo(s,nb);return g?g[1]:null}
+function relLoop(){if(relLoop.on)return;relLoop.on=true;(function f(){var nb=relNb(S);if(nb==null||!S||!S.run){relLoop.on=false;var o=document.getElementById('hlLocal');if(o)o.remove();return}
+ if(nb>=0){var R=S.rel,g=relGrupo(S,nb),sv=$('score').querySelector('svg');
+  if(g&&sv){var grp=sv.querySelector('g[data-sy="'+g[1]+'"]')||sv,r=document.getElementById('hlLocal');
+   if(!r||r.parentNode!==grp){if(r)r.remove();r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.id='hlLocal';r.setAttribute('rx','6');r.setAttribute('style','fill:#B5D4F4;opacity:0.45');grp.insertBefore(r,grp.firstChild)}
+   var tt=40+g[1]*230;r.setAttribute('x',g[2]-16);r.setAttribute('y',tt-10);r.setAttribute('width','32');r.setAttribute('height','142');
+   if(S.sy!==g[1]){S.sy=g[1];fit()}}
+  var m=Math.floor(nb/R.beats);if(nb<R.fim&&(S.opt||{}).cnt){var txt='Compasso '+(R.mm?R.mm[m]:m+1)+' · tempo '+(Math.floor(nb-m*R.beats)+1);if($('cd').textContent!==txt)$('cd').textContent=txt}}
+ requestAnimationFrame(f)})()}
 var EXTRA1=true;
 /* continuar de onde parou depois de recarregar (atualização): guarda qual tela estava aberta (Opções, Início, Conceitos),
    a rolagem dela, se o resultado estava aberto ou fechado e a rolagem da partitura; ao voltar, põe tudo igual

@@ -1128,7 +1128,7 @@ var ACTIVE=true;
  function snap(){var g=function(id){return document.getElementById(id)};
   return JSON.stringify({title:g('exTitle').textContent,cd:g('cd').innerHTML,score:VIS==='fall'?'':g('score').outerHTML,scoreFull:celFull(),recv:+document.getElementById('recVol').value,alvo:+document.getElementById('alvo').value,perfis:PERFIS,perfil:PERFIL,pre:document.getElementById('pre').value,preS:+document.getElementById('preS').value,preN:+document.getElementById('preN').value,tr:(function(){var n=linhas();if(n<2)return null;var src=CUR.base||CUR,per=perFor(src),l=[];for(var i=1;i<=n;i++)l.push('Linha '+i+' (comp. '+((i-1)*per+1)+'–'+Math.min(i*per,src.ms.length)+')');return {l:l,v:trAtual()}})(),mao:MAO,celv:CELV,
    /* queda de notas: as notas e o relógio da música (hora do Mac em que começa o tempo 0); o iPhone anima sozinho */
-   fall:VIS==='fall'?{m:fallModel(),t0:startPerf?Date.now()-performance.now()+startPerf:0,spb:spb,run:run,mode:MODE,wb:run&&MODE==='wait'?waitBeat():null,played:played}:null,kb:OPT.kb?g('kb').outerHTML:'',errs:g('errs').innerHTML,res:g('res').innerHTML,saida:typeof JG!=='undefined'&&JG?JG.saida:'piano',som:typeof SOMCEL!=='undefined'&&SOMCEL&&Date.now()-SOMCEL.t<4000?SOMCEL:null,ult:run?'':g('exUlt').innerHTML,jogo:seguro(jSnap),conc:seguro(concCel),ini:run?null:seguro(celInicio),ritn:seguro(function(){return Object.keys(RITN).map(function(k){return [k,RITN[k].t]})}),festa:FESTA&&Date.now()-FESTA.ts<6000?FESTA:null,
+   rel:seguro(relSnap),fall:VIS==='fall'?{m:fallModel(),t0:startPerf?Date.now()-performance.now()+startPerf:0,spb:spb,run:run,mode:MODE,wb:run&&MODE==='wait'?waitBeat():null,played:played}:null,kb:OPT.kb?g('kb').outerHTML:'',errs:g('errs').innerHTML,res:g('res').innerHTML,saida:typeof JG!=='undefined'&&JG?JG.saida:'piano',som:typeof SOMCEL!=='undefined'&&SOMCEL&&Date.now()-SOMCEL.t<4000?SOMCEL:null,ult:run?'':g('exUlt').innerHTML,jogo:seguro(jSnap),conc:seguro(concCel),ini:run?null:seguro(celInicio),ritn:seguro(function(){return Object.keys(RITN).map(function(k){return [k,RITN[k].t]})}),festa:FESTA&&Date.now()-FESTA.ts<6000?FESTA:null,
    run:run,mode:MODE,show:SHOW,opt:OPT,bpm:+g('bpm').value,midi:g('midiStat').innerHTML,cur:CUR&&CUR.id,ink:getComputedStyle(document.body).getPropertyValue('--ink').trim()||'#1f1f1d',
    sy:curSys(),hid:document.hidden,tol:document.getElementById('tol').value,out:document.getElementById('outdev').value,clk:document.getElementById('clkdev').value,cs:document.getElementById('clksnd').value,nomes:NOMES,pv:+document.getElementById('pnoVol').value,pcv:+document.getElementById('pclkVol').value,ex:allEx().filter(function(e){return !oculta(e.id)&&livroVisivel(e)}).map(function(e){return [e.g,e.id,e.title]})})}
  /* só uma aba do Mac comanda o iPhone: vira dona ao abrir, ao ganhar foco ou ao receber nota do piano */
@@ -1963,6 +1963,16 @@ document.querySelectorAll('.sw').forEach(function(b){b.addEventListener('click',
 /* botão ao lado da contagem: liga ou desliga a contagem só neste exercício */
 function cntPinta(){var b=document.getElementById('cntBtn');if(!b)return;var exc=AJX[ajxId()]&&'cnt' in AJX[ajxId()];b.textContent=OPT.cnt?'Esconder a contagem':'Mostrar a contagem';b.title=(OPT.cnt?'Esconde':'Mostra')+' "Compasso 1 · tempo 1…" só neste exercício'+(exc?' (este exercício está diferente do padrão)':'')}
 (function(){var b=document.getElementById('cntBtn');if(b)b.onclick=function(){ajxDefine('cnt',!OPT.cnt);if(!run)show(OPT.cnt?'<span class="lb">Contagem ligada neste exercício.</span>':'<span class="lb">Contagem escondida só neste exercício: conte você mesmo. Nos outros ela continua.</span>',true)}})();
+/* ---------- o celular acompanha a música sozinho (como o Ableton Link) ----------
+   No modo Com tempo, o celular recebe uma vez: a hora do Mac em que o tempo 0 começa, o andamento e onde fica cada nota
+   na partitura. Com o relógio já acertado com o Mac, ele mesmo acende a nota da vez, conta "Compasso · tempo" e troca de
+   linha, sem esperar o Wi-Fi a cada tempo. As cores de certo/errado continuam vindo do Mac. */
+var RELC=null;
+function relSnap(){if(!run||MODE!=='time'||!startPerf||!CUR||VIS==='fall')return null;
+ if(!RELC||RELC.k!==GOID){var per=perLine(),ksw=Math.abs(CUR.key)*12,x0=70+ksw,mw=(890-x0)/per,gs={};
+  EV.forEach(function(e){var k=Math.round(e.beat*1000);if(gs[k])return;var mi=e.m%per;gs[k]=[Math.round(e.beat*1000)/1000,Math.floor(e.m/per),Math.round(x0+mi*mw+26+noteX(e)*(mw-38))]});
+  RELC={k:GOID,g:Object.keys(gs).map(function(k){return gs[k]}).sort(function(a,b){return a[0]-b[0]})}}
+ return {t0:Math.round(Date.now()-performance.now()+startPerf),spb:spb,beats:CUR.beats,fim:CUR.ms.length*CUR.beats,mm:CUR.mmap||null,g:RELC.g}}
 /* ---------- quiálteras (3 notas no lugar de 2) ----------
    Nas durações de 1/3 e 2/3 de tempo, o grupo ganha um "3" em cima (ou embaixo) da barra */
 function eTri(e){var D=e.ndur||e.dur;return Math.abs(D*3-Math.round(D*3))<1e-6&&Math.abs(D*4-Math.round(D*4))>1e-6}
