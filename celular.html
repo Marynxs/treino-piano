@@ -597,6 +597,17 @@ function tutCel(i){i=i||0;TUTI=i;var o=document.getElementById('tutO');if(o)o.re
 $('tutVer').onclick=function(){$('sheet').classList.remove('open');tutCel(0)};
 var TUTI=-1;window.addEventListener('resize',function(){if(document.getElementById('tutO')&&TUTI>=0)setTimeout(function(){tutCel(TUTI)},250)});
 var EXTRA1=true;
+/* continuar de onde parou depois de recarregar (atualização): guarda qual tela estava aberta (Opções, Início, Conceitos),
+   a rolagem dela, se o resultado estava aberto ou fechado e a rolagem da partitura; ao voltar, põe tudo igual
+   (e não abre o Início sozinho de novo) */
+function celSalva(){if(ENSAIO)return;try{var ab=['sheet','ini','conc'].filter(function(id){return $(id).classList.contains('open')})[0]||'';
+ sessionStorage.setItem('cel_sessao',JSON.stringify({t:Date.now(),ab:ab,abY:ab?$(ab).scrollTop:0,reshid:RESHID,res:$('res').classList.contains('show'),resY:$('res').scrollTop,y:window.scrollY,boxY:$('score').scrollTop,tut:document.getElementById('tutO')?TUTI:-1}))}catch(e){}}
+window.addEventListener('pagehide',celSalva);window.addEventListener('beforeunload',celSalva);
+var CELS=null;try{if(!ENSAIO){CELS=JSON.parse(sessionStorage.getItem('cel_sessao'));sessionStorage.removeItem('cel_sessao');if(CELS&&Date.now()-CELS.t>3600000)CELS=null}}catch(e){CELS=null}
+if(CELS&&CELS.reshid)RESHID=CELS.reshid;
+function celVolta(s){var c=CELS;CELS=null;if(c.ab){if(c.ab==='conc')abrirConc();else{if(c.ab==='ini')paintIni(s);$(c.ab).classList.add('open')}setTimeout(function(){$(c.ab).scrollTop=c.abY||0},150)}
+ if(c.res&&$('res').classList.contains('show'))setTimeout(function(){$('res').scrollTop=c.resY||0},200);
+ setTimeout(function(){window.scrollTo(0,c.y||0);if(c.boxY)$('score').scrollTop=c.boxY},200);if(c.tut>=0)setTimeout(function(){tutCel(c.tut)},500)}
 /* sons que o Mac manda tocar aqui (opção "Este celular"): piano sampleado, os mesmos arquivos do Mac. O celular só deixa tocar som depois de um toque na tela */
 var CAC=null,CBUF={},CLD={},SOMV='';
 function celAudio(){try{if(!CAC){CAC=new(window.AudioContext||window.webkitAudioContext)();var b=CAC.createBuffer(1,1,22050),s=CAC.createBufferSource();s.buffer=b;s.connect(CAC.destination);s.start(0)}if(CAC.state==='suspended')CAC.resume()}catch(e){}}
@@ -607,7 +618,7 @@ var CSRC=[],CTK=0;
 function celCorta(){CTK++;CSRC.forEach(function(x){try{x.g.gain.cancelScheduledValues(CAC.currentTime);x.g.gain.setTargetAtTime(0,CAC.currentTime,0.02);x.s.stop(CAC.currentTime+0.12)}catch(e){}});CSRC=[]}
 function celToca(sm){if(!sm||sm.id===SOMV||ENSAIO)return;SOMV=sm.id;if(!CAC)return;if(sm.corta)celCorta();var tk=CTK;Promise.all(sm.n.map(function(n){return celLoad(n[0])})).then(function(){if(tk!==CTK)return;var t0=CAC.currentTime+0.05;sm.n.forEach(function(n){var b=CBUF[n[0]];if(!b)return;var s=CAC.createBufferSource(),g=CAC.createGain();s.buffer=b;s.connect(g);g.connect(CAC.destination);var t=t0+(n[1]||0);g.gain.setValueAtTime(n[3]||0.8,t);g.gain.setTargetAtTime(0,t+(n[2]||0.8),0.08);s.start(t);s.stop(t+(n[2]||0.8)+0.8);if(sm.corta)CSRC.push({s:s,g:g})})})}
 function paintExtra(s){paintJogo(s);document.querySelectorAll('.jvs').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.saida||'piano'))});if(SOMV===''&&s.som)SOMV=s.som.id;else celToca(s.som);paintUltCel(s);paintIni(s);paintConc(s);
- if(EXTRA1){EXTRA1=false;var o=s.opt||{};try{if((o.simples||o.ini!==false)&&!s.run&&!s.res&&!s.jogo)$('iniBtn').click();if(o.tut!==false&&!localStorage.getItem('cel_tutvisto')&&!ENSAIO)setTimeout(function(){tutCel(0)},800)}catch(e){}}}
+ if(EXTRA1){EXTRA1=false;if(CELS){celVolta(s);return}var o=s.opt||{};try{if((o.simples||o.ini!==false)&&!s.run&&!s.res&&!s.jogo)$('iniBtn').click();if(o.tut!==false&&!localStorage.getItem('cel_tutvisto')&&!ENSAIO)setTimeout(function(){tutCel(0)},800)}catch(e){}}}
 
 paintView();listen();
 window.APP_OK=true;
