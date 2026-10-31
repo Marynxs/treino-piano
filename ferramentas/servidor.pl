@@ -136,6 +136,33 @@ while (my $c = $srv->accept) {
     if (open(my $fh, '>>', "$tmp/atrasos.log")) { print $fh scalar(localtime) . "\t$body\n"; close $fh }
     reply($c, '200 OK', 'application/json', '{"ok":true}'); close $c; exit 0;
   }
+  # Backup do progresso (só do próprio Mac): grava em backups/ na pasta do app e uma cópia no iCloud Drive
+  # (pasta "Treino de Piano"), lista e devolve um backup. Ficam no máximo 60 arquivos em cada lugar.
+  if ($path =~ m{^/api/backups?$} && $c->peerhost !~ /^127\./) { reply($c, '403 Forbidden', 'text/plain', 'só no Mac'); close $c; exit 0 }
+  if ($path eq '/api/backup' && $meth eq 'POST') {
+    my $body = ''; read($c, $body, $len) if $len && $len < 60_000_000;
+    if ($body !~ /^\s*\{/) { reply($c, '400 Bad Request', 'text/plain', 'backup vazio'); close $c; exit 0 }
+    my @t = localtime; my $tipo = ($q{tipo} // '') eq 'auto' ? '-auto' : '';
+    my $nome = sprintf('progresso-%04d-%02d-%02d-%02d%02d%02d%s.json', $t[5]+1900, $t[4]+1, $t[3], $t[2], $t[1], $t[0], $tipo);
+    my $nuvem = '';
+    for my $dir ("$root/backups", (-d "$ENV{HOME}/Library/Mobile Documents/com~apple~CloudDocs" ? "$ENV{HOME}/Library/Mobile Documents/com~apple~CloudDocs/Treino de Piano" : ())) {
+      mkdir $dir; my $ok = open(my $fh, '>', "$dir/$nome"); if ($ok) { binmode $fh; print $fh $body; close $fh; $nuvem = 1 if $dir =~ /CloudDocs/ }
+      elsif ($dir eq "$root/backups") { reply($c, '500 Internal Server Error', 'text/plain', "não consegui gravar: $!"); close $c; exit 0 }
+      my @f = sort { $b cmp $a } grep { /^progresso-.*\.json$/ } do { my $d; opendir($d, $dir) ? readdir($d) : () };
+      unlink map { "$dir/$_" } @f[60..$#f] if @f > 60;
+    }
+    reply($c, '200 OK', 'application/json', qq({"ok":true,"nome":"$nome","icloud":) . ($nuvem ? 'true' : 'false') . '}'); close $c; exit 0;
+  }
+  if ($path eq '/api/backups') {
+    my @f = sort { $b cmp $a } grep { /^progresso-.*\.json$/ } do { my $d; opendir($d, "$root/backups") ? readdir($d) : () };
+    reply($c, '200 OK', 'application/json', '[' . join(',', map { my $s = -s "$root/backups/$_"; qq({"nome":"$_","tam":$s}) } @f) . ']'); close $c; exit 0;
+  }
+  if ($path eq '/api/backup') {
+    my $nome = $q{nome} // ''; $nome =~ s/%([0-9A-Fa-f]{2})/chr(hex $1)/ge;
+    if ($nome !~ /^progresso-[\d-]+(-auto)?\.json$/ || !-f "$root/backups/$nome") { reply($c, '404 Not Found', 'text/plain', 'backup não encontrado'); close $c; exit 0 }
+    open(my $fh, '<', "$root/backups/$nome"); binmode $fh; my $b = do { local $/; <$fh> }; close $fh;
+    reply($c, '200 OK', 'application/json', $b); close $c; exit 0;
+  }
   if ($path eq '/api/info') { my $h = $host ? "$host.local" : ''; reply($c, '200 OK', 'application/json', qq({"ip":"@{[lan_ip()]}","host":"$h","port":$port})); close $c; exit 0 }
 
   $path = '/treino-piano.html' if $path eq '/';

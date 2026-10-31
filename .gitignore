@@ -29,3 +29,6 @@ sons/
 # atalho do Mac (gerado com o caminho desta pasta)
 Treino de Piano.app/
 _preview/
+
+# backups do progresso (têm os dados de quem usa o app)
+backups/

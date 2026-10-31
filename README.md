@@ -89,7 +89,7 @@ Com exercícios de livro (`g: 'livro'` e `src: 'Livro p. N'`), aparece a aba **L
 
 ## Seus dados
 
-Tudo fica **no seu navegador** (localStorage): histórico, ajustes, perfis e músicas importadas. Nada vai para a internet. O servidor só atende `localhost` e a rede da sua casa (IPs privados).
+Tudo fica **no seu navegador** (localStorage): histórico, ajustes, perfis e músicas importadas. Na aba Histórico há **backup**: o app salva sozinho uma vez por dia na pasta `backups/` (e, se houver iCloud Drive, numa pasta "Treino de Piano" nele), e dá para restaurar, baixar ou abrir um arquivo de backup. A pasta `backups/` fica fora do repositório. Nada vai para a internet. O servidor só atende `localhost` e a rede da sua casa (IPs privados).
 
 Se você abrir o app com `?teste` no fim do endereço, ele não fala com o iPhone nem toma o controle da aba principal. Serve para testar mudanças.
 

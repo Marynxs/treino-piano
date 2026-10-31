@@ -237,6 +237,9 @@ ol.dicas{margin:4px 0 0;padding-left:22px;display:flex;flex-direction:column;gap
 .volta{margin:0 0 14px;padding:12px 16px;border-radius:14px;background:var(--bg);box-shadow:inset 4px 0 0 var(--blue);line-height:1.5}
 .volta button{margin-left:6px}
 h3.dh{font-size:15px;margin:10px 0 6px}
+.bk{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:14px;box-shadow:0 0 0 1px var(--bd)}.bk p{margin:0 0 8px;max-width:78ch;line-height:1.5}
+.bkfile{display:inline-flex;align-items:center;min-height:36px;padding:8px 14px;border-radius:10px;background:var(--fill);font-weight:500;cursor:pointer;font-size:14px}.bkfile input{display:none}
+.bk-lista{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-width:560px}.bk-item{display:flex;gap:12px;align-items:center;padding:6px 10px;border-radius:10px;background:var(--bg)}.bk-item span:first-child{flex:1}
 ul.evite{padding-left:22px}
 /* ---------- tema escolhido no app (botão ◐ no topo): vale mais que o do Mac ---------- */
 :root{--ilu-f:#DCEAF8}
@@ -903,6 +906,8 @@ function showPanel(){var p=document.getElementById('panel'),h='';if(TAB!=='leit'
  p.querySelectorAll('[data-jogoir]').forEach(function(b){b.onclick=irJogo});
  p.querySelectorAll('[data-retoma]').forEach(function(b){b.onclick=function(){retomar(b.dataset.retoma)}});
  p.querySelectorAll('[data-ritmo]').forEach(function(b){b.onclick=function(){ritmoNovo(b.dataset.ritmo)}});
+ praticaVis();
+ if(TAB==='hist'){p.insertAdjacentHTML('beforeend',bkHtml());bkMontar(p)}
  p.querySelectorAll('[data-open]').forEach(function(b){b.onclick=function(){var e=byId(b.dataset.open)||USERS.filter(function(u){return u.id===b.dataset.open})[0];if(b.dataset.time){MODE='time';paint()}load_ex(e)}});
  var rm=document.getElementById('restMus');if(rm)rm.onclick=restaurarMusicas;
  p.querySelectorAll('[data-leit]').forEach(function(b){b.onclick=function(){leitura(b.dataset.leit)}});
@@ -1356,7 +1361,7 @@ function leitura(k){var L=LEIT[k];if(!L)return;JG.vis=false;function seq(lo,hi,h
  var ms=[];for(var m=0;m<8;m++){var h=L.h==='x'?(m%2?'e':'d'):L.h,lo=L.h==='x'?(h==='d'?28:21):L.lo,hi=L.h==='x'?(h==='d'?32:25):L.hi;ms.push(seq(lo,hi,h,4))}
  var ex={id:'leit_'+k,g:'leit',title:'Leitura · '+L.t,src:'Leitura de notas (sequência nova a cada vez)',bpm:60,beats:4,key:0,seq:true,leit:true,ms:ms,
   desc:'Leia cada nota na pauta e toque. Sem nomes nem dedos escritos: o objetivo é ler. Comece no modo espera; quando ficar fácil, tente o modo com tempo bem devagar.'};
- MODE='wait';paint();load_ex(ex)}
+ MODE='wait';paint();load_ex(ex);praticaVis();var pr=document.getElementById('practice');if(pr)pr.scrollIntoView({block:'start',behavior:'smooth'})}
 /* ---------- comemoração de recorde: animação curta, som e texto (sem animação se o Mac pede "reduzir movimento") ---------- */
 var FESTA=null;
 /* por onde saem os sons do jogo, dos conceitos e do recorde: piano (padrão; sem o cabo, cai para o Mac), Mac ou celular */
@@ -1481,9 +1486,9 @@ function jPainel(){var e=document.getElementById('jgSt');if(!e)return;var t='';
  e.innerHTML=t;var g=document.getElementById('jgGo');if(g)g.textContent=JG.on?'Parar':(JG.n||JG.pontos?'Jogar de novo':'Começar o jogo');
  var d=document.getElementById('jgDica');if(d){d.style.display=JG.modo!=='corre'&&JG.on?'':'none';d.textContent=JG.modo==='ouvido'?'Ouvir de novo':'Dica'}}
 function jStat(pre,c,i,ok,ms){var k=pre+c+i,s=JS.notas[k]||[0,0,0];if(ok){s[0]++;if(ms&&ms<15000)s[2]=(s[2]||0)+ms}else s[1]++;JS.notas[k]=s}
-/* sorteio: as notas mais erradas pesam mais; nos níveis de intervalo, a segunda nota sai do intervalo sorteado */
-function jEscolhe(){var n=jNivel(),p=jPool(n),ant=JG.ult,pre=JG.modo==='ouvido'?'o':'',w=p.map(function(q){var s=JS.notas[pre+q.c+q.i]||[0,0],t=s[0]+s[1];if(ant&&ant.c===q.c&&ant.i===q.i&&p.length>1)return 0;return 1+(t?4*s[1]/t:1.5)}),tot=0,r,k;
- w.forEach(function(x){tot+=x});r=Math.random()*tot;for(k=0;k<p.length;k++){r-=w[k];if(r<=0&&w[k]>0)break}k=Math.min(k,p.length-1);var q=p[k];JG.ult=q;var a={c:q.c,i:q.i,ns:[q.i],k:0};
+/* sorteio: as notas mais erradas pesam mais (a mesma nota pode vir de novo, como numa partitura); nos níveis de intervalo, a segunda nota sai do intervalo sorteado */
+function jEscolhe(){var n=jNivel(),p=jPool(n),ant=JG.ult,ant2=JG.ult2,pre=JG.modo==='ouvido'?'o':'',w=p.map(function(q){var s=JS.notas[pre+q.c+q.i]||[0,0],t=s[0]+s[1];if(ant&&ant2&&p.length>1&&ant.c===q.c&&ant.i===q.i&&ant2.c===q.c&&ant2.i===q.i)return 0;return 1+(t?4*s[1]/t:1.5)}),tot=0,r,k;
+ w.forEach(function(x){tot+=x});r=Math.random()*tot;for(k=0;k<p.length;k++){r-=w[k];if(r<=0&&w[k]>0)break}k=Math.min(k,p.length-1);var q=p[k];JG.ult2=JG.ult;JG.ult=q;var a={c:q.c,i:q.i,ns:[q.i],k:0};
  if(n.par){var f=n[q.c];for(var t=0;t<20;t++){var iv=n.par[Math.floor(Math.random()*n.par.length)]-1,dir=Math.random()<0.5?-1:1,j=q.i+dir*iv;if(j<f[0]||j>f[1])j=q.i-dir*iv;if(j>=f[0]&&j<=f[1]){a.ns=[q.i,j];break}}}
  return a}
 function jOuvir(){var a=JG.alvo;if(!a)return;var seq=[[60,0,0.8,0.7]];a.ns.forEach(function(i,k){seq.push([wm(i),1.1+k*0.8,0.75,0.85])});tocarSeq(seq)}
@@ -1492,7 +1497,7 @@ function jProxima(){JG.alvo=jEscolhe();JG.cor=null;JG.errou=false;JG.dica=false;
  if(JG.modo==='ouvido')jOuvir();jDesenha();jKb();jPainel()}
 function jCerto(i,m){var t=wm(i);return JG.oit?m%12===t%12:m===t}
 function jComecar(){if(run)resetAll();if(jNivel().par&&JG.modo==='corre'){JG.modo='calma';jsSave();jogoMontar()}
- JG.on=true;JG.vis=true;JG.n=0;JG.acertos=0;JG.erros=0;JG.combo=0;JG.bestCombo=0;JG.tempos=[];JG.pontos=0;JG.vidas=3;JG.fila=[];JG.ult=null;JKB={};
+ JG.on=true;JG.vis=true;praticaVis();JG.n=0;JG.acertos=0;JG.erros=0;JG.combo=0;JG.bestCombo=0;JG.tempos=[];JG.pontos=0;JG.vidas=3;JG.fila=[];JG.ult=null;JG.ult2=null;JKB={};
  if(JG.modo==='corre'){JG.v=34;JG.tl=null;jMsg('Toque a nota mais perto da linha azul antes que ela chegue lá.');jDesenha();jKb();jPainel();jTick()}else jProxima()}
 function jParar(){pararSeq();JG.on=false;JG.alvo=null;JG.fila=[];jMsg('');jDesenha();jKb();jPainel()}
 /* próximo passo do modo Correndo: com a janela do Mac visível, a cada quadro; escondida (o Chrome congela as animações), pelo relógio de fundo do app */
@@ -1560,6 +1565,11 @@ function jogoMontar(){if(!document.getElementById('jogo'))return;
   jMsg('Dica: '+(a.ns.length>1&&a.k===1?jIntTxt(a):jDica(a.c,i).t+' (Está '+jLugar(a.c,i)+' da '+jClave(a.c)+'.)'));jDesenha()};
  if(JG.msg)jMsg(JG.msg[0],JG.msg[1]);var b=document.querySelector('#jgMsg [data-jgniv]');if(b)b.onclick=function(){JG.nivel=b.dataset.jgniv;jsSave();showPanel()};
  jDesenha();jKb();jPainel();jRec();jSoon();if(JG.on&&JG.modo==='corre'){JG.tl=null;jTick()}}
+/* a área da partitura só aparece nas abas em que se toca; no jogo das notas, nos Conceitos e no Histórico ela some
+   (em "Ler notas" ela volta quando você abre uma sequência para ler e tocar) */
+function praticaVis(){var p=document.getElementById('practice');if(!p)return;var leitSeq=TAB==='leit'&&CUR&&CUR.leit&&!JG.vis,esc=TAB==='conc'||TAB==='hist'||(TAB==='leit'&&!leitSeq);p.style.display=esc?'none':''}
+/* abriu um exercício estando no jogo, nos Conceitos ou no Histórico (pelo iPhone, pela rotina, por "Continuar"): vai para a aba dele */
+var PRONTO=false,_loadAba=load_ex;load_ex=function(ex){_loadAba(ex);if(PRONTO&&ex&&!ex.leit&&!JG.on&&['leit','conc','hist'].indexOf(TAB)>=0){JG.vis=false;TAB=ex.g==='user'?'mus':['aq','livro','ritmo','mus'].indexOf(ex.g)>=0?ex.g:'hoje';showPanel();saveAtual()}else praticaVis()};
 /* abrir o jogo (pelo Mac, pelo iPhone, pela tela simples ou pela rotina) */
 function jAbrir(){if(run)resetAll();TAB='leit';var f=document.getElementById('f_ex');if(f)f.open=true;JG.vis=true;showPanel();saveAtual();var j=document.getElementById('jogo');if(j)j.scrollIntoView({block:'start',behavior:'smooth'});jSoon()}
 /* o jogo para a tela do iPhone: a pauta pronta (modo calmo) ou as notas andando, que o iPhone anima sozinho a partir de x, v e t */
@@ -1883,6 +1893,34 @@ function exIcone(e){return e.g==='livro'?'livro':e.g==='aq'?'dedos':e.g==='ritmo
 var _paintBase=paint;paint=function(){_paintBase();aplicaFacil()};
 document.querySelectorAll('.letra').forEach(function(b){b.onclick=function(){OPT.letra=+b.dataset.v||1;saveSet();aplicaFacil()}});
 (function(){var b=document.getElementById('tutVer');if(b)b.onclick=function(){var d=document.getElementById('ajDlg');if(d&&d.close)d.close();tutorial(0)}})();
+/* ---------- backup do progresso ----------
+   Guarda todas as chaves do app (todos os perfis: histórico, recordes, ajustes, músicas importadas, jogo, tentativas).
+   Salva na pasta do app (backups/) e uma cópia no iCloud Drive (pasta "Treino de Piano"); automático uma vez por dia.
+   Restaurar troca tudo pelo backup escolhido, mas antes salva o estado atual (dá para voltar). */
+function bkDados(){var d={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/^piano_/.test(k)||k==='tema_app')d[k]=localStorage[k]}
+ return {app:'treino-piano',versao:1,criado:new Date().toISOString(),perfis:PERFIS.map(function(p){return p.nome}),dados:d}}
+function bkPode(){return /^https?:/.test(location.protocol)&&!TESTE&&!ENSAIO}
+function bkSalvar(tipo){if(!bkPode())return Promise.reject(new Error('abra o app pelo ícone "Treino de Piano" (não funciona no modo de teste)'));
+ return fetch('/api/backup?tipo='+(tipo==='auto'?'auto':'manual'),{method:'POST',body:JSON.stringify(bkDados())}).then(function(r){return r.ok?r.json():r.text().then(function(t){throw new Error(t)})}).then(function(j){try{localStorage['backup_ultimo']=String(Date.now())}catch(e){}return j})}
+function bkAuto(){var hoje=dkey();try{if(localStorage['backup_dia']===hoje)return}catch(e){return}bkSalvar('auto').then(function(){try{localStorage['backup_dia']=hoje}catch(e){}}).catch(function(){})}
+function bkRestaurar(obj){if(!obj||obj.app!=='treino-piano'||!obj.dados)return Promise.reject(new Error('este arquivo não é um backup do Treino de piano'));
+ return bkSalvar('manual').catch(function(){}).then(function(){var del=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/^piano_/.test(k))del.push(k)}
+  del.forEach(function(k){RAWDEL(k)});Object.keys(obj.dados).forEach(function(k){if(/^piano_/.test(k)||k==='tema_app')localStorage[k]=obj.dados[k]});
+  try{sessionStorage.setItem('restaurado',obj.criado||'1')}catch(e){}location.reload()})}
+function bkQuando(nome){var m=/progresso-(\d+)-(\d+)-(\d+)-(\d\d)(\d\d)\d\d(-auto)?/.exec(nome);return m?m[3]+'/'+m[2]+'/'+m[1]+' às '+m[4]+':'+m[5]+(m[6]?' (automático)':''):nome}
+function bkHtml(){var u=0;try{u=+localStorage['backup_ultimo']||0}catch(e){}
+ return '<h2 class="conc-h">Backup do progresso</h2><div class="bk">'+ilu('diario','sug')+'<div><p>Guarda tudo: histórico, recordes, ajustes, músicas importadas e os perfis de todas as pessoas. O app salva sozinho uma vez por dia, na pasta do app (<b>backups</b>) e no <b>iCloud Drive</b> (pasta "Treino de Piano"), que você abre também pelo iPhone. Nunca vai para o GitHub.</p>'+
+  '<p class="lb">Último backup: '+(u?quando(u):'ainda nenhum')+'.</p><div class="row"><button class="primary" id="bkSalvar">Salvar meu progresso agora</button><button id="bkLista">Restaurar um backup…</button><button id="bkBaixar">Baixar arquivo</button><label class="bkfile"><input type="file" id="bkAbrir" accept=".json,application/json">Abrir arquivo…</label></div>'+
+  '<div id="bkStat" class="lb" aria-live="polite"></div><div id="bkList"></div></div></div>'}
+function bkMontar(p){var st=function(t){var e=document.getElementById('bkStat');if(e)e.innerHTML=t};
+ var sv=document.getElementById('bkSalvar');if(!sv)return;
+ sv.onclick=function(){st('Salvando…');bkSalvar('manual').then(function(j){st('Salvo: '+bkQuando(j.nome)+(j.icloud?', com cópia no iCloud Drive.':'.'));showPanel()}).catch(function(e){st('Não deu: '+e.message)})};
+ document.getElementById('bkBaixar').onclick=function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(bkDados())],{type:'application/json'}));a.download='progresso-treino-piano-'+dkey()+'.json';document.body.appendChild(a);a.click();a.remove()};
+ document.getElementById('bkAbrir').onchange=function(){var f=this.files[0];if(!f)return;f.text().then(function(t){var o=JSON.parse(t);if(!confirm('Trocar o progresso atual pelo deste arquivo ('+(o.criado?new Date(o.criado).toLocaleString('pt-BR'):'sem data')+')? O progresso atual é salvo antes, em backups.'))return;st('Restaurando…');return bkRestaurar(o)}).catch(function(e){st('Não deu: '+e.message)})};
+ document.getElementById('bkLista').onclick=function(){if(!bkPode()){st('Abra o app pelo ícone "Treino de Piano" para ver os backups.');return}st('Carregando…');fetch('/api/backups').then(function(r){return r.json()}).then(function(l){st(l.length?'Escolha qual backup trazer de volta:':'Ainda não há backups.');
+  document.getElementById('bkList').innerHTML='<div class="bk-lista">'+l.slice(0,20).map(function(x){return '<div class="bk-item"><span>'+bkQuando(x.nome)+'</span><span class="lb">'+Math.max(1,Math.round(x.tam/1024))+' KB</span><button data-bk="'+x.nome+'">Restaurar</button></div>'}).join('')+'</div>';
+  document.querySelectorAll('[data-bk]').forEach(function(b){b.onclick=function(){if(!confirm('Trocar o progresso atual pelo de '+bkQuando(b.dataset.bk)+'? O progresso atual é salvo antes, então dá para voltar.'))return;st('Restaurando…');
+   fetch('/api/backup?nome='+encodeURIComponent(b.dataset.bk)).then(function(r){return r.json()}).then(bkRestaurar).catch(function(e){st('Não deu: '+e.message)})}})}).catch(function(){st('Não consegui ler os backups.')})}}
 /* ---------- quiálteras (3 notas no lugar de 2) ----------
    Nas durações de 1/3 e 2/3 de tempo, o grupo ganha um "3" em cima (ou embaixo) da barra */
 function eTri(e){var D=e.ndur||e.dur;return Math.abs(D*3-Math.round(D*3))<1e-6&&Math.abs(D*4-Math.round(D*4))>1e-6}
@@ -1933,7 +1971,11 @@ if(!EX.some(function(e){return e.g==='livro'})){var tbL=document.querySelector('
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){render();if(TAB==='leit'||TAB==='conc')showPanel()})}catch(e){}
 /* facilidades: tela simples e letra; passo a passo na primeira vez de quem começa (nunca no teste nem no ensaio) */
 aplicaFacil();
+/* backup automático do dia (uma vez por dia, alguns segundos depois de abrir) */
+if(bkPode())setTimeout(bkAuto,8000);
+try{if(sessionStorage.getItem('restaurado')){sessionStorage.removeItem('restaurado');show('<span class="lb">Progresso restaurado do backup. Tudo como estava naquele dia.</span>',true)}}catch(e){}
 try{if(OPT.tut!==false&&!TESTE&&!ENSAIO&&!localStorage.getItem('piano_tutvisto')&&!Object.keys(H.days).length)setTimeout(function(){tutorial(0)},900)}catch(e){}
+PRONTO=true;praticaVis();
 window.APP_OK=true;/* chegou ao fim do início sem erro */
 if(!ENSAIO)connectMidi(true);
 </script>

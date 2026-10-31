@@ -158,3 +158,10 @@ Quando os arquivos do app mudam, ele **se atualiza sozinho** e mantém tudo como
 ## 9. Onde ficam os seus dados
 
 Ficam no **Chrome deste Mac**: histórico, ajustes, perfis e músicas importadas. Não apague os "dados de sites" do Chrome, senão perde o histórico. Outro navegador ou outro computador começa do zero.
+
+**Backup (aba Histórico → "Backup do progresso"):**
+- O app salva sozinho **uma vez por dia**: na pasta do app (`backups/`) e uma cópia no **iCloud Drive**, pasta "Treino de Piano" (dá para ver pelo iPhone, no app Arquivos).
+- **Salvar meu progresso agora**: um backup na hora.
+- **Restaurar um backup…**: escolha a data. Antes de trocar, o app salva o progresso atual, então dá para voltar.
+- **Baixar arquivo / Abrir arquivo…**: para levar o progresso para outro computador.
+- Os backups nunca vão para o GitHub (o repositório é público).
