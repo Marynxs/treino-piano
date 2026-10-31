@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Piano">
 <title>Piano no iPhone</title>
+<script>/* tema escolhido aqui (Automático, Claro ou Escuro) e tamanho da letra, antes de desenhar */try{if(localStorage.getItem('cel_deitado')!=='0'&&matchMedia('(orientation: portrait)').matches)document.documentElement.classList.add('rodado')}catch(e){}try{var t_=localStorage.getItem('cel_tema');if(t_==='light'||t_==='dark')document.documentElement.setAttribute('data-theme',t_)}catch(e){}</script>
 <style>
 :root{--bg:#f7f6f2;--card:#ffffff;--tx:#1f1f1d;--tx2:#5f5e5a;--tx3:#888780;--bd:#d3d1c7;--blue:#378ADD;--blueD:#185FA5;--ink:#1f1f1d;--cdtx:#185FA5}
 @media (prefers-color-scheme:dark){:root{--bg:#1c1c1b;--card:#262624;--tx:#f1efe8;--tx2:#b4b2a9;--tx3:#888780;--bd:#444441;--ink:#f1efe8;--cdtx:#85B7EB}}
@@ -27,6 +28,7 @@ h1{font-size:15px;font-weight:600;margin:0;flex:1;min-width:0;white-space:nowrap
 #score svg,#kb svg{display:block;width:100%;height:auto}
 #errs{font-size:12px;margin:6px 0;min-height:16px}
 #kb{margin-top:6px}
+@media (orientation:landscape) and (max-height:500px){#kb svg{max-height:22vh;width:auto;margin:0 auto}.top{gap:6px}#cd{min-height:28px;font-size:15px;margin:2px 0}h1{font-size:14px}.bar{padding-top:4px}.bar button{min-height:38px;padding:6px 12px}#go{min-height:40px}#ult{display:none!important}}
 /* relatório do fim: no iPhone abre em tela cheia por cima da partitura, com letra grande e rolagem */
 #res{position:fixed;inset:0;z-index:4;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);color:var(--tx);
  padding:0 max(14px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));font-size:16px;line-height:1.45}
@@ -95,7 +97,7 @@ button.on{background:#378ADD!important;color:#fff!important;border-color:#185FA5
 .stack{display:flex;flex-direction:column;gap:6px}.stack button,.f>button{width:100%;text-align:left}
 .sheet select{width:100%}
 .seg select{flex:1 1 40%;width:auto;min-width:0}
-@media (min-width:700px){.sheet.open{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-content:start;align-items:start}.sheet .rephead,.sheet>p{grid-column:1/-1}}
+@media (min-width:700px){#sheet.open{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-content:start;align-items:start}.sheet .rephead,.sheet>p{grid-column:1/-1}}
 /* partitura inteira: rola dentro da caixa; zoom com os botões ou com pinça */
 #scoreWrap{position:relative}
 /* zoom fica na barra de baixo (não cobre a partitura) */
@@ -142,18 +144,105 @@ button,select,input{font-family:inherit}
 @keyframes festaIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
 @keyframes confete{0%{transform:translate(-50%,-50%) rotate(0)}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(220deg);opacity:0}}
 @media (prefers-reduced-motion:reduce){.festa-box{animation:none}.festa-box i{display:none}}
+/* ---------- tema escolhido aqui, ilustrações, jogo, conceitos, início e passo a passo (30/10/2026) ---------- */
+:root{--ink:#000;--ilu-f:#DCEAF8;--ok:#3B6D11;--bad:#B3261E}
+@media (prefers-color-scheme:dark){:root{--ink:#ECEFF3;--ilu-f:#1F3A57;--ok:#97C459;--bad:#F09595}}
+:root[data-theme="light"]{color-scheme:light;--bg:#F4F6F9;--card:#FFFFFF;--tx:#1B1E24;--tx2:#535A66;--tx3:#848B97;--bd:#DCE0E7;--ink:#000;--cdtx:#185FA5;--fill:rgba(84,96,116,.09);--fill2:rgba(84,96,116,.17);--ilu-f:#DCEAF8;--ok:#3B6D11;--bad:#B3261E}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#13161B;--card:#1C2026;--tx:#ECEFF3;--tx2:#A9B0BB;--tx3:#7E8692;--bd:#313741;--ink:#ECEFF3;--cdtx:#85B7EB;--fill:rgba(170,180,195,.11);--fill2:rgba(170,180,195,.2);--ilu-f:#1F3A57;--ok:#97C459;--bad:#F09595}
+.ilu{display:block;color:var(--tx);flex:none;height:auto}
+.ilu .a{stroke:#378ADD}.ilu .af{fill:var(--ilu-f);stroke:#378ADD}.ilu .f{fill:currentColor;stroke:none}
+.ilu text{stroke:none;fill:currentColor;font:700 12px 'Atkinson Hyperlegible Next',sans-serif}.ilu text.a2{fill:#378ADD}
+.ilu-dica{width:64px}.ilu-foco{width:80px}.ilu-sug{width:56px}.ilu-conc{width:110px;margin:6px 0}.ilu-pequena{width:40px}.ilu-ini{width:56px}
+.foco{display:flex;flex-direction:column;gap:10px}.sug{display:flex;gap:12px;align-items:center}
+li.dica{display:flex;gap:12px;align-items:flex-start;list-style:none;margin-bottom:10px}ol.dicas,ul.evite{padding-left:0}
+#ult{font-size:14px;color:var(--tx2);margin:4px 0;display:flex;flex-direction:column;gap:2px}#ult b{color:var(--tx)}#ult button{min-height:34px;padding:4px 12px;font-size:14px;margin-left:6px}
+/* jogo das notas no iPhone */
+.jogoV{display:none;margin-top:6px}.jogoV.on{display:block}
+.jv-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.jv-head select{flex:1 1 220px;min-width:0}
+.jv-modo{display:flex;gap:4px;flex:1 1 260px}.jv-modo button{flex:1;padding:8px 6px;font-size:14px}
+.jv-stage{background:var(--card);border-radius:14px;box-shadow:0 0 0 1px var(--bd);padding:4px 6px;margin-top:8px}
+.jv-stage svg{display:block;width:100%;height:auto;max-height:58vh}
+.jv-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 4px}
+.jg-st{font-size:16px;color:var(--tx2);display:inline-flex;gap:10px;align-items:center;flex-wrap:wrap}.jg-st b{color:var(--tx);font-size:18px}
+.okc{color:var(--ok);font-weight:700}.errc{color:var(--bad);font-weight:700}
+.combo{background:#FAEEDA;color:#633806;border-radius:999px;padding:2px 10px;font-weight:700;font-size:14px}
+.vidas{color:#D4537E;font-size:20px;letter-spacing:2px}.vidas i{font-style:normal;opacity:.2}
+.estrelas{color:#EF9F27;font-size:20px;letter-spacing:2px}.estrelas i{font-style:normal;opacity:.25}
+.jg-msg{min-height:24px;font-size:16px;line-height:1.45;padding:2px 0 6px}.jg-msg.ok{color:var(--ok)}.jg-msg.bad b{color:var(--bad)}
+#jvKb svg{display:block;width:100%;height:auto;max-height:28vh;touch-action:none}
+@media (orientation:landscape){.jogoV.on{display:grid;grid-template-columns:2fr 1fr;gap:0 12px;align-items:start}.jv-head{grid-column:1/-1}.jv-stage{grid-row:2/5}.jv-stage svg{max-height:62vh}}
+@media (orientation:landscape) and (max-height:500px){.jv-head{gap:6px}.jv-head select,.jv-modo button{min-height:36px;padding:6px 10px}.jv-stage{margin-top:6px;padding:2px 4px}.jv-stage svg{max-height:calc(100vh - 150px)}.jv-bar{margin:6px 0 2px}.jg-msg{font-size:14px;line-height:1.35}#jvRec{display:none}#jvKb svg{max-height:26vh}.jogoV.on{grid-template-columns:2fr 1fr}}
+/* conceitos e início em tela cheia */
+#conc .conc-list{display:flex;flex-direction:column;gap:8px}
+#conc details.conc{background:var(--card);border-radius:14px;padding:4px 14px;box-shadow:0 0 0 1px var(--bd)}
+#conc details.conc>summary{list-style:none;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;min-height:44px;padding:10px 0;cursor:pointer}
+#conc details.conc>summary::-webkit-details-marker{display:none}
+#conc .conc-body p{line-height:1.5}#conc svg.fig{display:block;width:100%;max-width:420px;height:auto}#conc .row{display:flex;flex-wrap:wrap;gap:8px}
+#conc .lb,#ini .lb{white-space:normal}
+.ini-perf{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.ini-perf button{font-size:17px;min-height:48px;padding:8px 18px}
+.ini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ini-b{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;min-height:120px;padding:14px;border-radius:16px;background:var(--card)!important;box-shadow:0 0 0 1px var(--bd);font-weight:400}
+.ini-b b{font-size:18px}.ini-b span{color:var(--tx2);font-size:14px}.ini-p{box-shadow:0 0 0 2px #378ADD}
+.rot{display:flex;flex-direction:column;gap:6px;margin-top:14px}.rot button{display:flex;gap:10px;align-items:center;text-align:left;width:100%;font-weight:400}
+.rot button i{font-style:normal;width:26px;height:26px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--fill2);font-size:13px}.rot button.feito i{background:#639922;color:#fff}
+/* passo a passo */
+.tut{position:fixed;inset:0;z-index:60;background:rgba(10,14,20,.35)}
+.tut-box{position:fixed;background:var(--card);color:var(--tx);border-radius:16px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.3),0 0 0 2px #378ADD;max-width:calc(100vw - 24px)}
+.tut-box p{margin:6px 0 12px;line-height:1.5}.tut-box .row{display:flex;gap:8px}
+.tut-alvo{position:relative;z-index:61;box-shadow:0 0 0 4px #378ADD!important}
+/* ---------- sempre deitado: com o celular em pé (ou a rotação bloqueada), a tela é desenhada girada; é só virar o celular ---------- */
+html.rodado,html.rodado body{overflow:hidden}
+html.rodado body{position:fixed;top:0;left:0;width:100vh;height:100vw;transform-origin:0 0;transform:rotate(90deg) translateY(-100%);overflow:hidden}
+html.rodado #turn{display:none!important}
+html.rodado h1{flex:0 1 auto;max-width:30%;font-size:14px}html.rodado #cd{flex:1;flex-basis:auto;order:0;margin:0;min-height:28px;font-size:15px}html.rodado #cd .lb{font-size:13px}
+html.rodado .top{gap:6px}html.rodado #ult{display:none!important}
+html.rodado #kb svg{max-height:22vw;width:auto;margin:0 auto}
+html.rodado .bar{padding-top:4px;gap:8px}html.rodado .bar button{min-height:38px;padding:6px 12px;font-size:15px}html.rodado #go{min-height:40px;min-width:112px}
+html.rodado .jogoV.on{display:grid;grid-template-columns:2fr 1fr;gap:0 12px;align-items:start}html.rodado .jv-head{grid-column:1/-1;gap:6px}
+html.rodado .jv-stage{grid-row:2/5;margin-top:6px;padding:2px 4px}html.rodado .jv-stage svg{max-height:calc(100vw - 150px)}
+html.rodado .jv-head select,html.rodado .jv-modo button{min-height:36px;padding:6px 10px}html.rodado .jg-msg{font-size:14px;line-height:1.35}html.rodado #jvRec{display:none}html.rodado #jvKb svg{max-height:26vw}
+html.rodado .tut-box{left:50%!important;top:18%!important;transform:translateX(-50%)}
+@media (min-height:700px){html.rodado #sheet.open{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-content:start;align-items:start}html.rodado #sheet .rephead,html.rodado #sheet>p{grid-column:1/-1}}
+/* jogo no celular: a pauta ocupa a tela; contagem pequena no canto, mensagem curta embaixo, Dica na barra, o resto em Opções */
+.jogoV.on{display:block!important;margin-top:0}
+.jv-wrap{position:relative}
+.jv-stage{margin-top:0}
+.jv-stage svg{max-height:calc(100vh - 128px)!important;margin:0 auto}
+html.rodado .jv-stage svg{max-height:calc(100vw - 128px)!important}
+.jogoV.comkb .jv-stage svg{max-height:calc(100vh - 128px - 24vh)!important}
+html.rodado .jogoV.comkb .jv-stage svg{max-height:calc(100vw - 128px - 24vw)!important}
+.jv-st{position:absolute;top:6px;right:10px;font-size:14px;background:color-mix(in srgb,var(--card) 85%,transparent);padding:2px 8px;border-radius:8px;display:flex;gap:8px;align-items:center}
+.jv-st b{font-size:15px}
+#jvMsg{min-height:0;max-height:3.1em;overflow:hidden;font-size:14px;line-height:1.5;padding:4px 4px 0;text-align:center}
+#jvRec{display:none}
+#jvKb svg{max-height:24vh!important;width:auto;margin:4px auto 0}
+html.rodado #jvKb svg{max-height:24vw!important}
+/* tela pequena (qualquer celular): nada sai para os lados */
+html,body{overflow-x:hidden}
+@media (max-width:380px){body{font-size:14px}button,select{font-size:14px;padding:8px 10px}.fbpct{font-size:34px}.jv-modo button{font-size:13px}}
+
 </style>
 </head>
 <body>
 <div class="top"><h1 id="title">Conectando ao Mac…</h1><div id="cd"></div><span class="lb" id="perfLb"></span><span class="lb" id="midi"></span><span class="lb" id="link"><span class="dot"></span>Mac</span><span class="lb" id="lat" title="Atraso do Mac até esta tela"></span></div>
+<div id="ult"></div>
+<div id="jogoV" class="jogoV"><div class="jv-wrap"><div class="jv-stage" id="jvStage"></div><span id="jvSt" class="jv-st" aria-live="polite"></span></div><div id="jvMsg" class="jg-msg" aria-live="polite"></div><div id="jvKb"></div><div id="jvRec" class="lb" style="white-space:normal;margin-top:6px"></div></div>
 <div id="turn">↻ Vire o iPhone de lado: a partitura fica bem maior.</div>
 <div id="res"></div>
 <div id="scoreWrap"><div id="score"></div></div>
 <canvas id="fallCv" style="display:none;width:100%;border-radius:10px;border:1px solid var(--bd);margin-top:6px"></canvas>
 <div id="errs"></div>
 <div id="kb"></div>
+<div class="sheet" id="conc"><div class="rephead"><b>Conceitos</b><button id="concClose">Fechar</button></div><div id="concBody"><p class="lb">Carregando…</p></div></div>
+<div class="sheet" id="ini"><div class="rephead"><b>Início</b><button id="iniClose">Fechar</button></div><div id="iniBody"></div></div>
 <div class="sheet" id="sheet">
  <div class="rephead"><b>Opções</b><button id="sheetClose">Fechar</button></div>
+ <section class="grp" data-only="jogo"><h3>Jogo das notas</h3>
+  <div class="f"><span class="lb">Nível</span><select id="jvNivel" aria-label="Nível"></select></div>
+  <div class="f"><span class="lb">Modo</span><div class="seg" role="group" aria-label="Modo do jogo"><button class="jvm" data-v="calma">Uma por vez</button><button class="jvm" data-v="corre">Correndo</button><button class="jvm" data-v="ouvido">De ouvido</button></div></div>
+  <div class="f"><div class="stack"><button id="jvTec"></button><button id="jvOit"></button><button id="jvSom"></button></div></div>
+ </section>
  <section class="grp"><h3>🎯 Como praticar</h3>
   <div class="f"><span class="lb">👤 Perfil (histórico e recordes de cada pessoa)</span><select id="perfSel"></select></div>
   <div class="f"><span class="lb">Exercício</span><select id="exSel"></select></div>
@@ -178,6 +267,9 @@ button,select,input{font-family:inherit}
   <div class="f"><span class="lb">Nomes das notas</span><div class="seg"><button class="nmb" data-v="en">C D E F G</button><button class="nmb" data-v="pt">Dó Ré Mi Fá Sol</button></div></div>
   <div class="f"><span class="lb">Ligar e desligar</span><div class="stack"><button class="sw" data-k="cnt" data-n="Contagem"></button><button class="sw" data-k="hl" data-n="Acender a nota da vez"></button><button class="sw" data-k="kb" data-n="Teclado"></button><button class="sw" data-k="live" data-n="Cores enquanto toca"></button></div></div>
  </section>
+ <section class="grp"><h3>🔈 Sons do jogo, dos conceitos e do recorde</h3>
+  <div class="f"><span class="lb">Saem por (sem o cabo do piano, saem pelo Mac)</span><div class="seg"><button class="jvs" data-v="piano">Piano</button><button class="jvs" data-v="mac">Mac</button><button class="jvs" data-v="celular">Este celular</button></div></div>
+ </section>
  <section class="grp"><h3>🎹 Som guia (a música)</h3>
   <div class="f"><button class="sw" data-k="pno" data-n="Som guia"></button></div>
   <div class="f"><span class="lb">Sai por</span><div class="seg"><button class="out" data-v="mac">Mac</button><button class="out" data-v="piano">Piano</button></div></div>
@@ -190,11 +282,20 @@ button,select,input{font-family:inherit}
   <div class="f" data-only="clk-piano"><span class="lb">Volume no piano</span><div class="seg num"><button class="vol" data-c="pcvol" data-k="pcv" data-d="-10">−</button><b id="pcvV">—</b><button class="vol" data-c="pcvol" data-k="pcv" data-d="10">+</button></div></div>
   <div class="f"><button id="ckTest">▶ Testar clique</button></div>
  </section>
- <p class="lb">O piano continua ligado no Mac pelo USB; o Mac corrige e manda a tela para cá. Deixe o Chrome do Mac aberto e o Mac acordado. Para a tela do iPhone não apagar: Ajustes → Tela e Brilho → Bloqueio Automático → Nunca (durante o treino).</p>
+ <section class="grp"><h3>Facilidades</h3>
+  <div class="f"><span class="lb">Tema desta tela</span><div class="seg"><button class="tema" data-v="auto">Automático</button><button class="tema" data-v="light">Claro</button><button class="tema" data-v="dark">Escuro</button></div></div>
+  <div class="f"><span class="lb">Tamanho da letra nesta tela</span><div class="seg"><button class="letra" data-v="1">Normal</button><button class="letra" data-v="1.15">Grande</button><button class="letra" data-v="1.3">Maior</button></div></div>
+  <div class="f"><div class="stack"><button class="sw" data-k="ini" data-n="Abrir no Início (botões grandes)"></button><button class="sw" data-k="simples" data-n="Tela simples (no Mac)"></button><button class="sw" data-k="voz" data-n="Ler o resultado em voz alta (no Mac)"></button><button class="sw" data-k="pcmd" data-n="Comandos pelo piano"></button><button class="sw" data-k="avisos" data-n="Avisos com dicas"></button><button class="sw" data-k="tut" data-n="Passo a passo para quem começa"></button></div><span class="lb">Comandos pelo piano: as teclas mais graves. O 1º Lá = Começar/Parar, o Si = Recomeçar, o Dó = preparar o treino sugerido, o Ré = próxima etapa da rotina.</span></div>
+  <div class="f"><button id="deitB"></button><span class="lb">Ligado: o app fica sempre deitado, mesmo com a rotação do celular bloqueada (no Android ele entra em tela cheia no primeiro toque).</span></div>
+  <div class="f"><button id="acesaB"></button><span class="lb">Enquanto esta tela estiver aberta, o celular não apaga sozinho (começa no primeiro toque na tela).</span></div>
+  <div class="f"><button id="tutVer">Ver o passo a passo agora</button></div>
+ </section>
+ <p class="lb">O piano continua ligado no Mac pelo USB; o Mac corrige e manda a tela para cá. Deixe o Chrome do Mac aberto e o Mac acordado. Se a tela ainda apagar, ligue "Tela sempre acesa" acima, ou no celular: Ajustes → Tela e Brilho → Bloqueio Automático → Nunca (durante o treino).</p>
 </div>
-<div class="bar" id="bar"><button id="go">Começar</button><button id="reset">Recomeçar</button><button id="viewBtn"></button><span id="zoomF"><button id="zOut" title="Partitura menor">🔍−</button><b id="zV">100%</b><button id="zIn" title="Partitura maior">🔍+</button></span><button class="vol" data-c="pvol" data-k="pv" data-d="-10" title="Guia mais baixo">🔉</button><button class="vol" data-c="pvol" data-k="pv" data-d="10" title="Guia mais alto">🔊</button><button id="repBtn">Resultado</button><button id="more">Opções</button></div>
+<div class="bar" id="bar"><button id="iniBtn">Início</button><button id="go">Começar</button><button id="jvDica" style="display:none">Dica</button><button id="sairJ" style="display:none">Sair do jogo</button><button id="reset">Recomeçar</button><button id="viewBtn"></button><span id="zoomF"><button id="zOut" title="Partitura menor">🔍−</button><b id="zV">100%</b><button id="zIn" title="Partitura maior">🔍+</button></span><button class="vol" data-c="pvol" data-k="pv" data-d="-10" title="Guia mais baixo">🔉</button><button class="vol" data-c="pvol" data-k="pv" data-d="10" title="Guia mais alto">🔊</button><button id="repBtn">Resultado</button><button id="more">Opções</button></div>
 <div class="off" id="off">Sem conexão com o Mac.<br><br>Confira se o "Abrir Treino de Piano" está ligado no Mac, com o app aberto no Chrome, e se o iPhone está no mesmo Wi-Fi.</div>
 <script src="queda.js"></script>
+<script src="nosleep.js" onerror="this.remove()"></script>
 <script>
 var ENSAIO=/[?&]ensaio\b/.test(location.search);
 var V=null,S=null,lastOk=0,lastNew=0,start=Date.now(),VIEW='linha';
@@ -207,11 +308,14 @@ function paintView(){$('viewBtn').textContent=VIEW==='linha'?'Ver inteira':'Ver 
 /* "linha": só a linha da próxima nota, do tamanho da tela. "tudo": a partitura inteira, que rola dentro da caixa e tem zoom
    (botões − + ou pinça com dois dedos); tocando, a caixa rola sozinha até a linha da música */
 var FULL=null,ZM=1;try{ZM=+localStorage.getItem('cel_zoom')||1}catch(e){}
+/* tamanho visível: com a tela desenhada deitada (celular em pé ou rotação bloqueada), a altura é a largura do aparelho */
+function altura(){return document.documentElement.classList.contains('rodado')?window.innerWidth:window.innerHeight}
+function topo(e){var y=0;while(e){y+=e.offsetTop;e=e.offsetParent}return y-(document.documentElement.classList.contains('rodado')?0:window.scrollY)+window.scrollY}
 function fit(){var zf=$('zoomF');zf.style.display=S&&!S.fall&&VIEW==='tudo'?'flex':'none';$('zV').textContent=Math.round(ZM*100)+'%';
- if(S&&S.fall){var cv=$('fallCv'),fr=window.innerHeight-(cv.getBoundingClientRect().top+window.scrollY)-$('bar').offsetHeight-14;cv.style.height=Math.max(160,fr)+'px';return}
+ if(S&&S.fall){var cv=$('fallCv'),fr=altura()-topo(cv)-$('bar').offsetHeight-14;cv.style.height=Math.max(160,fr)+'px';return}
  var sv=$('score').querySelector('svg');if(!sv||!S)return;
  var full=(sv.getAttribute('viewBox')||'0 0 900 240').split(' ').map(Number);
- var box=$('score'),free=window.innerHeight-(box.getBoundingClientRect().top+window.scrollY)-$('bar').offsetHeight-14;
+ var box=$('score'),kbH=VIEW!=='tudo'&&$('kb').style.display!=='none'&&$('kb').innerHTML?$('kb').offsetHeight+6:0,free=altura()-topo(box)-$('bar').offsetHeight-14-kbH;
  if(VIEW==='tudo'){box.style.height=Math.max(140,free)+'px';box.style.overflow='auto';sv.style.width=Math.round(ZM*100)+'%';sv.style.height='auto';sv.style.margin='0 auto';
   /* tocando: quando a música passa para outra linha, essa linha sobe para o topo da caixa (a seguinte aparece logo abaixo) */
   fit.moved=false;if(S.run){if(S.sy!==fit.sy){fit.sy=S.sy;var hh=sv.getBoundingClientRect().height,y=Math.max(0,(S.sy*230-full[1])/full[3]*hh-6);
@@ -270,7 +374,7 @@ function paint(s){
  /* o Mac precisa saber se esta tela quer a partitura inteira (ele desenha à parte para cá) */
  if(s.celv&&s.celv!==VIEW&&Date.now()-(paint.cv||0)>2000){paint.cv=Date.now();cmd({cmd:'celvista',v:VIEW})}
  document.querySelectorAll('.mao').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.mao||'ambas'))});
- var only={'pno-piano':s.out==='piano','clk-piano':s.clk==='piano',mao1:!!s.mao&&s.mao!=='ambas',tr:!!s.tr,'pre-sec':s.pre==='sec','pre-clk':s.pre!=='sec',subir:!!(s.opt||{}).subir};
+ var only={jogo:!!s.jogo,'pno-piano':s.out==='piano','clk-piano':s.clk==='piano',mao1:!!s.mao&&s.mao!=='ambas',tr:!!s.tr,'pre-sec':s.pre==='sec','pre-clk':s.pre!=='sec',subir:!!(s.opt||{}).subir};
  document.querySelectorAll('.pre').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.pre==='sec'?'sec':'clk'))});$('rvV').textContent=(s.recv!=null?s.recv:'—')+'%';$('alvoV').textContent=(s.alvo||'—')+' BPM';$('preNV').textContent=s.preN?s.preN+(s.preN>1?' cliques':' clique'):'Um compasso';$('preV').textContent=(s.preS!=null?s.preS:'—')+' s';
  /* trecho: só refaz a lista quando muda (para não fechar a lista enquanto você escolhe) */
  if(s.tr){var tk=JSON.stringify(s.tr);if($('trA').dataset.k!==tk){$('trA').dataset.k=tk;var o=s.tr.l.map(function(t,i){return '<option value="'+(i+1)+'">'+t+'</option>'}).join('');$('trA').innerHTML=o;$('trB').innerHTML=o;$('trA').value=s.tr.v[0];$('trB').value=s.tr.v[1]}}document.querySelectorAll('[data-only]').forEach(function(d){d.style.display=only[d.dataset.only]?'':'none'});
@@ -291,7 +395,7 @@ function paint(s){
  if(sel.dataset.k!==key){sel.dataset.k=key;var G={aq:'Aquecimento',livro:'Livro',ritmo:'Ritmo',mus:'Músicas',user:'Importadas'},h='',grp=null;
   s.ex.forEach(function(e){if(e[0]!==grp){if(grp!==null)h+='</optgroup>';grp=e[0];h+='<optgroup label="'+(G[grp]||grp)+'">'}h+='<option value="'+e[1]+'">'+e[2].replace(/</g,'&lt;')+'</option>'});
   sel.innerHTML=h+'</optgroup>'}
- sel.value=s.cur||''}
+ sel.value=s.cur||'';try{paintExtra(s)}catch(e){}}
 /* medidor de atraso: acerta o relógio com o do Mac (OFF) e mede, a cada tela, quanto tempo levou do Mac até aparecer aqui */
 var OFF=null,LAT=[],LASTLAT=null;
 /* a cada 100 ms o iPhone ENVIA um sinal pequeno ao Mac. Só receber não basta: o Wi-Fi do iPhone cochila e entrega
@@ -314,7 +418,7 @@ function listen(){var es=new EventSource('/api/stream');es.onopen=function(){FIR
  es.onerror=function(){/* o EventSource reconecta sozinho */}}
 setInterval(function(){var now=Date.now(),ok=now-lastOk<3000&&now-lastNew<30000;
  $('link').innerHTML='<span class="dot '+(ok?'ok':'bad')+'"></span>Mac';$('off').classList.toggle('show',!ok&&now-start>4000)},500);
-$('go').onclick=function(){cmd({cmd:'go'})};
+$('go').onclick=function(){cmd({cmd:S&&S.jogo?'jgo':'go'})};
 $('repBtn').onclick=openRes;
 document.addEventListener('click',function(e){if(e.target.id==='repClose'){RESHID=RES;$('res').classList.remove('show')}});
 /* botões do relatório do fim (Repetir, mais devagar, só os compassos com erro): quem executa é o Mac */
@@ -369,6 +473,140 @@ var LASTUSE=Date.now();['pointerdown','touchstart'].forEach(function(t){document
   var ch=false,st=true;tx.forEach(function(t,i){var f=files[i];if(t==null)return;if(first[f]==null)first[f]=t;if(t!==first[f]){ch=true;if(seen[f]!==t)st=false}seen[f]=t});
   if(!ch||!st||(S&&S.run)||Date.now()-LASTUSE<60000||$('sheet').classList.contains('open')||($('res').classList.contains('show')&&Date.now()-LASTUSE<300000))return;if(!ok(tx[0])||(tx[1]!=null&&!ok(tx[1],true)))return;var f=document.createElement('iframe'),done=false;f.style.cssText='position:fixed;width:400px;height:800px;left:-10000px;top:0;visibility:hidden';f.src=location.pathname+'?ensaio=1&v='+Date.now();
   f.onload=function(){setTimeout(function(){if(done)return;done=true;var good=false;try{good=f.contentWindow.APP_OK===true}catch(e){}f.remove();if(good)location.reload()},2500)};document.body.appendChild(f)})},20000)})();
+/* ---------- ilustrações do app: desenhos de traço simples, na cor do texto (claro e escuro) com detalhes em azul ----------
+   ilu(nome, classe extra) devolve o <svg>. Classes nos desenhos: a = traço azul, af = preenchido azul-claro, f = preenchido na cor do texto */
+var ILU={
+ mao:['Mão arredondada, como segurando uma bola','<line x1="4" y1="60" x2="92" y2="60"/><path d="M12 60v7M26 60v7M40 60v7M54 60v7M68 60v7M82 60v7" stroke-width="1.3"/><rect class="f" x="21" y="60" width="9" height="5" rx="1"/><rect class="f" x="49" y="60" width="9" height="5" rx="1"/>'+
+  '<circle class="af" cx="56" cy="45" r="9" stroke-dasharray="3 3"/><path d="M2 30h20M2 42h20"/><path d="M22 30C34 23 48 17 61 21C71 24 77 36 76 58"/><path d="M22 42C30 42 38 40 46 38C57 35 66 43 68 58"/><path d="M60 23C66 30 68 42 66 56" stroke-width="1.5"/><path d="M38 41C43 46 45 52 43 58" stroke-width="1.8"/><circle class="a" cx="72" cy="59" r="2.6" fill="#378ADD"/>'],
+ postura:['Costas retas, antebraço na altura das teclas','<circle cx="28" cy="12" r="7"/><path d="M28 20v28"/><path d="M28 25l10 15h24"/><path d="M62 40c3 0 4 2 4 5"/><path d="M28 48h18v18h7"/><rect x="10" y="50" width="26" height="5" rx="2"/><path d="M14 55v13M32 55v13"/>'+
+  '<rect x="60" y="45" width="32" height="5" rx="1"/><path d="M62 50v18M90 50v18"/><path class="a" d="M38 40h30" stroke-dasharray="3 3"/><path class="a" d="M76 22l4 4 8-9"/>'],
+ olhos:['Olhos na partitura, não nas mãos','<path d="M6 30c8-10 22-10 30 0c-8 10-22 10-30 0z"/><circle class="f" cx="23" cy="30" r="4"/><path class="a" d="M40 30h12m-5-5 5 5-5 5"/>'+
+  '<rect x="56" y="12" width="36" height="38" rx="3"/><path d="M60 22h28M60 27h28M60 32h28M60 37h28M60 42h28" stroke-width="1.2"/><circle class="f" cx="70" cy="34.5" r="2.6"/><circle class="f" cx="80" cy="29.5" r="2.6"/><path d="M10 62h30" stroke-dasharray="2 4" opacity=".5"/>'],
+ contar:['Conte em voz alta','<path d="M10 14h64a6 6 0 0 1 6 6v22a6 6 0 0 1-6 6H36l-12 10v-10H10a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"/><text x="42" y="37" text-anchor="middle" class="t">1 e 2 e</text>'],
+ devagar:['Devagar e certo primeiro','<path class="af" d="M18 52a24 18 0 0 1 48 0z"/><path d="M28 52l6-12h16l6 12M34 40l8-6 8 6" stroke-width="1.4"/><circle cx="74" cy="46" r="6"/><circle class="f" cx="76" cy="45" r="1.2"/><path d="M66 50l4-2"/><path d="M24 52v6M36 52v6M50 52v6M60 52v6"/><path d="M14 50l-6 2"/>'],
+ trecho:['Treine só o pedaço difícil','<path d="M4 22h88M4 28h88M4 34h88M4 40h88M4 46h88" stroke-width="1.1"/><path d="M34 22v24M62 22v24" stroke-width="1.4"/><circle class="f" cx="16" cy="40" r="2.6"/><circle class="f" cx="24" cy="34" r="2.6"/><circle class="f" cx="78" cy="31" r="2.6"/>'+
+  '<circle class="af" cx="48" cy="34" r="15"/><circle class="f" cx="44" cy="37" r="2.6"/><circle class="f" cx="52" cy="28" r="2.6"/><path class="a" d="M59 45l12 13" stroke-width="4"/>'],
+ misturar:['Misture os exercícios no mesmo dia','<rect x="6" y="18" width="24" height="32" rx="4" transform="rotate(-8 18 34)"/><rect class="af" x="36" y="14" width="24" height="32" rx="4"/><rect x="66" y="18" width="24" height="32" rx="4" transform="rotate(8 78 34)"/>'+
+  '<text x="18" y="38" text-anchor="middle" class="t">♪</text><text x="48" y="35" text-anchor="middle" class="t">ABC</text><text x="78" y="38" text-anchor="middle" class="t">♩</text><path class="a" d="M24 60c10 8 38 8 48 0m-4-5 4 5-6 2"/>'],
+ diario:['Um pouco todo dia','<rect x="14" y="10" width="68" height="54" rx="6"/><path d="M14 22h68M30 6v8M66 6v8"/><path class="a" d="M22 34l3 3 6-6M42 34l3 3 6-6M62 34l3 3 6-6M22 50l3 3 6-6M42 50l3 3 6-6" stroke-width="2.4"/><rect x="60" y="45" width="12" height="10" rx="2" stroke-dasharray="2 2"/>'],
+ guia:['Leia a partir das notas-guia','<path d="M4 20h88M4 28h88M4 36h88M4 44h88M4 52h88" stroke-width="1.1"/><ellipse class="a" cx="30" cy="44" rx="6" ry="4.4" fill="#378ADD"/><text x="30" y="66" text-anchor="middle" class="t a2">Sol</text>'+
+  '<ellipse cx="70" cy="36" rx="6" ry="4.4" fill="currentColor"/><path class="a" d="M38 40q6-6 12-4m0 0q6 0 12-4" stroke-dasharray="2 3"/><text x="70" y="66" text-anchor="middle" class="t">Si</text>'],
+ pedal:['Calcanhar no chão, mexa só a frente do pé','<path d="M4 64h88"/><path class="a" d="M52 62L86 54" stroke-width="4"/><circle cx="52" cy="62" r="2.5"/><path d="M36 6l2 38M48 6v38"/><path d="M38 44C35 54 37 61 45 61L76 53C81 51 79 46 73 46L48 44"/><circle class="af" cx="43" cy="60" r="5"/>'],
+ tensao:['Ombros soltos, punho solto','<circle cx="48" cy="14" r="8"/><path d="M48 22v8M20 40c8-8 20-10 28-10s20 2 28 10M20 40v24M76 40v24"/><path class="a" d="M26 20v10m-4-4 4 4 4-4M70 20v10m-4-4 4 4 4-4"/>'],
+ metronomo:['Metrônomo','<path d="M34 64L42 8h12l8 56z"/><path d="M30 64h36"/><path class="a" d="M48 52L62 18" stroke-width="2.4"/><rect class="af" x="54" y="30" width="8" height="6" rx="1" transform="rotate(22 58 33)"/><path d="M40 44h16" stroke-width="1.2"/>'],
+ ouvido:['Ouça e ache no piano','<path d="M30 16c12-10 32-4 32 14c0 10-8 12-10 18c-2 6-4 12-12 12c-6 0-8-4-8-8"/><path d="M40 30c0-6 10-8 12-2c1 4-2 6-4 8" stroke-width="1.8"/>'+
+  '<text x="76" y="26" text-anchor="middle" class="t a2">♪</text><text x="84" y="44" text-anchor="middle" class="t a2">♫</text><text x="10" y="44" text-anchor="middle" class="t">♩</text>'],
+ hoje:['Treinar hoje','<rect x="16" y="12" width="64" height="52" rx="7"/><path d="M16 24h64M32 6v10M64 6v10"/><circle class="af" cx="48" cy="44" r="12"/><path class="a" d="M42 44l4 4 8-9" stroke-width="2.6"/>'],
+ continuar:['Continuar de onde parou','<path d="M28 8h40v56L48 50 28 64z"/><path class="af" d="M42 22l14 8-14 8z"/>'],
+ jogo:['Jogo das notas','<circle cx="48" cy="36" r="26"/><circle cx="48" cy="36" r="16"/><circle class="af" cx="48" cy="36" r="7"/><path d="M72 8l-18 22" stroke-width="2.4"/><path class="a" d="M68 6l6 2 2 6"/>'],
+ musicas:['Minhas músicas','<rect x="22" y="6" width="52" height="60" rx="4"/><path d="M30 18h36M30 23h36M30 28h36M30 33h36M30 38h36M30 48h36M30 53h36" stroke-width="1.1"/><circle class="f" cx="40" cy="31" r="2.6"/><circle class="f" cx="54" cy="26" r="2.6"/><path d="M42.4 31V18M56.4 26V14" stroke-width="1.4"/><circle class="a" cx="64" cy="51" r="2.6" fill="#378ADD"/>'],
+ conceitos:['Conceitos','<path d="M48 8c-12 0-20 8-20 19c0 8 6 12 8 18h24c2-6 8-10 8-18C68 16 60 8 48 8z"/><path d="M38 52h20M40 58h16"/><text x="48" y="34" text-anchor="middle" class="t a2">♪</text>'],
+ cabo:['Confira o cabo USB','<rect x="4" y="22" width="40" height="14" rx="2"/><path d="M8 36v10M40 36v10"/><path d="M10 26h28" stroke-width="1"/><path class="a" d="M44 30c14 0 10 20 26 20" stroke-width="2.4"/><rect x="70" y="44" width="16" height="12" rx="2"/><path d="M78 56v6M70 62h16"/>'],
+ segurar:['Segure a nota contando','<path d="M10 52h76"/><rect class="af" x="30" y="44" width="20" height="8" rx="2"/><path d="M40 10v26c0 4-2 6-2 8"/><text x="66" y="28" text-anchor="middle" class="t a2">1 – 2</text><path class="a" d="M54 36h26" stroke-dasharray="3 3"/>'],
+ chegar:['Prepare a mão antes da hora','<path d="M4 56h88" /><path d="M10 56v8M22 56v8M34 56v8M46 56v8M58 56v8M70 56v8M82 56v8" stroke-width="1.2"/><path d="M14 46c4-10 16-10 20 0"/><path class="af" d="M60 46c4-10 16-10 20 0" stroke-dasharray="3 3"/><path class="a" d="M30 26q20-14 38 0m-6-5 6 5-7 3"/>'],
+ subir:['Suba o andamento aos poucos','<path d="M14 58a34 34 0 0 1 68 0"/><path d="M20 58h8M68 58h8M48 24v8" stroke-width="1.6"/><path class="a" d="M48 58l16-20" stroke-width="3"/><circle class="f" cx="48" cy="58" r="4"/><path class="a" d="M80 30V14m-5 5 5-5 5 5"/>'],
+ dedos:['Os números dos dedos (mão direita)','<rect x="30" y="34" width="38" height="32" rx="12"/><rect x="31" y="14" width="8" height="26" rx="4"/><rect x="41" y="7" width="8" height="31" rx="4"/><rect x="51" y="9" width="8" height="29" rx="4"/><rect x="61" y="17" width="7" height="24" rx="3.5"/><rect x="16" y="36" width="8" height="22" rx="4" transform="rotate(-38 20 47)"/>'+
+  '<text x="12" y="34" class="t a2" text-anchor="middle">1</text><text x="35" y="10" class="t a2" text-anchor="middle">2</text><text x="45" y="4" class="t a2" text-anchor="middle">3</text><text x="55" y="6" class="t a2" text-anchor="middle">4</text><text x="66" y="13" class="t a2" text-anchor="middle">5</text>']};
+function ilu(n,cls){var d=ILU[n];if(!d)return '';return '<svg class="ilu'+(cls?' ilu-'+cls:'')+'" viewBox="0 0 96 72" role="img" aria-label="'+d[0]+'"><g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'+d[1]+'</g></svg>'}
+/* ---------- jogo das notas, conceitos, início, facilidades e tema no iPhone (30/10/2026) ----------
+   O jogo roda no Mac (ele ouve o piano); aqui aparece a pauta. No modo "Correndo" o Mac manda onde cada nota estava (x),
+   a velocidade (v) e a hora (t), e o iPhone anda com as notas sozinho, liso, sem esperar o Wi-Fi. */
+function inkFix(s,h){var ink=myInk();h=String(h||'').replace(/ id="[^"]*"/,'');return s.ink&&s.ink!==ink?h.split(s.ink).join(ink):h}
+var JV=null,JVLOOP=false;
+function jvY(c,i){return c==='g'?50+(38-i)*6:134+(26-i)*6}
+function jvNota(c,i,x,col,ink){var y=jvY(c,i),h='',l;var lg=[];if(c==='g'){for(l=28;l>=i;l-=2)lg.push(l);for(l=40;l<=i;l+=2)lg.push(l)}else{for(l=16;l>=i;l-=2)lg.push(l);for(l=28;l<=i;l+=2)lg.push(l)}
+ lg.forEach(function(l){var yy=jvY(c,l);h+='<line x1="'+(x-13)+'" x2="'+(x+13)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:'+ink+';stroke-width:1.3"/>'});
+ var up=c==='g'?i<34:i<22,sx=up?x+6.5:x-6.5;h+='<ellipse cx="'+x+'" cy="'+y+'" rx="7.5" ry="5.5" transform="rotate(-20 '+x+' '+y+')" style="fill:'+col+'"/><line x1="'+sx+'" x2="'+sx+'" y1="'+y+'" y2="'+(up?y-36:y+36)+'" style="stroke:'+col+';stroke-width:1.4"/>';return h}
+function jvLoop(){if(JVLOOP)return;JVLOOP=true;(function f(){var J=S&&S.jogo;if(!J||J.modo!=='corre'||!J.on||!J.fila){JVLOOP=false;return}var g=document.getElementById('jvNotas');if(g){var ink=myInk(),now=Date.now()+(OFF||0),dt=Math.max(0,(now-J.t)/1000),h='';
+  J.fila.forEach(function(q){var x=q[5]?q[2]:q[2]-J.v*dt;if(x<-40||x>560)return;h+=jvNota(q[0],q[1],x,q[3]||ink,ink);if(q[4])h+='<text x="'+(x+16)+'" y="'+(jvY(q[0],q[1])+5)+'" style="font-size:14px;font-weight:700;fill:'+q[3]+'">'+(q[6]||'')+'</text>'});g.innerHTML=h}
+ requestAnimationFrame(f)})()}
+function paintJogo(s){var J=s.jogo,v=$('jogoV');v.style.display=J?'':'none';v.classList.toggle('on',!!J);['score','kb','errs','fallCv','turn','cd'].forEach(function(id){var e=$(id);if(e&&J)e.style.display='none'});
+ $('sairJ').style.display=J?'':'none';$('reset').style.display=J?'none':'';document.querySelectorAll('.bar .vol').forEach(function(b){b.style.display=J?'none':''});document.querySelector('.top').style.display=J?'none':'';$('viewBtn').style.display=J||s.fall?'none':'';
+ if(!J){JV=null;['errs','turn','cd'].forEach(function(id){$(id).style.display=''});$('jvDica').style.display='none';return}
+ var go=$('go');go.textContent=J.on?'Parar':'Começar o jogo';go.classList.toggle('stop',!!J.on);
+ var nk=JSON.stringify(J.niveis);if($('jvNivel').dataset.k!==nk){$('jvNivel').dataset.k=nk;$('jvNivel').innerHTML=J.niveis.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>'}).join('')}$('jvNivel').value=J.nivel;
+ document.querySelectorAll('.jvm').forEach(function(b){b.classList.toggle('on',b.dataset.v===J.modo);b.disabled=J.par&&b.dataset.v==='corre'});
+ var st=$('jvStage');if(J.modo==='corre'&&J.on&&J.pauta){if(st.dataset.k!=='corre'||st.dataset.ink!==myInk()){st.dataset.k='corre';st.dataset.ink=myInk();st.innerHTML=inkFix(s,J.pauta).replace('</svg>','<g id="jvNotas"></g></svg>')}jvLoop()}
+ else if(J.svg!=null){st.dataset.k='';st.innerHTML=inkFix(s,J.svg)}
+ $('jvSt').innerHTML=J.st||'';var m=J.msg||['',''];$('jvMsg').innerHTML=m[0];$('jvMsg').className='jg-msg'+(m[1]?' '+m[1]:'');$('jvRec').innerHTML=J.rec||'';
+ $('jvKb').innerHTML=inkFix(s,J.kb||'');v.classList.toggle('comkb',!!J.tec);var tk=$('jvTec');tk.textContent='Teclado na tela: '+(J.tec?'ligado':'desligado');tk.classList.toggle('on',!!J.tec);var oi=$('jvOit');oi.textContent='Qualquer oitava: '+(J.oit?'ligado':'desligado');oi.classList.toggle('on',!!J.oit);var so=$('jvSom');so.textContent='Sons do jogo: '+(J.som?'ligado':'desligado');so.classList.toggle('on',!!J.som);$('jvKb').style.display=J.tec?'':'none';var d=$('jvDica');d.textContent=J.dica||'Dica';d.style.display=J.on&&J.modo!=='corre'?'':'none'}
+/* nomes das notas que passaram (modo Correndo): o Mac manda só o índice; o nome vem pronto na mensagem, aqui fica sem */
+function paintUltCel(s){var u=$('ult');u.innerHTML=!s.run&&!s.jogo&&s.ult?s.ult:'';u.style.display=u.innerHTML?'':'none'}
+/* início: rotina de hoje, continuar de onde parou, jogo, ritmo novo, conceitos e pessoas */
+var INI='';
+function paintIni(s){var I=s.ini;if(!I)return;var h='';
+ if(s.perfis&&s.perfis.length>1)h+='<div class="ini-perf">'+s.perfis.map(function(p){return '<button class="'+(p.id===s.perfil?'on':'')+'" data-perf="'+p.id+'">'+p.nome.replace(/</g,'&lt;')+'</button>'}).join('')+'</div>';
+ h+='<div class="ini-grid"><button class="ini-b ini-p" data-c="prox">'+ilu('hoje','ini')+'<b>Treinar hoje</b><span>'+(I.prox?'Próxima etapa: '+I.prox:'Rotina de hoje completa!')+'</span></button>'+
+  (I.volta?'<button class="ini-b" data-c="retoma" data-k="'+I.volta.k+'">'+ilu('continuar','ini')+'<b>Continuar de onde parei</b><span>'+I.volta.t+'</span></button>':'')+
+  '<button class="ini-b" data-c="jabrir">'+ilu('jogo','ini')+'<b>Jogo das notas</b><span>ler as notas na pauta</span></button>'+
+  '<button class="ini-b" data-c="concA">'+ilu('conceitos','ini')+'<b>Conceitos</b><span>o que o livro já ensinou</span></button>'+
+  '<button class="ini-b" data-c="opc">'+ilu('musicas','ini')+'<b>Escolher exercício</b><span>músicas, livro, aquecimento</span></button></div>'+
+  '<h3 style="margin:18px 0 6px">Rotina de hoje</h3><div class="rot">'+I.rot.map(function(r,i){return '<button class="'+(r[1]?'feito':'')+'" data-c="etapa" data-k="'+r[2]+'" data-t="'+r[3]+'"><i>'+(r[1]?'✓':i+1)+'</i><span>'+r[0]+'</span></button>'}).join('')+'</div>'+
+  (s.ritn?'<h3 style="margin:18px 0 6px">Ritmo novo a cada vez</h3><div class="rot">'+s.ritn.map(function(r){return '<button data-c="rnovo" data-k="'+r[0]+'"><i>♩</i><span>'+r[1]+'</span></button>'}).join('')+'</div>':'');
+ if(h!==INI){INI=h;$('iniBody').innerHTML=h}}
+$('iniBody').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var c=b.dataset.c;
+ if(b.dataset.perf){cmd({cmd:'perfil',v:b.dataset.perf});return}
+ if(c==='opc'){$('ini').classList.remove('open');$('sheet').classList.add('open');return}
+ if(c==='concA'){abrirConc();return}
+ if(c==='prox')cmd({cmd:'prox'});else if(c==='retoma')cmd({cmd:'retoma',v:b.dataset.k});else if(c==='jabrir')cmd({cmd:'jabrir'});else if(c==='etapa')cmd({cmd:'etapa',v:b.dataset.k,test:b.dataset.t==='1'});else if(c==='rnovo')cmd({cmd:'rnovo',v:b.dataset.k});
+ $('ini').classList.remove('open')});
+$('iniBtn').onclick=function(){if(S)paintIni(S);$('ini').classList.add('open');$('ini').scrollTop=0};$('iniClose').onclick=function(){$('ini').classList.remove('open')};
+/* conceitos: o Mac monta (com os desenhos) quando pedimos */
+var CONCH='';function abrirConc(){$('ini').classList.remove('open');$('conc').classList.add('open');$('conc').scrollTop=0;cmd({cmd:'conc'});if(!CONCH)$('concBody').innerHTML='<p class="lb">Carregando…</p>'}
+function paintConc(s){if(!s.conc)return;var h=inkFix(s,s.conc);if(h!==CONCH){CONCH=h;$('concBody').innerHTML=h}}
+$('concClose').onclick=function(){$('conc').classList.remove('open')};
+$('concBody').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.csom!=null)cmd({cmd:'csom',v:+b.dataset.csom});else if(b.dataset.jgniv){cmd({cmd:'jnivel',v:b.dataset.jgniv});$('conc').classList.remove('open')}});
+/* jogo: comandos */
+$('jvNivel').onchange=function(){cmd({cmd:'jnivel',v:this.value})};
+document.querySelectorAll('.jvm').forEach(function(b){b.onclick=function(){if(!b.disabled)cmd({cmd:'jmodo',v:b.dataset.v})}});
+$('jvDica').onclick=function(){cmd({cmd:'jdica'})};$('jvTec').onclick=function(){cmd({cmd:'jtec'})};
+document.querySelectorAll('.jvs').forEach(function(b){b.onclick=function(){cmd({cmd:'jsaida',v:b.dataset.v});celAudio()}});$('jvOit').onclick=function(){cmd({cmd:'joit'})};$('jvSom').onclick=function(){cmd({cmd:'jsom'})};$('sairJ').onclick=function(){cmd({cmd:'jsair'})};
+$('jvKb').addEventListener('pointerdown',function(e){var t=e.target,m=t&&t.getAttribute&&+t.getAttribute('data-m');if(!m)return;e.preventDefault();cmd({cmd:'jtecla',v:m})});
+$('jvMsg').addEventListener('click',function(e){var b=e.target.closest('[data-jgniv]');if(b)cmd({cmd:'jnivel',v:b.dataset.jgniv})});
+/* tema e letra desta tela (ficam guardados no iPhone) */
+function celTema(){var t='auto';try{t=localStorage.getItem('cel_tema')||'auto'}catch(e){}if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
+ document.querySelectorAll('.tema').forEach(function(b){b.classList.toggle('on',b.dataset.v===t)});var z=1;try{z=+localStorage.getItem('cel_letra')||1}catch(e){}document.body.style.zoom=z===1?'':String(z);
+ document.querySelectorAll('.letra').forEach(function(b){b.classList.toggle('on',+b.dataset.v===z)})}
+document.querySelectorAll('.tema').forEach(function(b){b.onclick=function(){try{localStorage.setItem('cel_tema',b.dataset.v)}catch(e){}celTema();var sv=$('score');if(sv)sv.dataset.k='';if(S)paint(S)}});
+document.querySelectorAll('.letra').forEach(function(b){b.onclick=function(){try{localStorage.setItem('cel_letra',b.dataset.v)}catch(e){}celTema();fit()}});
+celTema();
+/* tela sempre acesa: ligado por padrão; guarda a escolha neste celular. O navegador só deixa ligar depois de um toque */
+var ACESA=true;try{ACESA=localStorage.getItem('cel_acesa')!=='0'}catch(e){}var NOSL=null,NOSLON=false;
+function acesaPinta(){var b=$('acesaB');b.textContent='Tela sempre acesa: '+(ACESA?'ligado':'desligado');b.classList.toggle('on',ACESA)}
+function acesaAplica(){if(ENSAIO||!window.NoSleep)return;if(!NOSL)NOSL=new NoSleep();if(ACESA&&!NOSLON){try{var p=NOSL.enable();NOSLON=true;if(p&&p.catch)p.catch(function(){NOSLON=false})}catch(e){NOSLON=false}}else if(!ACESA&&NOSLON){try{NOSL.disable()}catch(e){}NOSLON=false}}
+document.addEventListener('pointerdown',function(){if(ACESA&&!NOSLON)acesaAplica()},true);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){NOSLON=false}});
+$('acesaB').onclick=function(){ACESA=!ACESA;try{localStorage.setItem('cel_acesa',ACESA?'1':'0')}catch(e){}acesaPinta();acesaAplica()};acesaPinta();
+/* sempre deitado (padrão ligado). Android: tela cheia + trava deitado no primeiro toque. iPhone (não deixa travar): desenha girado quando o celular está em pé */
+var DEIT=true;try{DEIT=localStorage.getItem('cel_deitado')!=='0'}catch(e){}var DEITOK=false;
+function deitado(){var on=DEIT&&matchMedia('(orientation: portrait)').matches;document.documentElement.classList.toggle('rodado',on);var b=$('deitB');if(b){b.textContent='Sempre deitado: '+(DEIT?'ligado':'desligado');b.classList.toggle('on',DEIT)}setTimeout(fit,60)}
+function deitTrava(){if(!DEIT||DEITOK||ENSAIO)return;var so=screen.orientation,de=document.documentElement;if(!so||!so.lock||!de.requestFullscreen||/iPhone|iPad/.test(navigator.userAgent))return;DEITOK=true;
+ de.requestFullscreen({navigationUI:'hide'}).then(function(){return so.lock('landscape')}).catch(function(){DEITOK=false})}
+document.addEventListener('pointerdown',deitTrava,true);
+window.addEventListener('resize',deitado);window.addEventListener('orientationchange',function(){setTimeout(deitado,200)});
+document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement)DEITOK=false;deitado()});
+$('deitB').onclick=function(){DEIT=!DEIT;try{localStorage.setItem('cel_deitado',DEIT?'1':'0')}catch(e){}if(!DEIT&&document.fullscreenElement){try{screen.orientation.unlock()}catch(e){}document.exitFullscreen().catch(function(){})}deitado();if(DEIT)deitTrava()};
+deitado();
+/* passo a passo do iPhone (na primeira vez, se "Passo a passo" estiver ligado no Mac; ou em Opções → Ver o passo a passo) */
+var TUTC=[['#iniBtn','Início: a rotina de hoje, continuar de onde parou, o jogo das notas e os conceitos.'],['#go','Começar e Parar. O Mac ouve o piano e corrige; aqui você vê a partitura.'],['#more','Opções: mãos, andamento, som, metrônomo, tema, letra maior e as outras facilidades.']];
+function tutCel(i){i=i||0;TUTI=i;var o=document.getElementById('tutO');if(o)o.remove();document.querySelectorAll('.tut-alvo').forEach(function(e){e.classList.remove('tut-alvo')});
+ if(i>=TUTC.length){TUTI=-1;try{localStorage.setItem('cel_tutvisto','1')}catch(e){}return}var e=document.querySelector(TUTC[i][0]);if(!e){tutCel(i+1);return}e.classList.add('tut-alvo');
+ var r=e.getBoundingClientRect(),d=document.createElement('div');d.id='tutO';d.className='tut';d.innerHTML='<div class="tut-box"><b>Passo '+(i+1)+' de '+TUTC.length+'</b><p>'+TUTC[i][1]+'</p><div class="row"><button id="tutP" style="background:#378ADD;color:#fff">'+(i<TUTC.length-1?'Próximo':'Entendi')+'</button><button id="tutF">Fechar</button></div></div>';
+ document.body.appendChild(d);var b=d.firstChild,w=Math.min(340,window.innerWidth-24);b.style.width=w+'px';b.style.left=Math.max(12,Math.min(window.innerWidth-w-12,r.left+r.width/2-w/2))+'px';b.style.top=Math.max(12,r.top-14-b.offsetHeight)+'px';
+ $('tutP').onclick=function(){tutCel(i+1)};$('tutF').onclick=function(){tutCel(TUTC.length)}}
+$('tutVer').onclick=function(){$('sheet').classList.remove('open');tutCel(0)};
+var TUTI=-1;window.addEventListener('resize',function(){if(document.getElementById('tutO')&&TUTI>=0)setTimeout(function(){tutCel(TUTI)},250)});
+var EXTRA1=true;
+/* sons que o Mac manda tocar aqui (opção "Este celular"): piano sampleado, os mesmos arquivos do Mac. O celular só deixa tocar som depois de um toque na tela */
+var CAC=null,CBUF={},CLD={},SOMV='';
+function celAudio(){try{if(!CAC){CAC=new(window.AudioContext||window.webkitAudioContext)();var b=CAC.createBuffer(1,1,22050),s=CAC.createBufferSource();s.buffer=b;s.connect(CAC.destination);s.start(0)}if(CAC.state==='suspended')CAC.resume()}catch(e){}}
+document.addEventListener('pointerdown',celAudio,true);
+function celFnm(m){return ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'][m%12]+(Math.floor(m/12)-1)}
+function celLoad(m){if(CBUF[m])return Promise.resolve(CBUF[m]);if(CLD[m])return CLD[m];CLD[m]=fetch('sons/'+celFnm(m)+'.mp3').then(function(r){if(!r.ok)throw 0;return r.arrayBuffer()}).then(function(a){return new Promise(function(ok,no){CAC.decodeAudioData(a,ok,no)})}).then(function(b){CBUF[m]=b;return b}).catch(function(){delete CLD[m];return null});return CLD[m]}
+function celToca(sm){if(!sm||sm.id===SOMV||ENSAIO)return;SOMV=sm.id;if(!CAC)return;Promise.all(sm.n.map(function(n){return celLoad(n[0])})).then(function(){var t0=CAC.currentTime+0.05;sm.n.forEach(function(n){var b=CBUF[n[0]];if(!b)return;var s=CAC.createBufferSource(),g=CAC.createGain();s.buffer=b;s.connect(g);g.connect(CAC.destination);var t=t0+(n[1]||0);g.gain.setValueAtTime(n[3]||0.8,t);g.gain.setTargetAtTime(0,t+(n[2]||0.8),0.08);s.start(t);s.stop(t+(n[2]||0.8)+0.8)})})}
+function paintExtra(s){paintJogo(s);document.querySelectorAll('.jvs').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.saida||'piano'))});if(SOMV===''&&s.som)SOMV=s.som.id;else celToca(s.som);paintUltCel(s);paintIni(s);paintConc(s);
+ if(EXTRA1){EXTRA1=false;var o=s.opt||{};try{if((o.simples||o.ini!==false)&&!s.run&&!s.res&&!s.jogo)$('iniBtn').click();if(o.tut!==false&&!localStorage.getItem('cel_tutvisto')&&!ENSAIO)setTimeout(function(){tutCel(0)},800)}catch(e){}}}
+
 paintView();listen();
 window.APP_OK=true;
 </script>

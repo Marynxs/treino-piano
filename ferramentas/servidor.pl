@@ -136,7 +136,7 @@ while (my $c = $srv->accept) {
     if (open(my $fh, '>>', "$tmp/atrasos.log")) { print $fh scalar(localtime) . "\t$body\n"; close $fh }
     reply($c, '200 OK', 'application/json', '{"ok":true}'); close $c; exit 0;
   }
-  if ($path eq '/api/info') { my $h = $host ? "$host.local" : ''; reply($c, '200 OK', 'application/json', qq({"ip":"$ip","host":"$h","port":$port})); close $c; exit 0 }
+  if ($path eq '/api/info') { my $h = $host ? "$host.local" : ''; reply($c, '200 OK', 'application/json', qq({"ip":"@{[lan_ip()]}","host":"$h","port":$port})); close $c; exit 0 }
 
   $path = '/treino-piano.html' if $path eq '/';
   my $file = "$root$path";

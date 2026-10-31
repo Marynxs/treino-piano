@@ -25,3 +25,7 @@ sons/
 
 # --- macOS ---
 .DS_Store
+
+# atalho do Mac (gerado com o caminho desta pasta)
+Treino de Piano.app/
+_preview/

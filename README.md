@@ -108,4 +108,5 @@ As músicas que você importa ficam só no seu navegador.
 
 - Sons de piano: **FluidR3 GM** (Frank Wen), licença CC BY 3.0, via [gleitz/midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts).
 - Fonte: **Atkinson Hyperlegible Next** (Braille Institute), licença SIL OFL 1.1 (`fontes/OFL.txt`).
+- Tela sempre acesa no celular: **[NoSleep.js](https://github.com/richtr/NoSleep.js)** (Rich Tibbett), licença MIT (`nosleep.js`).
 - Leitura de PDF: **[Audiveris](https://github.com/Audiveris/audiveris)** (AGPL-3.0). O app só chama o programa instalado; ele não vem junto.
