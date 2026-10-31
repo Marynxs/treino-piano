@@ -1277,7 +1277,7 @@ function zoomUi(sys){var vb=document.getElementById('vistaBtn'),zb=document.getE
  vb.style.display=sys>2?'':'none';vb.textContent=VISTA==='inteira'?'Ver só 2 linhas (segue a música)':'Ver a partitura inteira ('+sys+' linhas)';
  zb.style.display=full?'':'none';box.classList.toggle('full',full);s.style.width=full?Math.round(ZOOM*100)+'%':'';document.getElementById('zV').textContent=Math.round(ZOOM*100)+'%';
  /* tocando: a caixa rola sozinha até a linha da música */
- if(full&&run){var c=curSys();if(c!==zoomUi.last){zoomUi.last=c;var h=s.getBoundingClientRect().height*230/(sys*230+10),y=Math.max(0,c*h-8);
+ if(full&&run){var c=curSys();if(c!==zoomUi.last){zoomUi.last=c;/* medida da própria caixa (não da tela): certa também com a letra maior (zoom) */var h=box.scrollHeight*230/(sys*230+10),y=Math.max(0,c*h-8);
    /* a linha da música sobe para o topo da caixa; a seguinte aparece logo abaixo */
    if(Math.abs(y-box.scrollTop)>4)box.scrollTop=y}}else zoomUi.last=null}
 function setZoom(z,cx,cy){var box=document.getElementById('scoreBox'),s=document.getElementById('score'),r=box.getBoundingClientRect();cx=cx==null?r.width/2:cx;cy=cy==null?r.height/2:cy;

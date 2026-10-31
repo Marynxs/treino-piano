@@ -326,7 +326,7 @@ function fit(){var bh=$('bar').offsetHeight;document.body.style.paddingBottom=(b
  var box=$('score'),kbH=VIEW!=='tudo'&&$('kb').style.display!=='none'&&$('kb').innerHTML?$('kb').offsetHeight+6:0,free=altura()-topo(box)-$('bar').offsetHeight-14-kbH;
  if(VIEW==='tudo'){box.style.height=Math.max(140,free)+'px';box.style.overflow='auto';sv.style.width=Math.round(ZM*100)+'%';sv.style.height='auto';sv.style.margin='0 auto';
   /* tocando: quando a música passa para outra linha, essa linha sobe para o topo da caixa (a seguinte aparece logo abaixo) */
-  fit.moved=false;if(S.run){if(S.sy!==fit.sy){fit.sy=S.sy;var hh=sv.getBoundingClientRect().height,y=Math.max(0,(S.sy*230-full[1])/full[3]*hh-6);
+  fit.moved=false;if(S.run){if(S.sy!==fit.sy){fit.sy=S.sy;/* medida da própria caixa (não da tela): certa com a letra maior (zoom) e com a tela girada */var hh=box.scrollHeight,y=Math.max(0,(S.sy*230-full[1])/full[3]*hh-6);
     if(Math.abs(y-box.scrollTop)>4){box.scrollTop=y;fit.moved=true}}}else fit.sy=null;return}
  box.style.height='';box.style.overflow='hidden';sv.style.width='';
  full=[0,(S.sy||0)*230+6,900,196];/* a linha y vai de 230*y até 230*y+200 na partitura do Mac */
