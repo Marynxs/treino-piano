@@ -165,3 +165,15 @@ Ficam no **Chrome deste Mac**: histórico, ajustes, perfis e músicas importadas
 - **Restaurar um backup…**: escolha a data. Antes de trocar, o app salva o progresso atual, então dá para voltar.
 - **Baixar arquivo / Abrir arquivo…**: para levar o progresso para outro computador.
 - Os backups nunca vão para o GitHub (o repositório é público).
+
+## Seguindo o livro sozinho
+
+Na aba **Livro**, marque em "Estou na página" a página em que você está. O app mostra o que fazer nessa página e libera os exercícios até ela. As explicações ficam na aba **Conceitos**, que pode ser filtrada por assunto.
+
+Algumas peças do livro têm direitos autorais. Nessas páginas, toque a peça pelo livro; o app traz um estudo do mesmo assunto.
+
+## Importar páginas de um PDF
+
+Na aba **Músicas**, em "Converter partitura em PDF", escolha o arquivo, informe a página inicial e a final e aperte **Converter**. Use a numeração do PDF, que pode ser diferente do número impresso. O leitor automático pode errar notas, então confira no app antes de treinar. PDF digital funciona melhor que foto.
+
+Depois de importar, se entrar algo a mais, como o dueto do professor, use **Cortar** para ficar só com os compassos que você quer. Uma página com vários exercícios pode virar várias partes, cada uma como um item da lista.

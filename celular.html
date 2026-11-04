@@ -175,6 +175,12 @@ li.dica{display:flex;gap:12px;align-items:flex-start;list-style:none;margin-bott
 @media (orientation:landscape) and (max-height:500px){.jv-head{gap:6px}.jv-head select,.jv-modo button{min-height:36px;padding:6px 10px}.jv-stage{margin-top:6px;padding:2px 4px}.jv-stage svg{max-height:calc(100vh - 150px)}.jv-bar{margin:6px 0 2px}.jg-msg{font-size:14px;line-height:1.35}#jvRec{display:none}#jvKb svg{max-height:26vh}.jogoV.on{grid-template-columns:2fr 1fr}}
 /* conceitos e início em tela cheia */
 #conc .conc-list{display:flex;flex-direction:column;gap:8px}
+#conc .cchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+#conc .cchip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 12px;border-radius:22px}
+#conc .cchip small{opacity:.7;font-size:12px}
+#conc .cchip[aria-pressed="true"]{background:#378ADD;border-color:#378ADD;color:#fff}
+#conc .ilu-chip{width:30px;flex:none;align-self:center}
+#conc details.conc[hidden]{display:none}
 #conc details.conc{background:var(--card);border-radius:14px;padding:4px 14px;box-shadow:0 0 0 1px var(--bd)}
 #conc details.conc>summary{list-style:none;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;min-height:44px;padding:10px 0;cursor:pointer}
 #conc details.conc>summary::-webkit-details-marker{display:none}
@@ -329,7 +335,11 @@ function fit(){var bh=$('bar').offsetHeight;if(fit.bh!==bh){fit.bh=bh;document.b
   fit.moved=false;if(S.run){if(S.sy!==fit.sy){fit.sy=S.sy;/* medida da própria caixa (não da tela): certa com a letra maior (zoom) e com a tela girada */var hh=box.scrollHeight,y=Math.max(0,(S.sy*230-full[1])/full[3]*hh-6);
     if(Math.abs(y-box.scrollTop)>4){box.scrollTop=y;fit.moved=true}}}else fit.sy=null;return}
  box.style.height='';box.style.overflow='hidden';sv.style.width='';
- full=[0,(S.sy||0)*230+6,900,196];/* a linha y vai de 230*y até 230*y+200 na partitura do Mac */
+ /* a linha y vai de 230*y até 230*y+200 na partitura do Mac; cifra em cima e dedos embaixo podem passar disso: mede o que foi desenhado (uma vez por linha) */
+ var sy0=S.sy||0,lg=full[2]||900,cx=sv._cx=sv._cx||{},yi=sy0*230+6,ai=196;
+ if(!cx[sy0]){var g0=sv.querySelector('g[data-sy="'+sy0+'"]');if(g0)try{var bb=g0.getBBox();if(bb.height)cx[sy0]=[Math.min(yi,Math.floor(bb.y)-4),Math.max(yi+ai,Math.ceil(bb.y+bb.height)+4)]}catch(e){}}
+ if(cx[sy0]){yi=cx[sy0][0];ai=cx[sy0][1]-yi}
+ full=[0,yi,lg,ai];
  sv.setAttribute('viewBox',full.join(' '));
  var w=box.clientWidth-8,h=Math.max(80,Math.min(w*full[3]/full[2],free));sv.style.height=h+'px'}
 function setZm(z,cx,cy){var box=$('score'),sv=box.querySelector('svg');if(!sv)return;cx=cx==null?box.clientWidth/2:cx;cy=cy==null?box.clientHeight/2:cy;
@@ -561,9 +571,10 @@ $('iniBody').addEventListener('click',function(e){var b=e.target.closest('button
 $('iniBtn').onclick=function(){if(S)paintIni(S);$('ini').classList.add('open');$('ini').scrollTop=0};$('iniClose').onclick=function(){$('ini').classList.remove('open')};
 /* conceitos: o Mac monta (com os desenhos) quando pedimos */
 var CONCH='';function abrirConc(){$('ini').classList.remove('open');$('conc').classList.add('open');$('conc').scrollTop=0;cmd({cmd:'conc'});if(!CONCH)$('concBody').innerHTML='<p class="lb">Carregando…</p>'}
-function paintConc(s){if(!s.conc)return;var h=inkFix(s,s.conc);if(h!==CONCH){CONCH=h;$('concBody').innerHTML=h}}
+function paintConc(s){if(!s.conc)return;var h=inkFix(s,s.conc);if(h!==CONCH){CONCH=h;$('concBody').innerHTML=h;var v='todos';try{v=localStorage.getItem('cel_conc_cat')||'todos'}catch(x){}concFiltra(v)}}
 $('concClose').onclick=function(){$('conc').classList.remove('open')};
-$('concBody').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.csom!=null)cmd({cmd:'csom',v:+b.dataset.csom});else if(b.dataset.jgniv){cmd({cmd:'jnivel',v:b.dataset.jgniv});$('conc').classList.remove('open')}});
+function concFiltra(v){var raiz=$('concBody');raiz.querySelectorAll('[data-ccat]').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.ccat===v))});raiz.querySelectorAll('details.conc[data-cc]').forEach(function(d){d.hidden=v!=='todos'&&d.dataset.cc!==v})}
+$('concBody').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;if(b.dataset.ccat){try{localStorage.setItem('cel_conc_cat',b.dataset.ccat)}catch(x){}concFiltra(b.dataset.ccat);return}if(b.dataset.csom!=null)cmd({cmd:'csom',v:+b.dataset.csom});else if(b.dataset.jgniv){cmd({cmd:'jnivel',v:b.dataset.jgniv});$('conc').classList.remove('open')}});
 /* jogo: comandos */
 $('jvNivel').onchange=function(){cmd({cmd:'jnivel',v:this.value})};
 document.querySelectorAll('.jvm').forEach(function(b){b.onclick=function(){if(!b.disabled)cmd({cmd:'jmodo',v:b.dataset.v})}});

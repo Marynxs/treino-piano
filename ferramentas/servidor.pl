@@ -105,14 +105,25 @@ while (my $c = $srv->accept) {
     my $dir = "$tmp/omr-" . time . "-$$"; mkdir $dir; mkdir "$dir/out";
     my ($body, $got, $buf) = ('', 0, ''); while ($got < $len) { my $want = $len - $got; $want = 1 << 20 if $want > (1 << 20); my $r = read($c, $buf, $want); last unless $r; $body .= $buf; $got += $r }
     spit("$dir/partitura.$ext", $body);
+    # páginas escolhidas: ?ini=3&fim=4 (só PDF). Separa essas páginas antes de ler, para não converter o arquivo inteiro
+    my $ini = ($q{ini} // '') =~ /^\d+$/ ? 0 + $q{ini} : 0; my $fim = ($q{fim} // '') =~ /^\d+$/ ? 0 + $q{fim} : 0; $fim ||= $ini;
+    if ($ini && $ext eq 'pdf') {
+      my $sai = qx{osascript -l JavaScript ferramentas/pdf-paginas.js '$dir/partitura.pdf' '$dir/paginas.pdf' $ini $fim 2>&1}; chomp $sai;
+      if ($sai ne 'ok') { $sai =~ s/^erro: //; reply($c, '500 Internal Server Error', 'text/plain; charset=utf-8', "Não deu para separar as páginas: $sai"); close $c; exit 0 }
+      rename("$dir/paginas.pdf", "$dir/partitura.pdf");
+    }
     system("'$aud' -batch -export -output '$dir/out' '$dir/partitura.$ext' > '$dir/log.txt' 2>&1");
-    my @mxl = sort glob("$dir/out/*.mxl"); my @xml = grep { !/\.omr$/ } sort glob("$dir/out/*.xml");
+    # cada exercício separado da página vira uma "parte" (mvt1, mvt2…): em ordem de número, não de texto
+    my $num = sub { $_[0] =~ /mvt(\d+)/ ? $1 : 0 };
+    my @mxl = sort { $num->($a) <=> $num->($b) } glob("$dir/out/*.mxl"); my @xml = grep { !/\.omr$/ } sort glob("$dir/out/*.xml");
+    my $abre = sub {   # .mxl = MusicXML compactado (zip): o arquivo principal está indicado em META-INF/container.xml
+      my ($f) = @_; my $cont = `unzip -p '$f' META-INF/container.xml 2>/dev/null`; my ($root) = $cont =~ /full-path="([^"]+)"/;
+      my $r = $root ? `unzip -p '$f' '$root' 2>/dev/null` : '';
+      if (!$r) { my @l = grep { /\.(xml|musicxml)$/ && !/container/ } split /\n/, `unzip -Z1 '$f' 2>/dev/null`; $r = `unzip -p '$f' '$l[0]' 2>/dev/null` if @l }
+      $r };
     my $res = '';
-    if (@mxl) {   # .mxl = MusicXML compactado (zip): o arquivo principal está indicado em META-INF/container.xml
-      my $cont = `unzip -p '$mxl[0]' META-INF/container.xml 2>/dev/null`; my ($root) = $cont =~ /full-path="([^"]+)"/;
-      $res = $root ? `unzip -p '$mxl[0]' '$root' 2>/dev/null` : '';
-      if (!$res) { my @l = grep { /\.(xml|musicxml)$/ && !/container/ } split /\n/, `unzip -Z1 '$mxl[0]' 2>/dev/null`; $res = `unzip -p '$mxl[0]' '$l[0]' 2>/dev/null` if @l }
-    } elsif (@xml) { $res = slurp($xml[0]) // '' }
+    if (@mxl) { $res = $q{todas} ? join("\n<!--PARTE-->\n", map { $abre->($_) } @mxl) : $abre->($mxl[0]) }
+    elsif (@xml) { $res = slurp($xml[0]) // '' }
     if ($res =~ /<score-partwise|<score-timewise/) {
       my $extra = @mxl > 1 ? "X-Partes: " . scalar(@mxl) . "\r\n" : '';
       reply($c, '200 OK', 'application/xml; charset=utf-8', $res, $extra);
