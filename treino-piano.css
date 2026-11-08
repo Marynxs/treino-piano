@@ -1,0 +1,293 @@
+:root{--bg:#f7f6f2;--card:#ffffff;--tx:#1f1f1d;--tx2:#5f5e5a;--tx3:#888780;--bd:#d3d1c7;--blue:#378ADD;--blueD:#185FA5;--blueL:#B5D4F4;--ink:#1f1f1d}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1c1b;--card:#262624;--tx:#f1efe8;--tx2:#b4b2a9;--tx3:#888780;--bd:#444441;--ink:#f1efe8}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}
+main{margin:0;padding:18px 24px 60px}
+/* largura toda da tela; partitura e teclado crescem junto, mas sem passar da altura da tela */
+#score{display:block;max-height:78vh}
+/* partitura inteira: rola dentro da caixa e tem zoom (botões, ou pinça no trackpad) */
+#scoreBox.full{max-height:78vh;overflow:auto;border:1px solid var(--bd);border-radius:10px}
+#scoreBox.full #score{max-height:none;height:auto;margin:0 auto}
+#kb{display:block;max-height:180px}
+h1{font-size:22px;font-weight:500;margin:0 0 2px}
+h2{font-size:17px;font-weight:500;margin:0 0 8px}
+.sub{color:var(--tx2);margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin:0 0 12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lb{font-size:13px;color:var(--tx2)}
+button,select{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--tx);cursor:pointer}
+button:hover{border-color:var(--tx3)}
+a{color:#185FA5}
+@media (prefers-color-scheme:dark){a{color:#85B7EB}}
+a.btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;padding:7px 14px;border-radius:8px;border:1px solid #185FA5;background:#378ADD;color:#fff;text-decoration:none;font-weight:500}
+a.btn:hover{background:#185FA5}
+button.on{background:var(--blue)!important;color:#fff!important;border-color:var(--blueD)!important}
+button.big{font-size:16px;padding:9px 18px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--tx3);margin-right:6px}
+.dot.ok{background:#639922}.dot.bad{background:#E24B4A}
+#last{font-size:24px;font-weight:500}
+#cd{height:50px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:500;color:var(--blueD);border-radius:8px;background:var(--bg);margin:8px 0}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.ex{border:1px solid var(--bd);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.ex b{font-weight:500}
+.ex .lb{flex:1}
+.ex.cur{border:2px solid var(--blueD)}
+.exact{gap:6px}.exact button{padding:5px 12px}
+button.del{color:#A32D2D;border-color:#F09595}
+.ocl>summary{cursor:pointer;color:var(--tx2)}
+.badge{font-size:12px;padding:1px 8px;border-radius:6px;background:#EAF3DE;color:#27500A;align-self:flex-start}
+.badge.no{background:var(--bg);color:var(--tx3)}
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;gap:10px;align-items:center;border:1px solid var(--bd);border-radius:10px;padding:8px 12px}
+.step .n{width:26px;height:26px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+.step.done .n{background:#639922;color:#fff}
+.step .t{flex:1}
+.days{display:flex;gap:6px;align-items:flex-end;height:70px;margin-top:8px}
+.days div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:11px;color:var(--tx3);height:100%}
+.days i{display:block;width:100%;background:var(--blueL);border-radius:4px 4px 0 0;min-height:2px}
+#errs{font-size:13px;margin:4px 0 8px;min-height:18px}
+#res{font-size:14px;color:var(--tx2)}
+#res b{color:var(--tx);font-weight:500}
+/* relatório do fim */
+.fb{margin-top:12px;border:1px solid var(--bd);border-radius:12px;padding:12px 14px;background:var(--card);color:var(--tx);font-size:14px}
+.fbhead{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;color:var(--tx2)}
+.fbpct{font-size:30px;font-weight:600;color:var(--tx)}
+.fbbar{display:flex;height:26px;border-radius:7px;overflow:hidden;margin:10px 0;font-size:12px}
+.fbbar span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;min-width:0}
+.fbleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--tx2);margin:-4px 0 6px}
+.fbleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.fbtips{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.fbtip{border-left:4px solid #378ADD;background:var(--bg);padding:8px 10px;border-radius:0 8px 8px 0;line-height:1.45}
+.fbdet>summary{cursor:pointer;font-weight:500;margin:6px 0}
+.fbms{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.fbm{border:1px solid var(--bd);border-radius:8px;padding:6px;display:flex;flex-direction:column;gap:4px}
+.fbn{border-radius:6px;padding:4px 7px;font-size:12px;line-height:1.35}
+.fbn small{opacity:.8}
+.okms{display:none}
+#res .fbn b{color:inherit}
+.fbact{margin-top:10px}
+
+.leg span{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;margin-right:4px}
+svg text{font-family:inherit}
+/* áreas que minimizam: clique no título (▾ aberto, ▸ fechado); o app lembra como você deixou */
+details.fold>summary{cursor:pointer;font-size:17px;font-weight:500;list-style:none;user-select:none}
+/* segurar o dedo ou o mouse num botão não seleciona o texto dele (no iPhone, segurar "Começar" selecionava a palavra) */
+button,select,.tab,summary,a.btn{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::before{content:'▸';display:inline-block;width:20px;color:var(--tx2)}
+details.fold[open]>summary::before{content:'▾'}
+.sumx{font-weight:400;margin-left:6px}
+#f_aj{border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:8px 0;margin-bottom:6px}
+#f_aj>summary{font-size:15px}
+/* Ajustes em cartões: cada assunto num grupo, nome em cima de cada controle, só aparece o que vale para a escolha atual */
+.aj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px;margin-top:10px}
+.aj{border:1px solid var(--bd);border-radius:10px;padding:12px 14px;background:var(--bg)}
+.aj h3{font-size:14px;font-weight:600;margin:0 0 10px;color:var(--tx)}
+.fld{margin:0 0 12px}.fld:last-child{margin-bottom:0}
+.fld>.lb{display:block;margin-bottom:5px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.stack{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.aj select{max-width:100%}
+.aj input[type=range]{width:160px}
+input[type=range]{width:130px}
+/* ---------- organização da tela (regras de design: uma ação principal, o resto escondido até precisar, controles relacionados juntos,
+   alvos de toque de 44 px, espaçamento em múltiplos de 8 px, contraste legível) ---------- */
+:root{--fill:rgba(120,118,110,.13);--fill2:rgba(120,118,110,.22);--r:12px}
+@media (prefers-color-scheme:dark){:root{--fill:rgba(160,158,150,.16);--fill2:rgba(160,158,150,.28)}}
+main{max-width:1600px;margin:0 auto;padding:16px 24px 64px}
+h1{font-size:24px;font-weight:600;letter-spacing:-.01em}
+h2{font-size:18px;font-weight:600}
+.card{border:none;border-radius:16px;padding:16px 20px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px var(--bd)}
+button,select{min-height:36px;border:none;background:var(--fill);border-radius:10px;padding:8px 14px;font-weight:500}
+button:hover{border-color:transparent;background:var(--fill2)}
+button.on{border:none!important}
+button:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.del{background:transparent;color:#C0392B;border:none}
+#go{background:var(--blue);color:#fff;font-size:17px;font-weight:600;padding:10px 28px;min-height:44px;border-radius:12px}
+#go:hover{background:var(--blueD)}
+button.primary{background:var(--blue);color:#fff}
+/* abas: um bloco só, como segmentos */
+#tabs{display:inline-flex;flex-wrap:wrap;gap:2px;background:var(--fill);padding:3px;border-radius:12px}
+#tabs .tab{background:transparent;min-height:34px;border-radius:9px;padding:6px 14px}
+#tabs .tab:hover{background:var(--fill2)}
+/* barra de controles do treino */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 4px}
+.segc{display:inline-flex;background:var(--fill);padding:3px;border-radius:12px;gap:2px}
+.segc button{background:transparent;min-height:34px;border-radius:9px;padding:6px 12px}
+.segc button:hover{background:var(--fill2)}
+.stepper{display:inline-flex;align-items:center;background:var(--fill);border-radius:12px;padding:3px}
+.stepper button{background:transparent;min-width:36px;min-height:34px;padding:0;font-size:18px;border-radius:9px}
+.stepper span{min-width:76px;text-align:center;font-size:14px;color:var(--tx2)}.stepper b{color:var(--tx);font-size:16px}
+.stepper input[type=range]{width:140px;margin:0 8px;accent-color:var(--blue)}
+.recvol{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2)}.recvol input{width:90px;accent-color:var(--blue)}.recvol b{min-width:40px;font-weight:500}
+.bpmin{display:inline-flex;align-items:center;gap:4px;padding:0 6px;font-size:14px;color:var(--tx2)}
+.bpmin input{width:56px;min-height:32px;border:none;border-radius:8px;background:var(--card);color:var(--tx);font:inherit;font-size:16px;font-weight:600;text-align:center;-moz-appearance:textfield}
+.bpmin input::-webkit-inner-spin-button,.bpmin input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.bpmin input:focus{outline:2px solid var(--blue)}
+.tbsp{flex:1}
+#cd{height:48px;font-size:22px;border-radius:12px;background:var(--fill)}
+.legrow{margin:6px 0 2px;opacity:.85}
+#scoreBox.full{border:none;box-shadow:0 0 0 1px var(--bd)}
+/* Ajustes: folha por cima da tela */
+#ajDlg{border:none;border-radius:18px;padding:0;width:min(1100px,94vw);max-height:88vh;background:var(--card);color:var(--tx);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#ajDlg::backdrop{background:rgba(0,0,0,.35)}
+#ajDlg .dlghead{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--bd)}
+#ajDlg .dlghead b{font-size:18px}#ajDlg .dlghead .lb{flex:1}
+#ajDlg .aj-grid{padding:16px 20px 20px;margin:0}
+.aj{border:none;background:var(--bg);border-radius:14px}
+/* menu "⋯" do perfil */
+select{padding:8px 32px 8px 12px;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--tx2) 50%),linear-gradient(135deg,var(--tx2) 50%,transparent 50%);background-position:calc(100% - 17px) 55%,calc(100% - 12px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;background-color:var(--fill);line-height:1.3;text-overflow:ellipsis}
+.pill{border-radius:999px;padding:8px 34px 8px 16px;min-width:130px;max-width:240px}
+details.menu{position:relative}details.menu>summary{list-style:none;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:var(--fill);font-weight:700}
+details.menu>summary::-webkit-details-marker{display:none}
+.menupop{position:absolute;right:0;top:42px;z-index:5;display:flex;flex-direction:column;gap:2px;min-width:220px;padding:6px;background:var(--card);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2),0 0 0 1px var(--bd)}
+.menupop button{background:transparent;text-align:left}
+.menupop button:hover{background:var(--fill)}
+/* cartões de exercício */
+.ex{border:none;background:var(--bg);border-radius:14px;padding:12px 14px}
+.ex.cur{box-shadow:0 0 0 2px var(--blue)}
+.ex>.lb{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}/* cartão: só o começo da explicação; ela inteira aparece ao abrir */
+.step{border:none;background:var(--bg);border-radius:14px}
+details.fold>summary{min-height:32px;display:flex;align-items:center}
+@media (max-width:700px){main{padding:12px 16px 48px}.tbsp{display:none}}
+/* ---------- visual "Estante limpa" (30/10/2026; regras em DESIGN.md) ----------
+   fundo frio de papel, tinta preta como a partitura impressa, uma fonte feita para leitura fácil,
+   azul só para ação principal e botão ligado. O destaque é a pauta grande; o resto fica quieto. */
+@font-face{font-family:'Atkinson Hyperlegible Next';src:url(fontes/AtkinsonHyperlegibleNext.woff2) format('woff2');font-weight:200 800;font-style:normal;font-display:swap}
+@font-face{font-family:'Atkinson Hyperlegible Next';src:url(fontes/AtkinsonHyperlegibleNext-Italic.woff2) format('woff2');font-weight:200 800;font-style:italic;font-display:swap}
+:root{--bg:#F4F6F9;--card:#FFFFFF;--tx:#1B1E24;--tx2:#535A66;--tx3:#848B97;--bd:#DCE0E7;--ink:#000;--fill:rgba(84,96,116,.09);--fill2:rgba(84,96,116,.17);--ok:#3B6D11;--bad:#B3261E}
+@media (prefers-color-scheme:dark){:root{--bg:#13161B;--card:#1C2026;--tx:#ECEFF3;--tx2:#A9B0BB;--tx3:#7E8692;--bd:#313741;--ink:#ECEFF3;--fill:rgba(170,180,195,.11);--fill2:rgba(170,180,195,.2);--ok:#97C459;--bad:#F09595}}
+body{font-family:'Atkinson Hyperlegible Next',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,select,input{font-family:inherit}
+h1{font-size:26px;font-weight:700;letter-spacing:-.015em}
+h2{font-size:19px;font-weight:700;letter-spacing:-.01em}
+.lb{font-size:14px}
+.card{box-shadow:none;border:1px solid var(--bd);border-radius:16px;padding:18px 22px}
+details.fold>summary{font-size:18px;font-weight:700}
+/* abas: navegação com sublinhado azul na aba aberta (não são botões de ligar) */
+#tabs{display:flex;flex-wrap:wrap;gap:2px 6px;background:transparent;padding:0;border-radius:0;border-bottom:1px solid var(--bd)}
+#tabs .tab{background:transparent!important;color:var(--tx2)!important;border-radius:0;border:none!important;border-bottom:3px solid transparent!important;min-height:44px;padding:8px 10px;font-weight:600;margin-bottom:-1px}
+#tabs .tab:hover{color:var(--tx)!important}
+#tabs .tab.on{color:var(--tx)!important;border-bottom-color:var(--blue)!important}
+.ex,.step,.aj{background:var(--bg)}
+#scoreBox{background:var(--card)}
+/* jogo das notas: a pauta grande é a peça principal da aba */
+.jogo{margin:4px 0 22px}
+.jg-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;margin-bottom:12px}
+.jg-head h2{font-size:22px;margin:0 0 2px}
+.jg-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.jg-ctl select{max-width:min(340px,100%)}
+.jg-stage{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:8px 12px}
+#jgSvg{display:block;width:100%;max-height:min(62vh,560px)}
+.jg-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 6px}
+#jgGo{font-size:17px;font-weight:700;min-height:44px;padding:10px 26px;border-radius:12px}
+.jg-st{font-size:16px;color:var(--tx2);display:inline-flex;gap:12px;align-items:center;flex-wrap:wrap}
+.jg-st b{color:var(--tx);font-size:18px}
+.okc{color:var(--ok);font-weight:700}.errc{color:var(--bad);font-weight:700}
+.combo{background:#FAEEDA;color:#633806;border-radius:999px;padding:2px 10px;font-weight:700;font-size:14px;animation:pop .3s ease-out}
+.vidas{color:#D4537E;font-size:20px;letter-spacing:2px}.vidas i{font-style:normal;opacity:.2}
+.estrelas{color:#EF9F27;font-size:20px;letter-spacing:2px}.estrelas i{font-style:normal;opacity:.25}
+.jg-msg{min-height:26px;font-size:16px;line-height:1.45;padding:2px 0 8px;max-width:75ch}
+.jg-msg.ok{color:var(--ok)}.jg-msg.bad{color:var(--tx)}.jg-msg.bad b{color:var(--bad)}
+.jg-msg.fim{font-size:17px}
+.jg-kb{display:block;width:100%;max-height:150px;touch-action:none;-webkit-user-select:none;user-select:none}
+.jg-rec{margin-top:10px;line-height:1.6}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+/* conceitos */
+.conc-h{margin:18px 0 10px}
+.conc-list{display:flex;flex-direction:column;gap:8px}
+.parcial{background:#FBF0D9;color:#6B4A0B;border-radius:10px;padding:8px 12px;margin:0 0 8px;line-height:1.45}
+.ausente{opacity:.82}.ausente-tag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:10px;background:var(--card);color:var(--tx2);box-shadow:0 0 0 1px var(--bd);font-size:12px;font-weight:700;white-space:nowrap}
+.parcial-tag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:10px;background:#FBF0D9;color:#6B4A0B;font-size:12px;font-weight:700;white-space:nowrap}
+.cchips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.cchip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 12px;border-radius:22px}
+.cchip small{opacity:.7;font-size:12px}
+.cchip[aria-pressed="true"]{background:#378ADD;border-color:#378ADD;color:#fff}.cchip[aria-pressed="true"] .ilu{color:#fff}
+.ilu-chip{width:30px;flex:none;align-self:center}
+details.conc>summary .ilu-chip{width:32px;margin-right:2px}
+details.conc[hidden]{display:none}
+.guia-pag{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border-radius:12px;padding:10px 14px;margin:0 0 12px;line-height:1.5}
+details.conc{background:var(--bg);border-radius:14px;padding:4px 16px}
+details.conc>summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;min-height:44px;padding:10px 0}
+details.conc>summary::-webkit-details-marker{display:none}
+details.conc>summary b{font-size:17px}
+.conc-body{padding:0 0 14px}
+.conc-body p{margin:6px 0 10px;max-width:72ch}
+svg.fig{display:block;width:100%;max-width:420px;height:auto;margin:4px 0}
+details.estudo{margin-top:12px;background:transparent;box-shadow:0 0 0 1px var(--bd)}
+ol.dicas{margin:4px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:8px;max-width:78ch}
+.vem{margin-top:14px}
+/* comemoração de recorde */
+.festa{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:50}
+.festa-box{position:relative;background:var(--card);color:var(--tx);border-radius:20px;padding:22px 34px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.25),0 0 0 2px var(--blue);animation:festaIn .45s cubic-bezier(.2,1.4,.4,1)}
+.festa-box b{display:block;font-size:30px;color:var(--blue);letter-spacing:-.01em}
+.festa-box span{display:block;font-size:16px;color:var(--tx2);margin-top:4px}
+.festa-box i{position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:3px;animation:confete 1.3s ease-out forwards}
+.festa.sai{transition:opacity .45s;opacity:0}
+@keyframes festaIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes confete{0%{transform:translate(-50%,-50%) rotate(0)}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(220deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.festa-box,.combo{animation:none}.festa-box i{display:none}}
+/* resultado: comparação, um foco com o treino pronto, e ajuda que dá para tirar */
+.prog{margin:10px 0 0;line-height:1.5;max-width:80ch}
+.foco{margin:12px 0;border-radius:14px;padding:14px 16px;background:var(--bg);box-shadow:inset 4px 0 0 var(--blue)}
+.foco-t{font-size:18px;font-weight:700;margin-bottom:4px}
+.foco p{margin:6px 0;max-width:80ch;line-height:1.5}
+.foco-ok{color:var(--tx2)}
+.sug{margin:0 0 12px;padding:12px 16px;border-radius:14px;box-shadow:0 0 0 1px var(--bd);line-height:1.5}
+.sug button{margin-left:6px}
+.ult{display:flex;flex-direction:column;gap:2px;margin:0 0 10px;font-size:14px;color:var(--tx2)}
+.ult b{color:var(--tx)}.ult button{margin-left:6px;min-height:30px;padding:4px 10px;font-size:13px}
+.volta{margin:0 0 14px;padding:12px 16px;border-radius:14px;background:var(--bg);box-shadow:inset 4px 0 0 var(--blue);line-height:1.5}
+.volta button{margin-left:6px}
+h3.dh{font-size:15px;margin:10px 0 6px}
+.cdwrap{position:relative}.cnt-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-height:30px;padding:4px 10px;font-size:13px;background:var(--card)}
+@media (max-width:700px){.cnt-btn{position:static;transform:none;margin:0 0 6px}}
+.bk{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:14px;box-shadow:0 0 0 1px var(--bd)}.bk p{margin:0 0 8px;max-width:78ch;line-height:1.5}
+.bkfile{display:inline-flex;align-items:center;min-height:36px;padding:8px 14px;border-radius:10px;background:var(--fill);font-weight:500;cursor:pointer;font-size:14px}.bkfile input{display:none}
+.bk-lista{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-width:560px}.bk-item{display:flex;gap:12px;align-items:center;padding:6px 10px;border-radius:10px;background:var(--bg)}.bk-item span:first-child{flex:1}
+ul.evite{padding-left:22px}
+/* ---------- tema escolhido no app (botão ◐ no topo): vale mais que o do Mac ---------- */
+:root{--ilu-f:#DCEAF8}
+@media (prefers-color-scheme:dark){:root{--ilu-f:#1F3A57}}
+:root[data-theme="light"]{color-scheme:light;--bg:#F4F6F9;--card:#FFFFFF;--tx:#1B1E24;--tx2:#535A66;--tx3:#848B97;--bd:#DCE0E7;--ink:#000;--fill:rgba(84,96,116,.09);--fill2:rgba(84,96,116,.17);--ok:#3B6D11;--bad:#B3261E;--ilu-f:#DCEAF8}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#13161B;--card:#1C2026;--tx:#ECEFF3;--tx2:#A9B0BB;--tx3:#7E8692;--bd:#313741;--ink:#ECEFF3;--fill:rgba(170,180,195,.11);--fill2:rgba(170,180,195,.2);--ok:#97C459;--bad:#F09595;--ilu-f:#1F3A57}
+:root[data-theme="light"] a{color:#185FA5}:root[data-theme="dark"] a{color:#85B7EB}
+.tema-btn{border-radius:999px;min-width:36px;padding:6px 12px}.tema-btn span{font-size:13px}
+/* ilustrações (traço na cor do texto, detalhes em azul) */
+.ilu{display:block;color:var(--tx);flex:none;height:auto}
+.ilu .a{stroke:#378ADD}.ilu .af{fill:var(--ilu-f);stroke:#378ADD}.ilu .f{fill:currentColor;stroke:none}
+.ilu text{stroke:none;fill:currentColor;font:700 12px 'Atkinson Hyperlegible Next',sans-serif}.ilu text.a2{fill:#378ADD}
+.ilu-tab{width:26px;margin-right:6px}.ilu-sec{width:30px;margin-right:8px}.ilu-aj{width:30px;margin-right:8px}.ilu-card{width:52px}
+#tabs .tab{display:inline-flex;align-items:center}
+#tabs .tab .ilu{color:currentColor}
+details.fold>summary .ilu{display:inline-block;vertical-align:middle}
+.aj h3{display:flex;align-items:center}
+.ex-h{display:flex;gap:12px;align-items:center}.jg-saida{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--tx2)}.ex-h b{font-size:16px}
+.ilu-dica{width:72px}.ilu-foco{width:96px}.ilu-sug{width:64px}.ilu-conc{width:120px;margin:6px 0}.ilu-pequena{width:44px}.ilu-ini{width:72px}
+li.dica{display:flex;gap:14px;align-items:flex-start;list-style:none}
+ol.dicas,ul.evite{padding-left:0}
+.foco{display:flex;gap:16px;align-items:flex-start}.sug{display:flex;gap:12px;align-items:center}
+@media (max-width:560px){.foco{flex-direction:column}.ilu-foco{width:80px}}
+/* aviso com dica */
+.aviso{display:flex;gap:12px;align-items:center;margin:6px 0;padding:10px 14px;border-radius:12px;background:#FAEEDA;color:#633806;line-height:1.45}
+.aviso span{flex:1}.aviso button{background:transparent;color:inherit;min-width:36px}
+.aviso .ilu{color:#633806}
+.dica-st{color:var(--tx2);font-size:14px}
+/* tela inicial simples */
+.inicio{margin:4px 0 16px}
+.ini-perf{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.ini-perf button{font-size:18px;min-height:52px;padding:10px 22px;border-radius:14px}
+.ini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.ini-b{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;min-height:130px;padding:16px 18px;border-radius:18px;background:var(--card);box-shadow:0 0 0 1px var(--bd)}
+.ini-b:hover{box-shadow:0 0 0 2px var(--blue);background:var(--card)}
+.ini-b b{font-size:20px}.ini-b span{color:var(--tx2);font-size:15px;font-weight:400}
+.ini-p{box-shadow:0 0 0 2px var(--blue)}
+body.simples .toolbar .segc,body.simples .stepper,body.simples #ouvirBtn,body.simples .recvol,body.simples #trBox,body.simples .legrow,body.simples #f_aj{display:none!important}
+body.simples #go{font-size:20px;padding:12px 36px}
+/* passo a passo com seta */
+.tut{position:fixed;inset:0;z-index:60;background:rgba(10,14,20,.35)}
+.tut-box{position:fixed;background:var(--card);color:var(--tx);border-radius:16px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.3),0 0 0 2px var(--blue)}
+.tut-box p{margin:6px 0 12px;line-height:1.5}
+.tut-seta{position:absolute;width:14px;height:14px;background:var(--card);transform:rotate(45deg);box-shadow:-2px -2px 0 0 var(--blue)}
+.tut-box.baixo .tut-seta{top:-8px}.tut-box.cima .tut-seta{bottom:-8px;box-shadow:2px 2px 0 0 var(--blue)}
+.tut-alvo{position:relative;z-index:61;box-shadow:0 0 0 4px var(--blue)!important;border-radius:12px}
+

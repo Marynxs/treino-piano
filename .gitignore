@@ -32,3 +32,9 @@ _preview/
 
 # backups do progresso (têm os dados de quem usa o app)
 backups/
+PROMPT-NOVA-SESSAO.md
+
+# cópias de segurança feitas antes de mexer (têm dados pessoais)
+*.antes-*
+CLAUDE.md.ANtes-do-livro
+CLAUDE.md.*.bak
