@@ -15,6 +15,8 @@
 html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;line-height:1.35;-webkit-text-size-adjust:100%}
 body{padding:max(6px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 76px max(10px,env(safe-area-inset-left))}
 .top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+/* tema desta tela, à mão na barra de cima (o mesmo de Opções → Tema desta tela): Automático → Claro → Escuro */
+.temaB{margin-left:auto;min-height:30px;padding:4px 10px;font-size:13px;border-radius:15px;white-space:nowrap}
 h1{font-size:15px;font-weight:600;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cd{flex-basis:100%;order:5}
 /* deitado: título, contagem e status numa linha só, para sobrar altura para a partitura */
@@ -238,7 +240,7 @@ html,body{overflow-x:hidden}
 </style>
 </head>
 <body>
-<div class="top"><h1 id="title">Conectando ao Mac…</h1><div id="cd"></div><span class="lb" id="perfLb"></span><span class="lb" id="midi"></span><span class="lb" id="link"><span class="dot"></span>Mac</span><span class="lb" id="lat" title="Atraso do Mac até esta tela"></span></div>
+<div class="top"><h1 id="title">Conectando ao Mac…</h1><div id="cd"></div><span class="lb" id="perfLb"></span><span class="lb" id="midi"></span><span class="lb" id="link"><span class="dot"></span>Mac</span><span class="lb" id="lat" title="Atraso do Mac até esta tela"></span><button id="temaB" class="temaB" title="Tema desta tela: Automático, Claro ou Escuro">◐ Automático</button></div>
 <div id="ult"></div>
 <div id="jogoV" class="jogoV"><div class="jv-wrap"><div class="jv-stage" id="jvStage"></div><span id="jvSt" class="jv-st" aria-live="polite"></span></div><div id="jvMsg" class="jg-msg" aria-live="polite"></div><div id="jvKb"></div><div id="jvRec" class="lb" style="white-space:normal;margin-top:6px"></div></div>
 <div id="turn">↻ Vire o iPhone de lado: a partitura fica bem maior.</div>
@@ -353,7 +355,7 @@ var LET=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],SOL=['D
 function phNb(){var F=FALL;if(!F)return 0;if(F.run&&F.mode==='time'&&F.t0)return ((Date.now()+(OFF||0))-F.t0)/1000/F.spb;
  var t=F.run&&F.mode==='wait'&&F.wb!=null?F.wb:(F.m&&F.m.notes.length?F.m.notes[0][0]-1:0);PNB=PNB==null?t:PNB+(t-PNB)*0.18;return PNB}
 function fallLoop(){if(FLOOP)return;FLOOP=true;(function f(){if(!S||!S.fall){FLOOP=false;return}
- var F=FALL,dark=matchMedia('(prefers-color-scheme: dark)').matches,nm=S.nomes==='pt'?SOL:LET;
+ var F=FALL,dark=celEscuro(),nm=S.nomes==='pt'?SOL:LET;
  Queda.draw($('fallCv'),F.m,phNb(),{dark:dark,live:(S.opt||{}).live!==false||!F.run,played:F.played||{},show:S.show,cName:function(m){return nm[m%12]+(Math.floor(m/12)-1)}});
  requestAnimationFrame(f)})()}
 function paintFall(s){var fall=!!s.fall;$('score').style.display=fall?'none':'';$('fallCv').style.display=fall?'block':'none';
@@ -421,19 +423,27 @@ var OFF=null,LAT=[],LASTLAT=null;
    das últimas 30 medidas, vale a de ida e volta mais rápida (a mais precisa) */
 var SAMP=[];
 function tick(){var a=Date.now();fetch('/api/time',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){var b=Date.now();
-  SAMP.push({rtt:b-a,off:j.t-(a+b)/2});if(SAMP.length>30)SAMP.shift();
-  OFF=SAMP.reduce(function(x,y){return y.rtt<x.rtt?y:x}).off}).catch(function(){})}
+  SAMP.push({rtt:b-a,off:j.t-(a+b)/2});if(SAMP.length>100)SAMP.shift();
+  /* o acerto anda no máximo 2 ms a cada 100 ms: sem pulos, as notas do jogo e a nota da vez não tremem quando o Wi-Fi oscila */
+  var alvo=SAMP.reduce(function(x,y){return y.rtt<x.rtt?y:x}).off;OFF=OFF==null||Math.abs(alvo-OFF)>1000?alvo:OFF+Math.max(-2,Math.min(2,alvo-OFF))}).catch(function(){})}
 tick();setInterval(tick,100);
 /* a 1ª mensagem depois de conectar é a tela que já estava guardada (antiga): não conta como atraso */
 var FIRST=true;
 function measure(s,t1){if(FIRST){FIRST=false;return}if(OFF==null||!s.t)return;var net=Math.round(t1+OFF-s.t),tot=Math.round(Date.now()+OFF-s.t);LASTLAT=tot;LAT.push([net,tot,s.hid?"mac escondido":"mac visivel"]);$('lat').textContent=tot+' ms'}
 setInterval(function(){if(!LAT.length)return;var tots=LAT.map(function(x){return x[1]}).sort(function(a,b){return a-b}),big=LAT.filter(function(x){return x[1]>100});
- fetch('/api/log',{method:'POST',body:JSON.stringify({telas:LAT.length,mediana:tots[tots.length>>1],maior:tots[tots.length-1],acima100ms:big.length,picos:big.slice(0,10),wifiIdaVolta:(function(){var r=SAMP.map(function(x){return x.rtt}).sort(function(a,b){return a-b});return r.length?{menor:r[0],mediana:r[r.length>>1],maior:r[r.length-1]}:null})()})}).catch(function(){});LAT=[]},15000);
+ fetch('/api/log',{method:'POST',body:JSON.stringify({telas:LAT.length,mediana:tots[tots.length>>1],maior:tots[tots.length-1],acima100ms:big.length,picos:big.slice(0,10),wifiIdaVolta:(function(){var r=SAMP.map(function(x){return x.rtt}).sort(function(a,b){return a-b});return r.length?{menor:r[0],mediana:r[r.length>>1],maior:r[r.length-1]}:null})(),celular:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/.test(navigator.userAgent)?'iphone':'outro',religou:RELIGA})}).catch(function(){});LAT=[]},15000);
 /* canal contínuo: o servidor empurra a tela nova assim que o Mac muda (sem ficar perguntando) */
-function listen(){var es=new EventSource('/api/stream');es.onopen=function(){FIRST=true};
+/* religar: no Android (Samsung) o Wi-Fi cochila e o canal às vezes fica "aberto" sem passar nada, e o EventSource não percebe.
+   Sem ping há 2,5 s: fecha e abre de novo (no máximo a cada 2 s); também ao voltar para a tela e quando o Wi-Fi volta */
+var ES=null,ESt=0,RELIGA=0;
+function listen(){if(ES)try{ES.close()}catch(x){}ESt=Date.now();var es=ES=new EventSource('/api/stream');es.onopen=function(){FIRST=true;lastOk=Date.now()};
  es.onmessage=function(e){var t1=Date.now();lastOk=lastNew=t1;try{var s=JSON.parse(e.data);S=s;paint(s);measure(s,t1)}catch(x){}};
  es.addEventListener('ping',function(){lastOk=Date.now()});
- es.onerror=function(){/* o EventSource reconecta sozinho */}}
+ es.onerror=function(){/* o EventSource reconecta sozinho; o vigia abaixo cobre quando ele trava */}}
+function religa(){var now=Date.now();if(now-ESt<2000)return;RELIGA++;listen()}
+setInterval(function(){if(Date.now()-lastOk>2500)religa()},500);
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&Date.now()-lastOk>1500)religa()});
+window.addEventListener('online',religa);
 setInterval(function(){var now=Date.now(),ok=now-lastOk<3000&&now-lastNew<30000;
  $('link').innerHTML='<span class="dot '+(ok?'ok':'bad')+'"></span>Mac';$('off').classList.toggle('show',!ok&&now-start>4000)},500);
 $('go').onclick=function(){cmd({cmd:S&&S.jogo?'jgo':'go'})};
@@ -545,9 +555,9 @@ function paintJogo(s){var J=s.jogo,v=$('jogoV');v.style.display=J?'':'none';v.cl
  var nk=JSON.stringify(J.niveis);if($('jvNivel').dataset.k!==nk){$('jvNivel').dataset.k=nk;$('jvNivel').innerHTML=J.niveis.map(function(x){return '<option value="'+x[0]+'">'+x[1]+'</option>'}).join('')}$('jvNivel').value=J.nivel;
  document.querySelectorAll('.jvm').forEach(function(b){b.classList.toggle('on',b.dataset.v===J.modo);b.disabled=J.par&&b.dataset.v==='corre'});
  var st=$('jvStage');if(J.modo==='corre'&&J.on&&J.pauta){if(st.dataset.k!=='corre'||st.dataset.ink!==myInk()){st.dataset.k='corre';st.dataset.ink=myInk();st.innerHTML=inkFix(s,J.pauta).replace('</svg>','<g id="jvNotas"></g></svg>')}jvLoop()}
- else if(J.svg!=null){st.dataset.k='';st.innerHTML=inkFix(s,J.svg)}
+ else if(J.svg!=null){var sh=inkFix(s,J.svg);if(st.dataset.k!==''||st._h!==sh){st.dataset.k='';st._h=sh;st.innerHTML=sh}}/* só troca o desenho quando ele mudou */
  $('jvSt').innerHTML=J.st||'';var m=J.msg||['',''];$('jvMsg').innerHTML=m[0];$('jvMsg').className='jg-msg'+(m[1]?' '+m[1]:'');$('jvRec').innerHTML=J.rec||'';
- $('jvKb').innerHTML=inkFix(s,J.kb||'');v.classList.toggle('comkb',!!J.tec);var tk=$('jvTec');tk.textContent='Teclado na tela: '+(J.tec?'ligado':'desligado');tk.classList.toggle('on',!!J.tec);var oi=$('jvOit');oi.textContent='Qualquer oitava: '+(J.oit?'ligado':'desligado');oi.classList.toggle('on',!!J.oit);var so=$('jvSom');so.textContent='Sons do jogo: '+(J.som?'ligado':'desligado');so.classList.toggle('on',!!J.som);$('jvKb').style.display=J.tec?'':'none';var d=$('jvDica');d.textContent=J.dica||'Dica';d.style.display=J.on&&J.modo!=='corre'?'':'none'}
+ var kh=inkFix(s,J.kb||'');if($('jvKb')._h!==kh){$('jvKb')._h=kh;$('jvKb').innerHTML=kh}v.classList.toggle('comkb',!!J.tec);var tk=$('jvTec');tk.textContent='Teclado na tela: '+(J.tec?'ligado':'desligado');tk.classList.toggle('on',!!J.tec);var oi=$('jvOit');oi.textContent='Qualquer oitava: '+(J.oit?'ligado':'desligado');oi.classList.toggle('on',!!J.oit);var so=$('jvSom');so.textContent='Sons do jogo: '+(J.som?'ligado':'desligado');so.classList.toggle('on',!!J.som);$('jvKb').style.display=J.tec?'':'none';var d=$('jvDica');d.textContent=J.dica||'Dica';d.style.display=J.on&&J.modo!=='corre'?'':'none'}
 /* nomes das notas que passaram (modo Correndo): o Mac manda só o índice; o nome vem pronto na mensagem, aqui fica sem */
 function paintUltCel(s){var u=$('ult');u.innerHTML=!s.run&&!s.jogo&&s.ult?s.ult:'';u.style.display=u.innerHTML?'':'none'}
 /* início: rotina de hoje, continuar de onde parou, jogo, ritmo novo, conceitos e pessoas */
@@ -584,9 +594,13 @@ $('jvKb').addEventListener('pointerdown',function(e){var t=e.target,m=t&&t.getAt
 $('jvMsg').addEventListener('click',function(e){var b=e.target.closest('[data-jgniv]');if(b)cmd({cmd:'jnivel',v:b.dataset.jgniv})});
 /* tema e letra desta tela (ficam guardados no iPhone) */
 function celTema(){var t='auto';try{t=localStorage.getItem('cel_tema')||'auto'}catch(e){}if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
- document.querySelectorAll('.tema').forEach(function(b){b.classList.toggle('on',b.dataset.v===t)});var z=1;try{z=+localStorage.getItem('cel_letra')||1}catch(e){}document.body.style.zoom=z===1?'':String(z);
+ document.querySelectorAll('.tema').forEach(function(b){b.classList.toggle('on',b.dataset.v===t)});var tb=$('temaB');if(tb)tb.textContent='◐ '+({auto:'Automático',light:'Claro',dark:'Escuro'}[t]||'Automático');var z=1;try{z=+localStorage.getItem('cel_letra')||1}catch(e){}document.body.style.zoom=z===1?'':String(z);
  document.querySelectorAll('.letra').forEach(function(b){b.classList.toggle('on',+b.dataset.v===z)})}
-document.querySelectorAll('.tema').forEach(function(b){b.onclick=function(){try{localStorage.setItem('cel_tema',b.dataset.v)}catch(e){}celTema();var sv=$('score');if(sv)sv.dataset.k='';if(S)paint(S)}});
+function celTemaPoe(v){try{localStorage.setItem('cel_tema',v)}catch(e){}celTema();var sv=$('score');if(sv)sv.dataset.k='';if(S)paint(S)}
+document.querySelectorAll('.tema').forEach(function(b){b.onclick=function(){celTemaPoe(b.dataset.v)}});
+$('temaB').onclick=function(){var t='auto';try{t=localStorage.getItem('cel_tema')||'auto'}catch(e){}celTemaPoe({auto:'light',light:'dark',dark:'auto'}[t]||'auto')};
+/* escuro de verdade nesta tela: o tema escolhido aqui, ou o do celular quando está em Automático */
+function celEscuro(){var t=document.documentElement.getAttribute('data-theme');return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
 document.querySelectorAll('.letra').forEach(function(b){b.onclick=function(){try{localStorage.setItem('cel_letra',b.dataset.v)}catch(e){}celTema();fit()}});
 celTema();
 /* tela sempre acesa: ligado por padrão; guarda a escolha neste celular. O navegador só deixa ligar depois de um toque */

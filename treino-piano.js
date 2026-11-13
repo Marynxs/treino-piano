@@ -89,12 +89,17 @@ function hlGroup(){if(MODE!=='time'||!run||!startPerf)return curGroup();var nb=(
 /* conta pelo exercício inteiro (base): um trecho mantém as mesmas linhas da partitura inteira */
 /* música com cifra: 3 compassos por linha em largura menor, para a nota sair maior (no celular, principalmente) */
 function largura(){return CUR&&(CUR.base||CUR).cif?675:900}
-function perLine(){var p=CUR?perFor(CUR.base||CUR):4;return CUR&&(CUR.base||CUR).cif?Math.min(p,3):p}
+function perLine(){return CUR?perTr(CUR.base||CUR):4}
+/* compassos por linha como a partitura desenha (com cifra, no máximo 3): o mesmo número vale para "Trecho" (linhas) */
+function perTr(src){var p=perFor(src);return src.cif?Math.min(p,3):p}
 function perFor(ex){if(ex._perB)return ex._perB;var mx=0;ex.ms.forEach(function(me){var on={},pos={};me.forEach(function(ev){if(ex.abs)on[ev[4]]=1;else{var k=ex.seq?'_':ev[3];pos[k]=pos[k]||0;on[pos[k]]=1;pos[k]+=ev[0]}});mx=Math.max(mx,Object.keys(on).length)});
  return ex._perB=mx<=8?4:mx<=12?3:mx<=20?2:1}
 /* quais linhas desenhar: "linhas" = a linha da música e a seguinte (troca sozinha, como no iPhone); "inteira" = todas */
 var VISTA='linhas';try{VISTA=localStorage.getItem('piano_vista')||'linhas'}catch(e){}
-function curSys(){var e=EV.filter(function(x){return !x.st})[0]||EV[EV.length-1];return e?Math.floor(e.m/perLine()):0}
+/* linha da vez: a da 1ª nota ainda não julgada. No modo com tempo, uma nota já julgada mas ainda soando (um acorde
+   segurado no fim da linha) segura a linha até acabar; senão a linha sumia do celular antes de a cor dela chegar lá */
+function curSys(){var nb=run&&MODE==='time'&&startPerf?(performance.now()-startPerf)/1000/spb:null;
+ var e=EV.filter(function(x){return !x.st||(nb!=null&&nb<x.beat+(x.ndur||x.dur)-0.05)})[0]||EV[EV.length-1];return e?Math.floor(e.m/perLine()):0}
 function scoreWin(sys){if(VISTA==='inteira'||sys<=2)return [0,sys];var c=Math.max(0,Math.min(curSys(),sys-2));return [c,c+2]}
 /* posição da nota dentro do compasso (0 a 1): metade pelo tempo e metade pela ordem, para colcheias e semicolcheias não se amontoarem.
    As pausas também ocupam lugar */
@@ -248,22 +253,24 @@ function midiTick(){if(!MQ.length||!MOUT)return;var now=performance.now(),keep=[
   try{MOUT.send(x.d,Math.max(x.p,now));if(x.k==='off')delete MON[(x.d[0]&0x0f)+'_'+x.d[1]];else MON[(x.d[0]&0x0f)+'_'+x.d[1]]=x.d}catch(e){}});MQ=keep}
 function midiStop(){MQ=[];if(!MOUT)return;try{Object.keys(MON).forEach(function(k){var d=MON[k];MOUT.send([0x80|(d[0]&0x0f),d[1],0])});[1,2,9].forEach(function(ch){MOUT.send([0xB0|ch,123,0])})}catch(e){}MON={}}
 /* acc = a outra mão (quando treina uma mão só): sai pelo GA, que liga e desliga com "O app toca a outra mão" */
-function tone(m,t,d,v,acc){if(acc==='rec')v=0.35+0.65*Math.min(1,v);if(viaPiano()){mq(t,acc==='rec'?'rec':acc?'acc':'pno',acc==='rec'?2:1,m,acc==='rec'?127*v*recF():v*110,d);return}var c=ctx(),g=c.createGain();g.connect(acc==='rec'?GR:acc?GA:GP);
+/* gravação ('rec'): v = força da tecla (0 a 1). No piano sai com a força original (o volume vai no CC7 do canal 3);
+   no Mac usa a mesma curva do piano sampleado (liveOn), para soar como quando você tocou */
+function tone(m,t,d,v,acc){if(viaPiano()){mq(t,acc==='rec'?'rec':acc?'acc':'pno',acc==='rec'?2:1,m,acc==='rec'?127*Math.min(1,v):v*110,d);return}if(acc==='rec')v=Math.pow(Math.min(1,v),1.5)*1.2+0.05;var c=ctx(),g=c.createGain();g.connect(acc==='rec'?GR:acc?GA:GP);
  if(BUF[m]){var s=c.createBufferSource();s.buffer=BUF[m];s.connect(g);g.gain.setValueAtTime(v,t);g.gain.setTargetAtTime(0,t+d,0.1);s.start(t,OFS[m]||0);s.stop(t+d+1);sched(s,g,t,t+d+1)}
  else{var f=440*Math.pow(2,(m-69)/12),o=c.createOscillator();o.type='triangle';o.frequency.value=f;o.connect(g);g.gain.setValueAtTime(v*0.5,t);g.gain.setTargetAtTime(0,t+d,0.1);o.start(t);o.stop(t+d+0.6);sched(o,g,t,t+d+0.6)}}
 function clickPiano(){return document.getElementById('clkdev').value==='piano'&&MOUT}
 /* volume do que sai no piano: CC7 (volume do canal) muda na hora, mesmo tocando; não mexe no volume das suas teclas */
-function pianoVols(){if(!MOUT)return;try{MOUT.send([0xB2,7,127]);MOUT.send([0xB1,7,Math.round(1.27*document.getElementById('pnoVol').value)]);MOUT.send([0xB9,7,Math.round(1.27*document.getElementById('pclkVol').value)])}catch(e){}}
+function pianoVols(){if(!MOUT)return;try{MOUT.send([0xB2,7,Math.round(127*Math.min(1,recF()))]);MOUT.send([0xB1,7,Math.round(1.27*document.getElementById('pnoVol').value)]);MOUT.send([0xB9,7,Math.round(1.27*document.getElementById('pclkVol').value)])}catch(e){}}
 function drumKit(){try{MOUT.send([0xB9,0,127]);MOUT.send([0xB9,32,0]);MOUT.send([0xC9,0])}catch(e){}}/* canal 10 = kit de bateria */
 /* sons da bateria do piano (canal 10): [tempo 1, outros tempos] */
 var CLKS={metro:[33,33],wood:[76,77],claves:[75,75],stick:[37,37]};
 function click(t,a){if(clickPiano()){var ks=CLKS[document.getElementById('clksnd').value]||CLKS.metro;mq(t,'clk',9,a?ks[0]:ks[1],a?120:80,0.08);return}var c=ctx(),o=c.createOscillator(),g=c.createGain();o.frequency.value=a?1500:1000;o.connect(g);g.connect(GC);g.gain.setValueAtTime(a?0.3:0.15,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.05);o.start(t);o.stop(t+0.06);sched(o,g,t,t+0.06)}
 /* relógios num Worker: com a janela do Chrome escondida (olhando o iPhone) o Chrome atrasa o setTimeout da página
    em até 1 s; o do Worker não. Ids negativos = Worker */
-var TW=null,TWF={},TWN=0;
+var TW=null,TWF={},TWN=0,TWN0=0;
 try{TW=new Worker(URL.createObjectURL(new Blob(['var T={};onmessage=function(e){var d=e.data;if(d[0]==="s")T[d[1]]=setTimeout(function(){delete T[d[1]];postMessage(d[1])},d[2]);else if(d[0]==="i")setInterval(function(){postMessage("tick")},d[1]);else{clearTimeout(T[d[1]]);delete T[d[1]]}}'],{type:'text/javascript'})));
- TW.onmessage=function(e){if(e.data==="tick"){midiTick();return}var f=TWF[e.data];delete TWF[e.data];if(f)f()};TW.postMessage(["i",20])}catch(e){TW=null}
-if(!TW)setInterval(midiTick,20);
+ TW.onmessage=function(e){if(e.data==="tick"){midiTick();if(++TWN0%500===0&&window.CEL_BEAT)window.CEL_BEAT();return}var f=TWF[e.data];delete TWF[e.data];if(f)f()};TW.postMessage(["i",20])}catch(e){TW=null}
+if(!TW){setInterval(midiTick,20);setInterval(function(){if(window.CEL_BEAT)window.CEL_BEAT()},10000)}
 function at(tt,f){var ms=Math.max(0,(tt-ctx().currentTime)*1000);if(!TW){timers.push(setTimeout(f,ms));return}var id=++TWN;TWF[id]=f;TW.postMessage(['s',id,ms]);timers.push(-id)}
 function clearAt(id){if(id<0){delete TWF[-id];TW.postMessage(['c',-id])}else clearTimeout(id)}
 /* piano sampleado (ouvir no fone) */
@@ -297,7 +304,7 @@ document.getElementById('clkVol').oninput=function(){if(GC&&OPT.clk)GC.gain.valu
 var midi=null,curIn=null;
 function stat(ok,t){document.getElementById('midiStat').innerHTML='<span class="dot '+(ok?'ok':'bad')+'"></span>'+t+(!ok&&OPT.avisos!==false&&/não/i.test(t)?'<span class="dica-st"> Ligue o piano, confira o cabo USB atrás dele e aperte "Conectar ao piano".</span>':'');if(ok&&typeof avisar==='function')avisar('')}
 function attach(inp){if(curIn)curIn.onmidimessage=null;if(typeof ACTIVE!=='undefined'&&!ACTIVE){curIn=null;return}curIn=inp;if(!inp){stat(false,'Nenhuma entrada MIDI. Confira o cabo USB e se o piano está ligado.');return}
- inp.onmidimessage=function(e){var d=e.data,cmd=d[0]&0xf0;if(cmd<0xF0&&((d[0]&0x0f)===1||(d[0]&0x0f)===9))return;/* canais do guia e dos cliques: não são teclas tocadas */ if(cmd===0x90&&d[2]>0){liveOn(d[1],d[2]);noteOn(d[1],d[2],e.timeStamp)}else if(cmd===0x80||(cmd===0x90&&d[2]===0)){liveOff(d[1]);noteOff(d[1],e.timeStamp)}else if(cmd===0xB0&&d[1]===64)pedal(d[2]>=64)};
+ inp.onmidimessage=function(e){var d=e.data,cmd=d[0]&0xf0;if(cmd<0xF0&&((d[0]&0x0f)===1||(d[0]&0x0f)===9))return;/* canais do guia e dos cliques: não são teclas tocadas */ if(cmd===0x90&&d[2]>0){liveOn(d[1],d[2]);noteOn(d[1],d[2],e.timeStamp)}else if(cmd===0x80||(cmd===0x90&&d[2]===0)){liveOff(d[1]);noteOff(d[1],e.timeStamp)}else if(cmd===0xB0&&d[1]===64){pedal(d[2]>=64);recPed(d[2]>=64)}};
  stat(true,'Conectado: '+inp.name)}
 function fillInputs(){var sel=document.getElementById('inSel'),ins=[];midi.inputs.forEach(function(i){ins.push(i)});
  /* saída MIDI para o guia e os cliques tocarem no próprio piano: a do mesmo aparelho da entrada */
@@ -429,13 +436,13 @@ function keepBpm(fn){var b=document.getElementById('bpm'),v=+b.value;fn();b.valu
 function practiceMeasures(list,label){var src=CUR.base||CUR,map=CUR.mmap||src.ms.map(function(_,i){return i+1});var orig=list.map(function(k){return k});
  var ex={};Object.keys(src).forEach(function(k){ex[k]=src[k]});ex.base=src;ex.id=src.id+'_parte';ex.mmap=orig;ex.ms=orig.map(function(k){return src.ms[k-1]});ex.title=src.title+' · '+(label||((orig.length>1?'compassos ':'compasso ')+orig.join(', ')));keepBpm(function(){load_ex(ex)})}
 /* treinar um trecho por linhas da partitura: da linha a até a linha b (1 = primeira). Todas = a partitura inteira */
-function linhas(){var src=CUR?CUR.base||CUR:null;return src?Math.ceil(src.ms.length/perFor(src)):0}
-function trecho(a,b){if(!CUR||run)return;var src=CUR.base||CUR,per=perFor(src),n=linhas();a=Math.max(1,Math.min(n,+a||1));b=Math.max(a,Math.min(n,+b||a));
+function linhas(){var src=CUR?CUR.base||CUR:null;return src?Math.ceil(src.ms.length/perTr(src)):0}
+function trecho(a,b){if(!CUR||run)return;var src=CUR.base||CUR,per=perTr(src),n=linhas();a=Math.max(1,Math.min(n,+a||1));b=Math.max(a,Math.min(n,+b||a));
  if(a===1&&b===n){keepBpm(function(){load_ex(src)});return}var l=[];for(var k=(a-1)*per+1;k<=Math.min(b*per,src.ms.length);k++)l.push(k);
  practiceMeasures(l,(a===b?'linha '+a:'linhas '+a+' a '+b)+' (compassos '+l[0]+(l.length>1?' a '+l[l.length-1]:'')+')')}
-function trAtual(){var n=linhas();if(!CUR||!CUR.mmap)return [1,n];var per=perFor(CUR.base);return [Math.floor((CUR.mmap[0]-1)/per)+1,Math.floor((CUR.mmap[CUR.mmap.length-1]-1)/per)+1]}
+function trAtual(){var n=linhas();if(!CUR||!CUR.mmap)return [1,n];var per=perTr(CUR.base);return [Math.floor((CUR.mmap[0]-1)/per)+1,Math.floor((CUR.mmap[CUR.mmap.length-1]-1)/per)+1]}
 function paintTrecho(){var n=linhas(),a=document.getElementById('trA'),b=document.getElementById('trB');if(!a)return;document.getElementById('trBox').style.display=n>1?'':'none';
- var src=CUR.base||CUR,per=perFor(src),o='';for(var i=1;i<=n;i++)o+='<option value="'+i+'">Linha '+i+' ('+((i-1)*per+1)+'–'+Math.min(i*per,src.ms.length)+')</option>';a.innerHTML=o;b.innerHTML=o;var t=trAtual();a.value=t[0];b.value=t[1];document.getElementById('trAll').style.display=CUR.base?'':'none'}
+ var src=CUR.base||CUR,per=perTr(src),o='';for(var i=1;i<=n;i++)o+='<option value="'+i+'">Linha '+i+' ('+((i-1)*per+1)+'–'+Math.min(i*per,src.ms.length)+')</option>';a.innerHTML=o;b.innerHTML=o;var t=trAtual();a.value=t[0];b.value=t[1];document.getElementById('trAll').style.display=CUR.base?'':'none'}
 function doAct(a){if(run)return;var bpm=document.getElementById('bpm');
  if(a==='ouvir'){ouvir();return}
  if(a==='repeat')document.getElementById('go').click();
@@ -455,7 +462,7 @@ function finish(){if(!run)return;run=false;timers.forEach(clearAt);timers=[];EV.
  var rid=CUR.id+(CUR._mao?'_'+CUR._mao:''),prev=(day().done[rid]||{}).best,antes=melhorDe(rid);
  document.getElementById('res').innerHTML=report(c,pct,prev);
  record(rid,pct,MODE);fbGuardar();if(antes!=null&&pct>antes&&pct>=40)celebrar('Novo recorde!',tDesc(CUR.title)+': '+pct+'% (antes '+antes+'%)');falar(pct+'%.'+(antes!=null&&pct>antes&&pct>=40?' Novo recorde!':'')+(FOCO_T?' Próxima tentativa: '+FOCO_T+'.':''));document.getElementById('go').textContent='Começar';show('<span class="lb">Fim. Aperte "Começar" para repetir</span>',true);render();showPanel();setTimeout(function(){RECON=false},1500);subirDepois(pct)}
-document.getElementById('go').onclick=function(){if(!CUR)return;if(JG.on)jParar();JG.vis=false;if(!run&&!curIn)avisar('O app não está ouvindo o piano. Ligue o piano, confira o cabo USB atrás dele e aperte "Conectar ao piano". Sem piano, dá para tocar no teclado do computador (A S D F G H J K).');if(run){resetAll();return}resetAll();run=true;REC=[];RECON=true;this.textContent='Parar';
+document.getElementById('go').onclick=function(){if(!CUR)return;if(JG.on)jParar();JG.vis=false;if(!run&&!curIn)avisar('O app não está ouvindo o piano. Ligue o piano, confira o cabo USB atrás dele e aperte "Conectar ao piano". Sem piano, dá para tocar no teclado do computador (A S D F G H J K).');if(run){resetAll();return}resetAll();run=true;REC=[];RECP=[[performance.now(),SUS]];RECON=true;this.textContent='Parar';
  if(MODE==='wait'){show('Toque a nota acesa em azul, no seu ritmo',true);render();return}
  var ms=[];allEv().forEach(function(e){if(e.midis)ms=ms.concat(e.midis)});
  var myGo=GOID;
@@ -760,7 +767,7 @@ var ACTIVE=true;
  function celFull(){if(CELV!=='tudo'||VIS==='fall'||(run&&lastFull))return null;var t=document.createElementNS(NS,'svg');t.setAttribute('width','100%');drawScore(t,true);var h=t.outerHTML;if(h===lastFull)return null;lastFull=h;return h}
  function allEx(){return EX.concat(USERS)}
  function snap(){var g=function(id){return document.getElementById(id)};
-  return JSON.stringify({title:g('exTitle').textContent+(CUR&&CUR.parcial?' · ⚠ Incompleta':''),cd:g('cd').innerHTML,score:VIS==='fall'?'':g('score').outerHTML,scoreFull:celFull(),recv:+document.getElementById('recVol').value,alvo:+document.getElementById('alvo').value,perfis:PERFIS,perfil:PERFIL,pre:document.getElementById('pre').value,preS:+document.getElementById('preS').value,preN:+document.getElementById('preN').value,tr:(function(){var n=linhas();if(n<2)return null;var src=CUR.base||CUR,per=perFor(src),l=[];for(var i=1;i<=n;i++)l.push('Linha '+i+' (comp. '+((i-1)*per+1)+'–'+Math.min(i*per,src.ms.length)+')');return {l:l,v:trAtual()}})(),mao:MAO,celv:CELV,
+  return JSON.stringify({title:g('exTitle').textContent+(CUR&&CUR.parcial?' · ⚠ Incompleta':''),cd:g('cd').innerHTML,score:VIS==='fall'?'':g('score').outerHTML,scoreFull:celFull(),recv:+document.getElementById('recVol').value,alvo:+document.getElementById('alvo').value,perfis:PERFIS,perfil:PERFIL,pre:document.getElementById('pre').value,preS:+document.getElementById('preS').value,preN:+document.getElementById('preN').value,tr:(function(){var n=linhas();if(n<2)return null;var src=CUR.base||CUR,per=perTr(src),l=[];for(var i=1;i<=n;i++)l.push('Linha '+i+' (comp. '+((i-1)*per+1)+'–'+Math.min(i*per,src.ms.length)+')');return {l:l,v:trAtual()}})(),mao:MAO,celv:CELV,
    /* queda de notas: as notas e o relógio da música (hora do Mac em que começa o tempo 0); o iPhone anima sozinho */
    rel:seguro(relSnap),fall:VIS==='fall'?{m:fallModel(),t0:startPerf?Date.now()-performance.now()+startPerf:0,spb:spb,run:run,mode:MODE,wb:run&&MODE==='wait'?waitBeat():null,played:played}:null,kb:OPT.kb?g('kb').outerHTML:'',errs:g('errs').innerHTML,res:g('res').innerHTML,saida:typeof JG!=='undefined'&&JG?JG.saida:'piano',som:typeof SOMCEL!=='undefined'&&SOMCEL&&Date.now()-SOMCEL.t<4000?SOMCEL:null,ult:run?'':g('exUlt').innerHTML,jogo:seguro(jSnap),conc:seguro(concCel),ini:run?null:seguro(celInicio),ritn:seguro(function(){return Object.keys(RITN).map(function(k){return [k,RITN[k].t]})}),festa:FESTA&&Date.now()-FESTA.ts<6000?FESTA:null,
    run:run,mode:MODE,show:SHOW,opt:OPT,bpm:+g('bpm').value,midi:g('midiStat').innerHTML,cur:CUR&&CUR.id,ink:getComputedStyle(document.body).getPropertyValue('--ink').trim()||'#1f1f1d',
@@ -775,6 +782,9 @@ var ACTIVE=true;
  /* sem setTimeout: o Chrome atrasa relógios quando a janela do Mac fica escondida */
  function soon(){if(!tm){tm=true;Promise.resolve().then(send)}}
  window.CEL_SOON=soon;
+ /* sinal de vida: reenvia a tela a cada 10 s, mesmo sem mudança. Sem isso, com o Mac parado o celular achava
+    que a conexão tinha caído (ele espera uma tela nova em até 30 s) */
+ window.CEL_BEAT=function(){last='';soon()};
  function mine(){if(!ACTIVE)return;claim=true;soon()}
  window.addEventListener('focus',mine);document.addEventListener('pointerdown',mine);
  var mo=new MutationObserver(soon);mo.observe(pr,{subtree:true,childList:true,characterData:true,attributes:true});mo.observe(document.getElementById('midiStat'),{subtree:true,childList:true,characterData:true});
@@ -969,20 +979,25 @@ document.getElementById('alvo').oninput=function(){document.getElementById('alvo
 /* ---------- gravar e ouvir o que você tocou ----------
    Cada vez que você aperta "Começar", o app grava as teclas (com a força) até o fim. "Ouvir o que eu toquei" toca a gravação
    pelo mesmo som em que você ouve o seu piano (sampleado no Mac ou o próprio piano, se o som guia sai pelo piano) */
-var REC=[],RECON=false,RECPLAY=false;
+var REC=[],RECP=[],RECON=false,RECPLAY=false;
 function recNote(m,v,on){if(RECON)REC.push([m,v,performance.now(),on])}
+/* pedal de sustentação gravado junto: [hora, pisou]. Na hora de ouvir, a nota solta com o pé no pedal continua até o pé subir */
+function recPed(on){if(RECON)RECP.push([performance.now(),on])}
+function pedSolta(t){var dn=false,i;for(i=0;i<RECP.length&&RECP[i][0]<=t;i++)dn=RECP[i][1];if(!dn)return t;for(;i<RECP.length;i++)if(!RECP[i][1])return RECP[i][0];return t+3000}
 function ouvir(){var b=document.getElementById('ouvirBtn');if(RECPLAY){stopSched();RECPLAY=false;paintOuvir();return}
  var ons=REC.filter(function(r){return r[3]});if(!ons.length){show('<span class="lb">Ainda não há gravação: toque um exercício (aperte "Começar").</span>',true);return}
  RECPLAY=true;paintOuvir();pianoVols();var rec=REC.slice();
  Promise.race([Promise.all(ons.map(function(r){return load(r[0])})),new Promise(function(x){setTimeout(x,1500)})]).then(function(){if(!RECPLAY)return;var c=ctx(),t0=c.currentTime+0.25,first=ons[0][2],end=0;
-  rec.forEach(function(r,i){if(!r[3])return;var off=rec.slice(i+1).filter(function(x){return !x[3]&&x[0]===r[0]})[0],d=Math.max(0.15,((off?off[2]:r[2]+500)-r[2])/1000);
-   tone(r[0],t0+(r[2]-first)/1000,d,Math.max(0.15,r[1]/127),'rec');end=Math.max(end,(r[2]-first)/1000+d)});
+  rec.forEach(function(r,i){if(!r[3])return;var nx=rec.slice(i+1).filter(function(x){return x[0]===r[0]}),off=nx.filter(function(x){return !x[3]})[0],re=nx.filter(function(x){return x[3]})[0],
+    fim=off?pedSolta(off[2]):r[2]+500;if(re)fim=Math.min(fim,re[2]);/* a mesma tecla tocada de novo corta a anterior, como no piano */
+    var d=Math.max(0.15,(fim-r[2])/1000);
+   tone(r[0],t0+(r[2]-first)/1000,d,r[1]/127,'rec');end=Math.max(end,(r[2]-first)/1000+d)});
   setTimeout(function(){RECPLAY=false;paintOuvir()},(end+1.2)*1000)})}
 function paintOuvir(){var b=document.getElementById('ouvirBtn');if(b){b.textContent=RECPLAY?'■ Parar a gravação':'▶ Ouvir o que eu toquei';b.classList.toggle('on',RECPLAY)}}
 document.getElementById('ouvirBtn').onclick=ouvir;
 /* volume da gravação: 0 a 300%; muda na hora, até no meio da gravação tocando */
 function recF(){var r=document.getElementById('recVol');return r?(+r.value)/100:1}
-document.getElementById('recVol').oninput=function(){document.getElementById('recVolV').textContent=this.value+'%';if(GR)GR.gain.setTargetAtTime(recF(),ctx().currentTime,0.03);saveSet()};
+document.getElementById('recVol').oninput=function(){document.getElementById('recVolV').textContent=this.value+'%';if(GR)GR.gain.setTargetAtTime(recF(),ctx().currentTime,0.03);pianoVols();saveSet()};
 /* ---------- dinâmica: a força com que você aperta a tecla ----------
    O piano manda a força de cada tecla (velocidade MIDI, 1 a 127). Nomes: pp p mp mf f ff.
    Exercício com dinâmica marcada: a nota no tempo certo mas com força fora da faixa fica amarela */
@@ -1142,7 +1157,9 @@ function jParar(){pararSeq();JG.on=false;JG.alvo=null;JG.fila=[];jMsg('');jDesen
 /* próximo passo do modo Correndo: com a janela do Mac visível, a cada quadro; escondida (o Chrome congela as animações), pelo relógio de fundo do app */
 function jTick(){if(document.hidden&&typeof at==='function'){try{at(ctx().currentTime+0.05,jLoop);return}catch(e){}}requestAnimationFrame(jLoop)}
 function jNova(x){var a=jEscolhe();return {c:a.c,i:a.i,x:x,t0:performance.now()}}
-function jLoop(){if(!JG.on||JG.modo!=='corre')return;var now=performance.now(),dt=Math.min(0.05,(now-(JG.tl||now))/1000),W=520,ev=false;JG.tl=now;
+/* dt até 0,25 s: com a janela do Mac escondida os quadros vêm espaçados, e o jogo não pode andar mais devagar que o relógio
+   (o celular calcula a posição pelo relógio e puxaria as notas para trás a cada mensagem) */
+function jLoop(){if(!JG.on||JG.modo!=='corre')return;var now=performance.now(),dt=Math.min(0.25,(now-(JG.tl||now))/1000),W=520,ev=false;JG.tl=now;
  if(!document.getElementById('jgSvg')){jParar();return}
  JG.fila.forEach(function(q){if(!q.fora)q.x-=JG.v*dt});
  var f=JG.fila.filter(function(q){return !q.fora})[0];
@@ -1215,7 +1232,7 @@ function jAbrir(){if(run)resetAll();TAB='leit';var f=document.getElementById('f_
 function jSnap(){if(!JG.vis&&!JG.on)return null;var g=function(id){var e=document.getElementById(id);return e?e:null},s=g('jgSvg'),kb=g('jgKb'),st=g('jgSt'),rec=g('jgRec'),corre=JG.modo==='corre';
  var pauta=null;if(corre){if(!jSnap.p||jSnap.pi!==jInk()+jVB()){var t=document.createElementNS(NS,'svg');t.setAttribute('viewBox',jVB());jPauta(t,520,jInk());el(t,'line',{x1:JLX,x2:JLX,y1:14,y2:222,style:'stroke:#378ADD;stroke-width:3;opacity:.6'});jSnap.p=t.outerHTML;jSnap.pi=jInk()+jVB()}pauta=jSnap.p}
  return {on:JG.on,modo:JG.modo,nivel:JG.nivel,par:!!jNivel().par,niveis:JN.map(function(x,k){var e=(JS.niv[x.id]||{}).est||0;return [x.id,'Nível '+(k+1)+': '+x.t+(e?' '+'★★★'.slice(0,e):'')]}),
-  svg:corre&&JG.on?null:(s?s.outerHTML:''),pauta:pauta,fila:corre?JG.fila.map(function(q){return [q.c,q.i,Math.round(q.x*10)/10,q.cor||'',q.rev?1:0,q.fora?1:0,jNome(q.i)]}):null,v:JG.v||0,t:Date.now(),
+  svg:corre&&JG.on?null:(s?s.outerHTML:''),pauta:pauta,fila:corre?JG.fila.map(function(q){return [q.c,q.i,Math.round(q.x*10)/10,q.cor||'',q.rev?1:0,q.fora?1:0,jNome(q.i)]}):null,v:JG.v||0,t:JG.tl?Math.round(Date.now()-(performance.now()-JG.tl)):Date.now(),/* hora em que as notas estavam nessas posições */ 
   kb:JG.teclado&&kb?kb.outerHTML:'',tec:JG.teclado,saida:JG.saida,st:st?st.innerHTML:'',msg:JG.msg||['',''],rec:rec?rec.innerHTML:'',oit:JG.oit,som:JG.som,dica:JG.modo==='ouvido'?'Ouvir de novo':'Dica'}}
 /* ---------- conceitos do livro: cada um aparece quando você chega na página dele (aba Conceitos) ----------
    Texto próprio do app (não é cópia do livro). "u" = onde aparece; "jogo" = nível do jogo que treina isso; "som" = [midi, início s, duração s] */
