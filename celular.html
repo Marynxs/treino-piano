@@ -143,7 +143,7 @@ button,select,input{font-family:inherit}
 .sug button,.foco button{margin-top:6px}
 .festa{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:50}
 .festa-box{position:relative;background:var(--card);color:var(--tx);border-radius:20px;padding:22px 30px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.25),0 0 0 2px #378ADD;animation:festaIn .45s cubic-bezier(.2,1.4,.4,1);max-width:86vw}
-.festa-box b{display:block;font-size:30px;color:#378ADD}
+.festa-box b{display:block;font-size:30px;color:#378ADD}.festa.leve .festa-box{padding:14px 24px;border-radius:16px}.festa.leve .festa-box b{font-size:22px}.festa.leve .festa-box span{font-size:14px}
 .festa-box span{display:block;font-size:17px;color:var(--tx2);margin-top:4px}
 .festa-box i{position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:3px;animation:confete 1.3s ease-out forwards}
 .festa.sai{transition:opacity .45s;opacity:0}
@@ -566,9 +566,9 @@ function paintRes(s){var r=s.res||'';$('repBtn').classList.toggle('has',!!r);
  if(now&&!was){$('res').scrollTop=0;requestAnimationFrame(function(){$('res').scrollTop=0;setTimeout(function(){$('res').scrollTop=0},150)})}}
 function openRes(){RESHID='';if(RES){$('res').classList.add('show');$('res').scrollTop=0}}
 /* recorde batido no Mac: a mesma comemoração aparece aqui (sem som; o som sai no Mac) */
-var FESTA_T=0;function festa(f){if(!f||f.ts===FESTA_T)return;FESTA_T=f.ts;var d=document.createElement('div'),b=document.createElement('div');d.className='festa';b.className='festa-box';b.innerHTML='<b>'+f.t+'</b>'+(f.s?'<span>'+f.s+'</span>':'');d.appendChild(b);
- var cores=['#378ADD','#639922','#EF9F27','#D4537E','#7F77DD'];for(var k=0;k<24;k++){var p=document.createElement('i'),a=k/24*2*Math.PI,r=110+Math.random()*80;p.style.setProperty('--dx',Math.round(Math.cos(a)*r)+'px');p.style.setProperty('--dy',Math.round(Math.sin(a)*r)+'px');p.style.background=cores[k%5];b.appendChild(p)}
- document.body.appendChild(d);setTimeout(function(){d.classList.add('sai')},2400);setTimeout(function(){d.remove()},2900)}
+var FESTA_T=0;function festa(f){if(!f||f.ts===FESTA_T)return;FESTA_T=f.ts;var d=document.createElement('div'),b=document.createElement('div');d.className='festa'+(f.leve?' leve':'');b.className='festa-box';b.innerHTML='<b>'+f.t+'</b>'+(f.s?'<span>'+f.s+'</span>':'');d.appendChild(b);
+ var cores=['#378ADD','#639922','#EF9F27','#D4537E','#7F77DD'],nc=f.leve?10:24;for(var k=0;k<nc;k++){var p=document.createElement('i'),a=k/nc*2*Math.PI,r=f.leve?60+Math.random()*40:110+Math.random()*80;p.style.setProperty('--dx',Math.round(Math.cos(a)*r)+'px');p.style.setProperty('--dy',Math.round(Math.sin(a)*r)+'px');p.style.background=cores[k%5];b.appendChild(p)}
+ document.body.appendChild(d);setTimeout(function(){d.classList.add('sai')},f.leve?1500:2400);setTimeout(function(){d.remove()},f.leve?2000:2900)}
 /* som do piano nos replays com o cabo no iPhone: o Mac põe uma chave (somk) enquanto a tentativa dura; o app grava a entrada USB e manda ao Mac */
 var SOMK=null;
 var SOMENV=null;

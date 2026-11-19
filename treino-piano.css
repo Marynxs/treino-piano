@@ -391,3 +391,5 @@ body.simples #go{font-size:20px;padding:12px 36px}
 .cal-lista{display:flex;flex-direction:column}.cal-lista div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:7px 0;border-bottom:1px solid var(--bd)}
 .cal-lista div:last-child{border-bottom:0}.cal-lista b{font-variant-numeric:tabular-nums;white-space:nowrap}
 .cal-linha{display:flex;flex-wrap:wrap;gap:6px}.cal-linha span{display:inline-flex;gap:6px;align-items:baseline;padding:4px 8px;border-radius:8px;background:var(--fill)}.cal-linha i{font-style:normal;font-size:12px;color:var(--tx2)}
+/* comemoração menor (recorde de hoje) */
+.festa.leve .festa-box{padding:14px 24px;border-radius:16px}.festa.leve .festa-box b{font-size:22px}.festa.leve .festa-box span{font-size:14px}
