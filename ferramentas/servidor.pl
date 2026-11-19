@@ -24,8 +24,11 @@ sub lan_ip { for my $if (qw(en0 en1 en2)) { my $ip = `ipconfig getifaddr $if 2>/
 sub peer { my $a = lc(shift // ''); $a =~ s/^::ffff://; $a =~ s/%.*$//; return $a eq '::1' ? '127.0.0.1' : $a }
 # Prefixos IPv6 (/64) do próprio Mac: um celular da mesma rede de casa tem o mesmo prefixo. Relidos a cada minuto.
 my (@pre6, $pre6t);
-sub prefixos6 { if (!$pre6t || time - $pre6t > 60) { $pre6t = time; @pre6 = ();
-  for (`ifconfig 2>/dev/null` =~ /inet6 ([0-9a-f:]+)/gi) { my $x = lc $_; next if $x =~ /^(fe80|::1$)/; my @h = split /:/, $x; push @pre6, join(':', @h[0..3]) if @h >= 4 } } @pre6 }
+# prefixos IPv6 da rede da casa: lidos do ifconfig no processo que atende o pedido (nunca no principal: um ifconfig
+# preso travou o servidor inteiro em 18/11), guardados em $tmp/pre6 por 60 s
+sub prefixos6 { my @s = stat("$tmp/pre6"); if (@s && time - $s[9] < 60) { return split /\n/, (slurp("$tmp/pre6") // '') }
+  my @p; for (`ifconfig 2>/dev/null` =~ /inet6 ([0-9a-f:]+)/gi) { my $x = lc $_; next if $x =~ /^(fe80|::1$)/; my @h = split /:/, $x; push @p, join(':', @h[0..3]) if @h >= 4 }
+  spit("$tmp/pre6", join("\n", @p)); @p }
 sub local_ok { my $a = peer(shift);
   return 1 if $a =~ /^(127\.|10\.|192\.168\.|169\.254\.)/ || $a =~ /^172\.(1[6-9]|2\d|3[01])\./;
   return 1 if $a =~ /^(fe80|fc|fd)/;   # IPv6 da rede local (link-local e ULA)
@@ -62,7 +65,6 @@ if ($port == 8000 && -x '/usr/bin/xcrun' && !fork()) {
 }
 
 while (my $c = $srv->accept) {
-  prefixos6();   # lido aqui (no processo principal) para os atendimentos herdarem a lista sem rodar ifconfig a cada pedido
   my $pid = fork();
   if (!defined $pid || $pid) { close $c; next }
   close $srv; binmode $c;

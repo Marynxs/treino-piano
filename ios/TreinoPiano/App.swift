@@ -53,6 +53,7 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
     private var entregando = false
     private var ultimoCabo = ""
     private var ultimaEntrega = Date()
+    private var ultimaCopia = Date()
     /// "O iPhone corrige quando o piano está nele" (Ajustes do app; começa ligado)
     private var iphoneCorrige: Bool {
         get { UserDefaults.standard.object(forKey: "iphoneCorrige") as? Bool ?? true }
@@ -246,6 +247,8 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
             } else {
                 falhas = 0
                 if !querIphone && !servidor.tocando { entrarMac(); return }   // tirou o cabo ou desligou a opção: volta ao Mac (e entrega os treinos)
+                // arquivos novos do Mac (a página que corrige aqui se atualiza sozinha quando eles mudam)
+                if Date().timeIntervalSince(ultimaCopia) > 120 && !servidor.tocando { ultimaCopia = Date(); if let n = try? await Copia.atualizarArquivos(mac: Endereco.base), n > 0 { Registro.anotar("copiou \(n) arquivo(s) do Mac") } }
                 if Date().timeIntervalSince(ultimaEntrega) > (ProcessInfo.processInfo.arguments.contains("-entregaRapida") ? 20 : 300) && !servidor.tocando { entregarDoCerebro(nil) }
             }
         case .sozinho:

@@ -365,3 +365,7 @@ body.simples #go{font-size:20px;padding:12px 36px}
 #espBox .esp-top>div{display:flex;flex-direction:column;gap:2px}
 #espBox .esp-top button{min-height:44px;padding:8px 16px}
 #espBox iframe{flex:1;border:0;width:100%;display:block}
+/* assistir o que eu toquei (olho ao lado do recomeçar; azul enquanto o replay roda) */
+#assBtn{min-width:56px}#assBtn svg{width:28px;height:28px;display:block;margin:0 auto}#assBtn svg .ch{fill:currentColor}
+#assBtn.on{background:#378ADD;color:#fff;border-color:#378ADD}
+.fbtop .ass-res{display:inline-flex;align-items:center;gap:8px}.fbtop .ass-res svg{width:20px;height:20px}.fbtop .ass-res svg .ch{fill:currentColor}

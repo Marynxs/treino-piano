@@ -255,7 +255,7 @@ html,body{overflow-x:hidden}
 #selIco{order:6;display:flex;gap:12px;align-items:center}#selIco button{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}#selIco svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}#selIco .on{background:#378ADD;color:#fff}#reset.selhide{display:none!important}#iniBtn{order:1}#viewBtn{order:2}#zoomF{order:3;gap:8px}#repBtn{order:4}#go{order:5;margin:0 auto;min-width:128px}#jvDica,#sairJ{order:6}#reset{order:7}#more{order:8}
 #bar #more,#bar #reset{margin-left:0}
 /* play e recomeçar juntos, no centro da barra */
-#bar #go{margin:0 0 0 auto}#bar #reset{order:5;margin:0 auto 0 0}
+#bar #go{margin:0 0 0 auto}#bar #reset{order:5;margin:0}#bar #assBtn{order:5;margin:0 auto 0 0;min-width:56px}#assBtn svg{width:28px;height:28px;display:block;margin:0 auto}#assBtn svg .ch{fill:currentColor}#assBtn.on{background:#378ADD;color:#fff}
 /* zoom da partitura inteira: flutua no canto de baixo da partitura, logo acima da barra (não ocupa lugar na barra) */
 #bar #zoomF{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:calc(100% + 8px);gap:4px;padding:4px;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--bd),0 4px 14px rgba(0,0,0,.18)}
 #bar #zoomF button{min-height:40px;min-width:44px;padding:4px 10px}
@@ -293,6 +293,7 @@ html.semlupa #bar #zoomF{display:none!important}
 #res .fbtop{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
 #res .fbtop button{flex:1 1 200px;min-height:48px;font-size:17px;font-weight:600}
 #res .fbtop .fbgo{background:#378ADD;color:#fff}
+#res .ass-res{display:inline-flex;align-items:center;justify-content:center;gap:8px}#res .ass-res svg{width:22px;height:22px;flex:none}#res .ass-res svg .ch{fill:currentColor}
 #res .rep-sal{display:inline-flex;align-items:center;justify-content:center;gap:8px}#res .rep-salic{width:22px;height:22px;flex:none}#res .rep-sal.ok{color:#639922;opacity:1}
 #res .fbcmp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 16px;color:var(--tx2);font-size:14px}
 #res .fbcmp span{margin-right:4px}
@@ -456,7 +457,7 @@ html.rodado .rephead{padding-top:10px}
  </section>
  </div>
 </div>
-<div class="bar" id="bar"><button id="iniBtn">Início</button><button id="go">Começar</button><button id="jvDica" style="display:none">Dica</button><button id="sairJ" style="display:none">Sair do jogo</button><button id="reset">Recomeçar</button><span id="selIco" class="selico" style="display:none"></span><button id="viewBtn"></button><span id="zoomF"><button id="zOut" title="Partitura menor">🔍−</button><b id="zV">100%</b><button id="zIn" title="Partitura maior">🔍+</button></span><button class="vol" data-c="pvol" data-k="pv" data-d="-10" title="Guia mais baixo">🔉</button><button class="vol" data-c="pvol" data-k="pv" data-d="10" title="Guia mais alto">🔊</button><button id="repBtn">Resultado</button><button id="more">Ajustes</button></div>
+<div class="bar" id="bar"><button id="iniBtn">Início</button><button id="go">Começar</button><button id="jvDica" style="display:none">Dica</button><button id="sairJ" style="display:none">Sair do jogo</button><button id="reset">Recomeçar</button><button id="assBtn" aria-label="Assistir o que eu toquei" title="Assistir o que eu toquei"></button><span id="selIco" class="selico" style="display:none"></span><button id="viewBtn"></button><span id="zoomF"><button id="zOut" title="Partitura menor">🔍−</button><b id="zV">100%</b><button id="zIn" title="Partitura maior">🔍+</button></span><button class="vol" data-c="pvol" data-k="pv" data-d="-10" title="Guia mais baixo">🔉</button><button class="vol" data-c="pvol" data-k="pv" data-d="10" title="Guia mais alto">🔊</button><button id="repBtn">Resultado</button><button id="more">Ajustes</button></div>
 <div class="off" id="off">Sem conexão com o Mac.<br><br>Confira se o "Abrir Treino de Piano" está ligado no Mac, com o app aberto no Chrome, e se o iPhone está no mesmo Wi-Fi.</div>
 <script src="queda.js"></script>
 <script src="nosleep.js" onerror="this.remove()"></script>
@@ -532,7 +533,7 @@ window.addEventListener('resize',fit);window.addEventListener('orientationchange
 var FALL=null,PNB=null,FLOOP=false;
 var LET=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],SOL=['Dó','Dó♯','Ré','Mi♭','Mi','Fá','Fá♯','Sol','Lá♭','Lá','Si♭','Si'];
 var POFF=0,PDRAG=null,PARRASTOU=false;
-var GOI={play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="5.5" width="4" height="13" rx="1"/><rect class="ch" x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>',ini:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="5" y="6" width="2.6" height="12" rx="1"/><path class="ch" d="M19 6v12l-9.5-6z"/></svg>',rec:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path class="ch" d="M20.5 3.5v6h-6z"/></svg>'};
+var GOI={play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="5.5" width="4" height="13" rx="1"/><rect class="ch" x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>',ini:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="5" y="6" width="2.6" height="12" rx="1"/><path class="ch" d="M19 6v12l-9.5-6z"/></svg>',rec:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path class="ch" d="M20.5 3.5v6h-6z"/></svg>',olho:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle class="ch" cx="12" cy="12" r="3.2"/></svg>'};
 function phNb(){var F=FALL;if(!F)return 0;if(F.run&&F.mode==='time'&&F.t0)return ((Date.now()+(OFF||0))-F.t0)/1000/F.spb;
  var t=F.run&&F.mode==='wait'&&F.wb!=null?F.wb:F.nbP!=null?F.nbP:(F.m&&F.m.notes.length?F.m.notes[0][0]-1:0);if(!F.run)t+=POFF;else POFF=0;PNB=PNB==null?t:PNB+(t-PNB)*0.18;return PNB}
 function umaLinha(id,h){var e=$(id);if(e.dataset.h===h&&e.firstChild&&e.firstChild.className==='um')return;e.dataset.h=h;e.innerHTML=h?'<span class="um">'+h+'</span>':''}
@@ -601,6 +602,7 @@ function paint(s){try{somPiano(s)}catch(e){}
  if(s.tr){var tk=JSON.stringify(s.tr);if($('trA').dataset.k!==tk){$('trA').dataset.k=tk;var o=s.tr.l.map(function(t,i){return '<option value="'+(i+1)+'">'+t+'</option>'}).join('');$('trA').innerHTML=o;$('trB').innerHTML=o;$('trA').value=s.tr.v[0];$('trB').value=s.tr.v[1]}}document.querySelectorAll('[data-only]').forEach(function(d){d.style.display=only[d.dataset.only]?'':'none'});
  var go=$('go'),gk=(s.run?'pause':'play')+(s.pausa?1:0),gn=s.run?'Pausar':s.pausa?'Continuar de onde parou':'Começar do começo';if(go.dataset.k!==gk||!go.querySelector('svg')){go.dataset.k=gk;go.innerHTML=GOI[s.run?'pause':'play']}go.setAttribute('aria-label',gn);go.title=gn;go.classList.toggle('stop',!!s.run);go.classList.toggle('pausado',!!s.pausa);
  var rs=$('reset'),lp=s.sel&&s.sel.loop,rn=(s.run||s.pausa||lp)?(lp?'Recomeçar o trecho':'Recomeçar do começo'):'Voltar ao começo';if(rs.dataset.k!=='rec'){rs.dataset.k='rec';rs.innerHTML=GOI.rec}if(rs.title!==rn){rs.setAttribute('aria-label',rn);rs.title=rn}
+ var ab=$('assBtn');if(ab){if(!ab.querySelector('svg'))ab.innerHTML=GOI.olho;ab.style.visibility=(s.ver||s.ass)?'':'hidden';ab.classList.toggle('on',!!s.ass);var an=s.ass?'Parar o replay':'Assistir o que eu toquei';if(ab.title!==an){ab.title=an;ab.setAttribute('aria-label',an)}}
  document.querySelectorAll('.mode').forEach(function(b){b.classList.toggle('on',b.dataset.v===s.mode)});
  $('pvV').textContent=(s.pv!=null?s.pv:'—')+'%';$('pcvV').textContent=(s.pcv!=null?s.pcv:'—')+'%';
  document.querySelectorAll('.nmb').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.nomes||'en'))});
@@ -670,7 +672,7 @@ $('repBtn').onclick=openRes;
 document.addEventListener('click',function(e){if(e.target.id==='repClose'){RESHID=RES;$('res').classList.remove('show')}});
 /* botões do relatório do fim (Repetir, mais devagar, só os compassos com erro): quem executa é o Mac */
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-act]');if(b)cmd({cmd:'act',v:b.dataset.act})});
-$('reset').onclick=function(){cmd({cmd:'reset'})};
+$('reset').onclick=function(){cmd({cmd:'reset'})};$('assBtn').onclick=function(){cmd({cmd:S&&S.ass?'go':'assistir'})};
 $('more').onclick=function(){$('sheet').classList.add('open');$('sheet').scrollTop=0};
 $('trGo').onclick=function(){var a=+$('trA').value,b=+$('trB').value;cmd({cmd:'trecho',a:Math.min(a,b),b:Math.max(a,b)});$('sheet').classList.remove('open')};
 $('trAll').onclick=function(){if(S&&S.tr)cmd({cmd:'trecho',a:1,b:S.tr.l.length});$('sheet').classList.remove('open')};
