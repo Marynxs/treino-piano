@@ -78,7 +78,7 @@ final class ServidorLocal {
                     return
                 }
             }
-            if fim || erro != nil || buf.count > 60_000_000 { c.cancel(); return }
+            if fim || erro != nil || buf.count > 400_000_000 { c.cancel(); return }   // áudio de replay longo passa de 60 MB
             self.receber(c, buf)
         }
     }

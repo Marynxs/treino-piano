@@ -267,7 +267,7 @@ while (my $c = $srv->accept) {
     my $copia = sub { return unless $nuvem && $f && -f $f; mkdir "$ENV{HOME}/Library/Mobile Documents/com~apple~CloudDocs/Treino de Piano"; mkdir $nuvem;
       if (open(my $o, '>', "$nuvem/R-$id.json")) { binmode $o; print $o (slurp($f) // ''); close $o } };
     if ($meth eq 'POST') {
-      my $body = ''; read($c, $body, $len) if $len && $len < 40_000_000;
+      my $body = ''; read($c, $body, $len) if $len && $len < 400_000_000;   # o áudio de um replay longo passa de 40 MB (saía vazio)
       my $acao = $q{acao} // '';
       if ($acao eq 'audio' && $id) { spit("$dir/audio/$id" . (($q{v} // '') =~ /^(\w{1,20})$/ ? "-$1" : '') . ".wav", $body); reply($c, '200 OK', 'application/json', '{"ok":true}'); close $c; exit 0 }
       if ($acao eq 'som' && $id) { spit("$dir/som/$id.som", $body); if ($nuvem) { mkdir $nuvem; mkdir "$nuvem/som"; spit("$nuvem/som/$id.som", $body) }

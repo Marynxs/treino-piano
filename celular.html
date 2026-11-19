@@ -549,7 +549,7 @@ function fallLoop(){if(FLOOP)return;FLOOP=true;var ult=0;(function f(ts){if(!S||
 /* a música da queda vem só quando muda (m.notes); nas outras mensagens vem só a cor de cada nota (m.st, uma letra por nota) */
 var FBASE=null,FCOD={o:'ok',w:'warn',b:'bad',m:'miss',x:'x'};
 function fallM(m,prev){if(!m)return null;if(!m.k)return m;/* formato antigo: a música inteira */
- if(m.notes)FBASE={k:m.k,n:m.notes,st:''};if(!FBASE||FBASE.k!==m.k)return prev||null;
+ if(m.notes)FBASE={k:m.k,n:m.notes,st:''};if(!FBASE||FBASE.k!==m.k){if(Date.now()-(fallM.p||0)>1000){fallM.p=Date.now();cmd({cmd:'fallfull'})}return prev||null}/* sem a música desta versão: pede ao que corrige */
  if(FBASE.st!==m.st){var ns=FBASE.n;for(var i=0;i<ns.length;i++)ns[i][5]=FCOD[m.st.charAt(i)]||null;FBASE.st=m.st}
  return {lo:m.lo,hi:m.hi,beats:m.beats,notes:FBASE.n,x:m.x}}
 function paintFall(s){var fall=!!s.fall;$('score').style.display=fall?'none':'';$('fallCv').style.display=fall?'block':'none';
@@ -947,7 +947,7 @@ function rcMostrar(){var b=$('repCel');(RC?Promise.resolve(RC):rcCarregar()).the
     '<span class="lb">'+rcEsc(m.titulo)+' · '+rcQuando(m.t)+' · '+rcDur(fim-ini)+' · '+rcMao(m)+' · '+(m.modo==='time'?m.bpm+' BPM':'Espera')+'</span>'+
     '<div class="rc-nota"><b class="rc-pct">'+m.pct+'%</b><div class="rc-bar">'+c.map(function(x){return '<span style="flex:'+x[0]+';background:'+x[1]+'"></span>'}).join('')+'</div><span class="lb">'+c.map(function(x){return x[0]+' '+x[2]}).join(' · ')+'</span></div>'+
     (j?rcRolo(j.dados,m):'<p class="lb">Carregando as teclas…</p>')+
-    '<div class="rc-corte"><label>Começo <input type="range" id="rcIni" min="0" max="'+dur+'" step="100" value="'+ini+'"></label><label>Fim <input type="range" id="rcFim" min="0" max="'+dur+'" step="100" value="'+fim+'"></label><span class="lb" id="rcCorteT">'+rcDur(ini)+' a '+rcDur(fim)+'</span><button data-rc="corte">Guardar corte</button></div>'+
+    '<div class="rc-corte"><label>Começo <input type="range" id="rcIni" min="0" max="'+dur+'" step="100" value="'+ini+'"></label><label>Fim <input type="range" id="rcFim" min="0" max="'+dur+'" step="100" value="'+fim+'"></label><span class="lb" id="rcCorteT">'+rcDur(ini)+' a '+rcDur(fim)+'</span></div>'+
     '<div class="rc-acoes">'+rcIc('ouvir','Ouvir',0,'on')+rcIc('parar','Parar')+(RCVID[m.id]?rcIc('video','Ver o vídeo desta vez',0,'on'):'')+rcIc('partilha','Compartilhar')+rcIc('estrela',m.est?'Guardado sempre (tocar para tirar)':'Guardar sempre',m.est?'estrelaOn':0,m.est?'on':'')+rcIc('nome','Renomear')+'<span class="rc-sep"></span>'+
     (RCCONF===m.id?'<span class="rc-conf">Apagar? Fica 30 dias na lixeira. <button data-rc="apagasim" class="rc-del">Apagar</button><button data-rc="apagano">Não</button></span>':rcIc('apagar','Apagar',0,'rc-del'))+'</div>'+
     '<span class="lb" id="rcAviso"></span>'+
@@ -955,7 +955,7 @@ function rcMostrar(){var b=$('repCel');(RC?Promise.resolve(RC):rcCarregar()).the
    if(APPN&&!(m.id in RCVID)){RCVID[m.id]=false;try{webkit.messageHandlers.acao.postMessage({videoDe:{id:m.id,ini:rcVini(m),fim:m.t}})}catch(x){}}
    if(!j)rcDados(m.id).then(function(){if(RCAB===m.id)rcMostrar()}).catch(function(){});
    var a=$('rcIni'),z=$('rcFim');if(a&&z){var mv=function(){var i=+a.value,f=+z.value;if(i>f-500){if(this===a)a.value=i=Math.max(0,f-500);else z.value=f=i+500}var W=1000/dur,r1=$('rcFora1'),r2=$('rcFora2');
-    if(r1)r1.setAttribute('width',(i*W).toFixed(1));if(r2){r2.setAttribute('x',(f*W).toFixed(1));r2.setAttribute('width',((dur-f)*W).toFixed(1))}$('rcCorteT').textContent=rcDur(i)+' a '+rcDur(f)};a.oninput=mv;z.oninput=mv}
+    if(r1)r1.setAttribute('width',(i*W).toFixed(1));if(r2){r2.setAttribute('x',(f*W).toFixed(1));r2.setAttribute('width',((dur-f)*W).toFixed(1))}$('rcCorteT').textContent=rcDur(i)+' a '+rcDur(f)};a.oninput=mv;z.oninput=mv;a.onchange=z.onchange=function(){rcAcao('corte')}/* o corte vale ao soltar */}
    var ni=$('rcNomeIn');if(ni){ni.focus();ni.select()}return}
   $('rcTit').textContent='Evolução e replays';var T=RCT||[];
   if(!l.length&&!T.length){b.innerHTML='<div class="rc-vazio"><b>Ainda não há tentativas.</b><span class="lb">Termine uma música: a nota de cada vez aparece aqui. Para guardar o som, toque em "Salvar replay" no resultado.</span></div>'+rcLixH();if(RCLIXA)rcLix();return}
