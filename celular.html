@@ -196,7 +196,7 @@ li.dica{display:flex;gap:12px;align-items:flex-start;list-style:none;margin-bott
 .ini-b{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;min-height:120px;padding:14px;border-radius:16px;background:var(--card)!important;box-shadow:0 0 0 1px var(--bd);font-weight:400}
 .ini-b b{font-size:18px}.ini-b span{color:var(--tx2);font-size:14px}.ini-p{box-shadow:0 0 0 2px #378ADD}
 .rot{display:flex;flex-direction:column;gap:6px;margin-top:14px}.rot button{display:flex;gap:10px;align-items:center;text-align:left;width:100%;font-weight:400}
-.rot button i{font-style:normal;width:26px;height:26px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--fill2);font-size:13px}.rot button.feito i{background:#639922;color:#fff}
+.rot button i{font-style:normal;width:26px;height:26px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--fill2);font-size:13px}.rot button.feito i{background:#639922;color:#fff}.rot button.trc i{background:#378ADD;color:#fff;width:36px;height:36px}.rot button.trc i svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}.rot button.trc span{font-size:15px;line-height:1.35}.rot button.trc.feito i{background:#639922}
 /* passo a passo */
 .tut{position:fixed;inset:0;z-index:60;background:rgba(10,14,20,.35)}
 .tut-box{position:fixed;background:var(--card);color:var(--tx);border-radius:16px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.3),0 0 0 2px #378ADD;max-width:calc(100vw - 24px)}
@@ -767,6 +767,7 @@ function paintIni(s){var I=s.ini;if(!I)return;var h='';
   '<button class="ini-b" data-c="concA">'+ilu('conceitos','ini')+'<b>Conceitos</b><span>o que o livro já ensinou</span></button>'+
   '<button class="ini-b" data-c="replays">'+ilu('continuar','ini')+'<b>Replays</b><span>ouvir, comparar e mandar o que você tocou</span></button>'+
   '<button class="ini-b" data-c="opc">'+ilu('musicas','ini')+'<b>Escolher exercício</b><span>músicas, livro, aquecimento</span></button></div>'+
+  (I.tr&&I.tr.length?'<h3 style="margin:18px 0 6px">Trechos para treinar</h3><div class="rot">'+I.tr.map(function(r){return '<button class="trc'+(r[3]?' feito':'')+'" data-c="trecho" data-k="'+String(r[0]).replace(/"/g,'&quot;')+'" aria-label="Repetir '+String(r[1]).replace(/"/g,'&quot;')+', '+r[2]+'"><i>'+SIC.rep+'</i><span><b>'+String(r[1]).replace(/</g,'&lt;')+'</b><br>'+r[2]+'</span></button>'}).join('')+'</div>':'')+
   '<h3 style="margin:18px 0 6px">Rotina de hoje</h3><div class="rot">'+I.rot.map(function(r,i){return '<button class="'+(r[1]?'feito':'')+'" data-c="etapa" data-k="'+r[2]+'" data-t="'+r[3]+'"><i>'+(r[1]?'✓':i+1)+'</i><span>'+r[0]+'</span></button>'}).join('')+'</div>'+
   (s.ritn?'<h3 style="margin:18px 0 6px">Ritmo novo a cada vez</h3><div class="rot">'+s.ritn.map(function(r){return '<button data-c="rnovo" data-k="'+r[0]+'"><i>♩</i><span>'+r[1]+'</span></button>'}).join('')+'</div>':'');
  if(h!==INI){INI=h;$('iniBody').innerHTML=h}}
@@ -775,7 +776,7 @@ $('iniBody').addEventListener('click',function(e){var b=e.target.closest('button
  if(c==='opc'){$('ini').classList.remove('open');$('sheet').classList.add('open');return}
  if(c==='concA'){abrirConc();return}
  if(c==='replays'){abrirReplays();return}
- if(c==='prox')cmd({cmd:'prox'});else if(c==='retoma')cmd({cmd:'retoma',v:b.dataset.k});else if(c==='jabrir')cmd({cmd:'jabrir'});else if(c==='etapa')cmd({cmd:'etapa',v:b.dataset.k,test:b.dataset.t==='1'});else if(c==='rnovo')cmd({cmd:'rnovo',v:b.dataset.k});
+ if(c==='prox')cmd({cmd:'prox'});else if(c==='retoma')cmd({cmd:'retoma',v:b.dataset.k});else if(c==='jabrir')cmd({cmd:'jabrir'});else if(c==='etapa')cmd({cmd:'etapa',v:b.dataset.k,test:b.dataset.t==='1'});else if(c==='rnovo')cmd({cmd:'rnovo',v:b.dataset.k});else if(c==='trecho')cmd({cmd:'trabrir',v:b.dataset.k});
  $('ini').classList.remove('open')});
 $('iniBtn').onclick=function(){if(S)paintIni(S);$('ini').classList.add('open');$('ini').scrollTop=0};$('iniClose').onclick=function(){$('ini').classList.remove('open')};
 /* conceitos: o Mac monta (com os desenhos) quando pedimos */
@@ -899,6 +900,7 @@ function rcRolo(d,m){var ons=[],abre={};(d.notas||[]).forEach(function(r){if(r[3
  ons.forEach(function(o){h+='<rect x="'+(o[1]*sx).toFixed(1)+'" y="'+((hi-o[0])*sy).toFixed(1)+'" width="'+Math.max(4,(o[2]-o[1])*sx).toFixed(1)+'" height="'+Math.max(3,sy-1).toFixed(1)+'" rx="2" fill="'+(cor[o[3]]||cor.o)+'"/>'});
  var ini=m.ini||0,fim=m.fim||dur;return h+'<rect id="rcFora1" x="0" y="0" width="'+(ini*sx).toFixed(1)+'" height="'+H+'" class="rc-fora"/><rect id="rcFora2" x="'+(fim*sx).toFixed(1)+'" y="0" width="'+((dur-fim)*sx).toFixed(1)+'" height="'+H+'" class="rc-fora"/></svg>'}
 var RCT=[];
+function rcGrupo(m){return m.titulo+'|'+(m.mao||'')+'|'+(m.modo==='wait'?'w':m.bpm)}
 function rcCarregar(){var pf=(S&&S.perfil)||'p0',so=function(l){return l.filter(function(m){return (m.perfil||'p0')===pf}).sort(function(a,b){return b.t-a.t})};
  fetch('/api/tentativas',{cache:'no-store'}).then(function(r){return r.ok?r.json():[]}).then(function(l){RCT=so(l);if(RC&&!RCAB&&$('repS').classList.contains('open'))rcMostrar()}).catch(function(){});
  return fetch('/api/replays',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(l){RC=so(l);return RC})}
@@ -923,11 +925,11 @@ function rcMostrar(){var b=$('repCel');(RC?Promise.resolve(RC):rcCarregar()).the
    var ni=$('rcNomeIn');if(ni){ni.focus();ni.select()}return}
   $('rcTit').textContent='Evolução e replays';var T=RCT||[];
   if(!l.length&&!T.length){b.innerHTML='<div class="rc-vazio"><b>Ainda não há tentativas.</b><span class="lb">Termine uma música: a nota de cada vez aparece aqui. Para guardar o som, toque em "Salvar replay" no resultado.</span></div>'+rcLixH();if(RCLIXA)rcLix();return}
-  var gs={},rs={},ord=[];T.forEach(function(m){if(!gs[m.ex]){gs[m.ex]=[];ord.push(m.ex)}gs[m.ex].push(m)});
-  l.forEach(function(m){if(!rs[m.ex])rs[m.ex]=[];rs[m.ex].push(m);if(!gs[m.ex]){gs[m.ex]=[];ord.push(m.ex)}if(!T.some(function(x){return x.id===m.id}))gs[m.ex].push(m)});
+  var gs={},rs={},ord=[];T.forEach(function(m){if(!gs[rcGrupo(m)]){gs[rcGrupo(m)]=[];ord.push(rcGrupo(m))}gs[rcGrupo(m)].push(m)});
+  l.forEach(function(m){if(!rs[rcGrupo(m)])rs[rcGrupo(m)]=[];rs[rcGrupo(m)].push(m);if(!gs[rcGrupo(m)]){gs[rcGrupo(m)]=[];ord.push(rcGrupo(m))}if(!T.some(function(x){return x.id===m.id}))gs[rcGrupo(m)].push(m)});
   ord.sort(function(a,c){return gs[c][0].t-gs[a][0].t});
   b.innerHTML='<div class="rc-lista">'+ord.map(function(ex){var g=gs[ex].sort(function(a,c){return c.t-a.t}),u=g[0],dif=u.pct-g[g.length-1].pct,best=Math.max.apply(null,g.map(function(m){return m.pct})),r=rs[ex]||[];
-   return '<div class="rc-ex"><div class="rc-exh"><div><b>'+rcEsc(u.titulo)+'</b><span class="lb">'+g.length+(g.length>1?' tentativas':' tentativa')+' · recorde '+best+'% · última '+rcQuando(u.t)+'</span></div><div class="rc-ev">'+rcLinha(g)+'<b class="rc-pct">'+u.pct+'%</b>'+(g.length>1?'<span class="rc-dif'+(dif<0?' neg':'')+'">'+(dif>=0?'+':'')+dif+'</span>':'')+'</div></div>'+
+   return '<div class="rc-ex"><div class="rc-exh"><div><b>'+rcEsc(u.titulo)+'</b><span class="lb">'+g.length+(g.length>1?' tentativas':' tentativa')+' · '+(u.modo==='time'?u.bpm+' BPM':'modo Espera')+' · '+rcMao(u)+' · recorde '+best+'% · última '+rcQuando(u.t)+'</span></div><div class="rc-ev">'+rcLinha(g)+'<b class="rc-pct">'+u.pct+'%</b>'+(g.length>1?'<span class="rc-dif'+(dif<0?' neg':'')+'">'+(dif>=0?'+':'')+dif+'</span>':'')+'</div></div>'+
     (r.length?'<div class="rc-tries">'+r.map(function(m){return '<button data-rcid="'+m.id+'">'+(m.est?'★ ':'')+'<b>'+m.pct+'%</b> '+(m.nome?rcEsc(m.nome)+' · ':'')+rcQuando(m.t)+'</button>'}).join('')+'</div>':'')+'</div>'}).join('')+'</div>'+rcLixH();if(RCLIXA)rcLix()}).catch(function(){
   b.innerHTML='<div class="rc-vazio"><b>Os replays ficam no Mac.</b><span class="lb">Abra o app com o Mac ligado (o Treino de Piano aberto no Chrome) para ver, ouvir e compartilhar.</span></div>'})}
 function rcMeta(m){return fetch('/api/replays?id='+m.id+'&acao=meta',{method:'POST',body:JSON.stringify(m)}).then(function(){RC=null;rcMostrar()})}

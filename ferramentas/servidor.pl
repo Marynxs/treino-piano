@@ -48,6 +48,19 @@ sub reply { my ($c, $code, $type, $body, $extra) = @_; $body //= ''; $extra //= 
 sub slurp { my $f = shift; open(my $fh, '<:raw', $f) or return undef; local $/; my $d = <$fh>; close $fh; return $d }
 sub spit { my ($f, $d) = @_; open(my $fh, '>:raw', "$f.$$") or return; print $fh $d; close $fh; rename "$f.$$", $f }
 
+# App do iPhone: uma vez por dia confere a assinatura; faltando 20 dias, reassina e reinstala sozinho (ferramentas/reinstalar-iphone.sh).
+# Só no servidor da porta 8000. O resultado vai para o registro do dia.
+if ($port == 8000 && -x '/usr/bin/xcrun' && !fork()) {
+  close $srv; $0 = "perl ferramentas/servidor.pl $port (iPhone)";
+  sleep 120;
+  while (1) {
+    my $r = `/bin/sh "$root/ferramentas/reinstalar-iphone.sh" 2>&1`; chomp $r; $r =~ s/\s+/ /g;
+    my @t = localtime;
+    if (open(my $fh, '>>', sprintf('%s/registro/%04d-%02d-%02d.log', $root, $t[5]+1900, $t[4]+1, $t[3]))) { printf $fh "%02d:%02d:%02d.000 [servidor] %s\n", $t[2], $t[1], $t[0], $r; close $fh }
+    sleep 86400;
+  }
+}
+
 while (my $c = $srv->accept) {
   prefixos6();   # lido aqui (no processo principal) para os atendimentos herdarem a lista sem rodar ifconfig a cada pedido
   my $pid = fork();
