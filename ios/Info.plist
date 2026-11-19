@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Para gravar você tocando, com o som do piano pelo cabo.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Para abrir o Treino de Piano do seu Mac e mandar as notas do piano para ele.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Para gravar o som do piano nos vídeos e reconhecer as notas quando o cabo não está ligado.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Para salvar os vídeos e áudios do piano nas suas Fotos.</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+</dict>
+</plist>

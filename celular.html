@@ -6,8 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Piano">
+<link rel="manifest" href="app-cel.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
 <title>Piano no iPhone</title>
-<script>/* tema escolhido aqui (Automático, Claro ou Escuro) e tamanho da letra, antes de desenhar */try{if(localStorage.getItem('cel_deitado')!=='0'&&matchMedia('(orientation: portrait)').matches)document.documentElement.classList.add('rodado')}catch(e){}try{var t_=localStorage.getItem('cel_tema');if(t_==='light'||t_==='dark')document.documentElement.setAttribute('data-theme',t_)}catch(e){}</script>
+<script>/* tema escolhido aqui (Automático, Claro ou Escuro) e tamanho da letra, antes de desenhar */try{if(localStorage.getItem('cel_deitado')!=='0'&&matchMedia('(orientation: portrait)').matches)document.documentElement.classList.add('rodado')}catch(e){}try{if(localStorage.getItem('cel_lupa')==='0')document.documentElement.classList.add('semlupa')}catch(e){}try{var t_=localStorage.getItem('cel_tema');if(t_==='light'||t_==='dark')document.documentElement.setAttribute('data-theme',t_)}catch(e){}</script>
 <style>
 :root{--bg:#f7f6f2;--card:#ffffff;--tx:#1f1f1d;--tx2:#5f5e5a;--tx3:#888780;--bd:#d3d1c7;--blue:#378ADD;--blueD:#185FA5;--ink:#1f1f1d;--cdtx:#185FA5}
 @media (prefers-color-scheme:dark){:root{--bg:#1c1c1b;--card:#262624;--tx:#f1efe8;--tx2:#b4b2a9;--tx3:#888780;--bd:#444441;--ink:#f1efe8;--cdtx:#85B7EB}}
@@ -237,10 +240,120 @@ html.rodado #jvKb svg{max-height:24vw!important}
 html,body{overflow-x:hidden}
 @media (max-width:380px){body{font-size:14px}button,select{font-size:14px;padding:8px 10px}.fbpct{font-size:34px}.jv-modo button{font-size:13px}}
 
+/* ---------- versão 2 (14/11/2026): barras com espaço entre os botões, sinal da conexão num lugar só, Ajustes em duas camadas ---------- */
+.top{gap:8px 12px}
+#perfLb,#midi,#link,#lat,#temaB{display:none}
+.top.det #midi,.top.det #link,.top.det #lat{display:inline-block}
+#treinoLb{font-size:13px;color:var(--tx2);white-space:nowrap;flex:none}
+.conn{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 12px;border-radius:16px;font-size:13px;font-variant-numeric:tabular-nums;flex:none;margin-left:auto}
+.conn .dot{margin:0}
+.dot.warn{background:#EF9F27}.dot.soz{background:#378ADD}
+/* barra de baixo: grupos com respiro; Começar no meio */
+.bar{gap:12px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+.bar button{min-height:44px;padding:8px 16px}
+#selIco{order:6;display:flex;gap:12px;align-items:center}#selIco button{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}#selIco svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}#selIco .on{background:#378ADD;color:#fff}#reset.selhide{display:none!important}#iniBtn{order:1}#viewBtn{order:2}#zoomF{order:3;gap:8px}#repBtn{order:4}#go{order:5;margin:0 auto;min-width:128px}#jvDica,#sairJ{order:6}#reset{order:7}#more{order:8}
+#bar #more,#bar #reset{margin-left:0}
+/* zoom da partitura inteira: flutua no canto de baixo da partitura, logo acima da barra (não ocupa lugar na barra) */
+#bar #zoomF{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:calc(100% + 8px);gap:4px;padding:4px;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--bd),0 4px 14px rgba(0,0,0,.18)}
+#bar #zoomF button{min-height:40px;min-width:44px;padding:4px 10px}
+@media (orientation:landscape){#cd{flex:1 1 0;min-width:0}}html.rodado #cd{flex:1 1 0;min-width:0}
+html.rodado .bar{gap:12px}html.rodado .bar button{min-height:42px;padding:6px 16px}html.rodado #go{min-width:128px}
+@media (max-width:700px){.bar{gap:8px}.bar button{padding:8px 12px}#go{min-width:104px}}
+/* Ajustes */
+#sheet.open{display:block!important}
+#sheet .rephead{gap:12px;margin-bottom:16px}
+.ajVolta{font-weight:600}
+.ajHome,.pg{display:grid;gap:16px;align-items:start}
+.ajHome[hidden],.pg[hidden],.ajVolta[hidden]{display:none!important}
+@media (min-width:640px){.ajHome{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}.pg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+html.rodado .ajHome{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}html.rodado .pg{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ajHome>[data-only="jogo"]{grid-column:1/-1}
+#sheet .grp{margin:0;padding:16px}
+#sheet .grp h3{margin:0 0 16px}
+#sheet .f{margin-bottom:16px}#sheet .f:last-child{margin-bottom:0}
+#sheet .seg,#sheet .stack{gap:8px}
+.ajMenu{display:flex;flex-direction:column;gap:8px}
+.ajIt{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;width:100%;min-height:64px;padding:12px 16px;border-radius:16px;background:var(--card);box-shadow:0 0 0 1px var(--bd)}
+.ajIt b{font-size:16px;display:flex;width:100%;justify-content:space-between;gap:8px}
+.ajIt b::after{content:"›";color:var(--tx2);font-weight:400}
+.ajIt span{font-size:13px;color:var(--tx2);font-weight:400;white-space:normal}
+/* explicações: escondidas, abrem no "?" do lado */
+#sheet .ex{display:none!important}
+#sheet .f.exon .ex{display:block!important;margin-top:8px}
+.f.hasq{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;align-items:start}
+.f.hasq>*{grid-column:1}.f.hasq>.exq{grid-column:2;grid-row:1}.f.hasq>.ex{grid-column:1/-1}
+html.semlupa #bar #zoomF{display:none!important}
+.exq{min-width:44px;min-height:44px;padding:0;border-radius:22px;font-weight:700;color:var(--tx2)}
+#sheet .f>.exq{width:44px;text-align:center;justify-content:center}
+.f.exon .exq{color:var(--tx);background:var(--fill2)}
+/* resultado: ações no topo e compassos com erro como botões */
+#res .fbtop{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
+#res .fbtop button{flex:1 1 200px;min-height:48px;font-size:17px;font-weight:600}
+#res .fbtop .fbgo{background:#378ADD;color:#fff}
+#res .rep-sal{display:inline-flex;align-items:center;justify-content:center;gap:8px}#res .rep-salic{width:22px;height:22px;flex:none}#res .rep-sal.ok{color:#639922;opacity:1}
+#res .fbcmp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 16px;color:var(--tx2);font-size:14px}
+#res .fbcmp span{margin-right:4px}
+#res .fbcmp button{min-height:40px;padding:6px 14px;font-weight:600}
+#res .fbact button:first-child{background:var(--fill);color:var(--tx);font-weight:500}
+/* iPhone girado pelo app (html.rodado): a largura da tela deitada é a ALTURA VISÍVEL (dvh, sem as barras do Safari; vh contava a área
+   escondida atrás delas e cortava o lado direito, onde fica Ajustes). As margens seguras trocam de lado: o topo do iPhone (relógio, ilha)
+   fica à esquerda e a barrinha de início à direita */
+html.rodado body{width:100vh;width:100dvh;height:100vw;height:100dvw;padding:6px max(12px,env(safe-area-inset-bottom)) 76px max(12px,env(safe-area-inset-top))}
+html.rodado .bar{padding-left:max(16px,env(safe-area-inset-top));padding-right:max(16px,env(safe-area-inset-bottom));padding-bottom:8px}
+html.rodado #bar #zoomF{right:max(16px,env(safe-area-inset-bottom))}
+html.rodado .sheet,html.rodado #res{padding:0 max(14px,env(safe-area-inset-bottom)) 24px max(14px,env(safe-area-inset-top))}
+html.rodado .rephead{padding-top:10px}
+/* aviso do endereço fixo (nome do Mac em vez do número) */
+.fixo{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9;width:min(560px,calc(100% - 32px));background:var(--card);border-radius:16px;padding:16px;box-shadow:0 0 0 1px var(--bd),0 8px 24px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:12px;font-size:15px;line-height:1.4}
+.fixo .row{display:flex;gap:12px;flex-wrap:wrap}.fixo button{min-height:44px;padding:8px 16px}.fixo .sim{background:#378ADD;color:#fff;font-weight:600}
+/* play / pausa / voltar ao começo: só ícones */
+#go svg,#reset svg{width:28px;height:28px;fill:currentColor;display:block;margin:0 auto}#go .ch,#reset .ch{fill:currentColor}#reset{min-width:56px}
+/* trecho por toque: barrinha acima dos botões de baixo */
+.selbar{position:fixed;left:50%;transform:translateX(-50%);z-index:3;align-items:center;gap:12px;padding:6px 8px 6px 16px;border-radius:16px;background:var(--card);box-shadow:0 0 0 1px var(--bd),0 8px 24px rgba(0,0,0,.18);max-width:calc(100% - 32px);font-size:15px;white-space:nowrap}
+.selbar button{min-height:44px;padding:6px 14px}.selbar button{display:inline-flex;align-items:center;gap:8px}.selbar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}.selbar .ch{fill:currentColor;stroke:none}.selbar .on{background:#378ADD;color:#fff;font-weight:600}
+/* replays no celular */
+#repS .rephead{gap:12px}
+#rcTit{font-weight:700;font-size:17px;background:none;padding-left:0;margin-right:auto}
+#repCel{display:flex;flex-direction:column;gap:12px;padding-bottom:16px}
+.rc-lix{padding:12px 16px;border:1px dashed var(--bd);border-radius:14px}.rc-lix summary{font-weight:600;min-height:32px}.rc-lix .rc-tries{margin-top:10px}
+.rc-vazio{display:flex;flex-direction:column;gap:6px;padding:16px;border:1px dashed var(--bd);border-radius:14px}
+.rc-lista{display:flex;flex-direction:column;gap:12px}
+.rc-ex{background:var(--card);border-radius:16px;box-shadow:0 0 0 1px var(--bd);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.rc-exh{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.rc-exh>div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rc-ev{display:flex;align-items:center;gap:10px}
+.rc-spark{width:96px;height:30px}
+.rc-pct{font-size:22px;font-variant-numeric:tabular-nums}
+.rc-dif{font-weight:700;color:#639922}.rc-dif.neg{color:#E24B4A}
+.rc-tries{display:flex;flex-wrap:wrap;gap:8px}
+.rc-tries button{min-height:44px;font-variant-numeric:tabular-nums}
+.rc-det{display:flex;flex-direction:column;gap:12px}
+.rc-det h3{margin:0;font-size:19px}
+.rc-renome{display:flex;gap:8px;flex-wrap:wrap}.rc-renome input{flex:1 1 220px;min-height:44px;font:inherit;font-size:17px;padding:6px 12px;border-radius:11px;border:1px solid var(--bd);background:var(--card);color:var(--tx)}
+.rc-nota{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rc-bar{display:flex;width:180px;height:12px;border-radius:6px;overflow:hidden}.rc-bar span{display:block}
+.rc-rolo{width:100%;height:140px;display:block;background:var(--card);border-radius:12px;box-shadow:0 0 0 1px var(--bd)}
+.rc-fora{fill:var(--bg);opacity:.75}
+.rc-corte{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.rc-corte label{display:flex;align-items:center;gap:8px}.rc-corte input[type=range]{width:170px}
+.rc-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rc-acoes button{min-height:44px}
+.rc-ic{width:48px;height:48px;min-height:48px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.rc-ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rc-ic svg .ch{fill:currentColor;stroke:none}
+.rc-ic.on{background:#378ADD;color:#fff}
+.rc-acoes{gap:12px}.rc-acoes .rc-sep{flex:1}
+#rcCam.rc-ic{width:44px;height:44px;min-height:44px}
+.rc-go{background:#378ADD!important;color:#fff!important;font-weight:600}
+.rc-del{color:#E24B4A}
+.rc-conf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rc-fb{border-radius:12px;box-shadow:0 0 0 1px var(--bd);padding:10px 14px;background:var(--card)}
+.rc-fb summary{font-weight:600;min-height:36px;display:flex;align-items:center}
+.rc-fbin button[disabled]{display:none}
 </style>
 </head>
 <body>
-<div class="top"><h1 id="title">Conectando ao Mac…</h1><div id="cd"></div><span class="lb" id="perfLb"></span><span class="lb" id="midi"></span><span class="lb" id="link"><span class="dot"></span>Mac</span><span class="lb" id="lat" title="Atraso do Mac até esta tela"></span><button id="temaB" class="temaB" title="Tema desta tela: Automático, Claro ou Escuro">◐ Automático</button></div>
+<div class="top"><h1 id="title">Conectando ao Mac…</h1><div id="cd"></div><span id="treinoLb"></span><button id="conn" class="conn" title="Conexão com o piano e o Mac"><span class="dot" id="connDot"></span><span id="connMs">—</span></button><span class="lb" id="perfLb"></span><span class="lb" id="midi"></span><span class="lb" id="link"><span class="dot"></span>Mac</span><span class="lb" id="lat" title="Atraso do Mac até esta tela"></span><button id="temaB" class="temaB" title="Tema desta tela: Automático, Claro ou Escuro">◐ Automático</button></div>
 <div id="ult"></div>
 <div id="jogoV" class="jogoV"><div class="jv-wrap"><div class="jv-stage" id="jvStage"></div><span id="jvSt" class="jv-st" aria-live="polite"></span></div><div id="jvMsg" class="jg-msg" aria-live="polite"></div><div id="jvKb"></div><div id="jvRec" class="lb" style="white-space:normal;margin-top:6px"></div></div>
 <div id="turn">↻ Vire o iPhone de lado: a partitura fica bem maior.</div>
@@ -249,71 +362,112 @@ html,body{overflow-x:hidden}
 <canvas id="fallCv" style="display:none;width:100%;border-radius:10px;border:1px solid var(--bd);margin-top:6px"></canvas>
 <div id="errs"></div>
 <div id="kb"></div>
+<div class="sheet" id="repS"><div class="rephead"><button id="rcTit">Replays</button><button id="rcCam" class="rc-ic on" hidden aria-label="Gravar vídeo" title="Gravar vídeo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6.5" width="12.5" height="11" rx="2"/><path d="M15.5 10.5l5-3v9l-5-3"/></svg></button><button id="repFechar">Fechar</button></div><div id="repCel"></div></div>
 <div class="sheet" id="conc"><div class="rephead"><b>Conceitos</b><button id="concClose">Fechar</button></div><div id="concBody"><p class="lb">Carregando…</p></div></div>
 <div class="sheet" id="ini"><div class="rephead"><b>Início</b><button id="iniClose">Fechar</button></div><div id="iniBody"></div></div>
 <div class="sheet" id="sheet">
- <div class="rephead"><b>Opções</b><button id="sheetClose">Fechar</button></div>
+ <div class="rephead"><button id="ajVolta" class="ajVolta" hidden>‹ Ajustes</button><b id="ajTit">Ajustes</b><button id="sheetClose">Fechar</button></div>
+ <!-- Ajustes em duas camadas: em cima o que muda entre um treino e outro; os assuntos abrem uma tela própria (.pg) -->
+ <div id="ajHome" class="ajHome">
  <section class="grp" data-only="jogo"><h3>Jogo das notas</h3>
   <div class="f"><span class="lb">Nível</span><select id="jvNivel" aria-label="Nível"></select></div>
   <div class="f"><span class="lb">Modo</span><div class="seg" role="group" aria-label="Modo do jogo"><button class="jvm" data-v="calma">Uma por vez</button><button class="jvm" data-v="corre">Correndo</button><button class="jvm" data-v="ouvido">De ouvido</button></div></div>
   <div class="f"><div class="stack"><button id="jvTec"></button><button id="jvOit"></button><button id="jvSom"></button></div></div>
  </section>
- <section class="grp"><h3>🎯 Como praticar</h3>
-  <div class="f"><span class="lb">👤 Perfil (histórico e recordes de cada pessoa)</span><select id="perfSel"></select></div>
+ <section class="grp ajQ"><h3>Este treino</h3>
   <div class="f"><span class="lb">Exercício</span><select id="exSel"></select></div>
-  <div class="f" data-only="tr"><span class="lb">Trecho (linhas da partitura)</span><div class="seg"><select id="trA"></select><select id="trB"></select></div><div class="seg" style="margin-top:6px"><button id="trGo">Treinar este trecho</button><button id="trAll">Partitura inteira</button></div></div>
   <div class="f"><span class="lb">Mãos</span><div class="seg"><button class="mao" data-v="ambas">As duas</button><button class="mao" data-v="d">Só a direita</button><button class="mao" data-v="e">Só a esquerda</button></div></div>
-  <div class="f" data-only="mao1"><button class="sw" data-k="outra" data-n="O app toca a outra mão"></button><span class="lb">No modo com tempo, você ouve a mão que não está treinando.</span></div>
   <div class="f"><span class="lb">Modo</span><div class="seg"><button class="mode" data-v="time">Com tempo</button><button class="mode" data-v="wait">Espera (só as notas)</button></div></div>
-  <div class="f"><span class="lb">Antes de começar (uma preparação só)</span><div class="seg"><button class="pre" data-v="clk">Cliques (1 compasso)</button><button class="pre" data-v="sec">Esperar em silêncio</button></div></div>
-  <div class="f" data-only="pre-clk"><span class="lb">Quantos cliques de contagem ("1, 2, 3... já!")</span><div class="seg num"><button id="preNDn">−1</button><b id="preNV">—</b><button id="preNUp">+1</button></div></div>
-  <div class="f" data-only="pre-sec"><span class="lb">Segundos de espera depois de apertar "Começar"</span><div class="seg num"><button id="preDn">−1</button><b id="preV">—</b><button id="preUp">+1</button></div></div>
   <div class="f"><span class="lb">Andamento (com o exercício parado)</span><div class="seg num"><input type="range" id="bpmRng" min="30" max="140" step="1" aria-label="Andamento"><label class="bpmin"><input type="number" id="bpmV" min="30" max="140" step="1" inputmode="numeric" pattern="[0-9]*"> BPM</label></div></div>
-  <div class="f"><button class="sw" data-k="subir" data-n="Subir o andamento sozinho"></button><span class="lb">Acertou 90% ou mais: sobe 5 BPM e começa de novo, até o alvo.</span></div>
-  <div class="f" data-only="subir"><span class="lb">Andamento alvo</span><div class="seg num"><button id="alvoDn">−5</button><b id="alvoV">—</b><button id="alvoUp">+5</button></div></div>
-  <div class="f"><button id="ouvirB">▶ Ouvir o que eu toquei (sai no Mac ou no piano)</button></div>
-  <div class="f"><span class="lb">Volume da gravação</span><div class="seg num"><button id="rvDn">−</button><b id="rvV">—</b><button id="rvUp">+</button></div></div>
-  <div class="f"><span class="lb">Exigência do ritmo (verde até 150, 100 ou 60 ms fora do tempo)</span><div class="seg"><button class="tol" data-v="ini">Iniciante</button><button class="tol" data-v="nor">Normal</button><button class="tol" data-v="exi">Exigente</button></div></div>
+  <div class="f" data-only="tr"><span class="lb">Trecho (linhas da partitura)</span><div class="seg"><select id="trA"></select><select id="trB"></select></div><div class="seg" style="margin-top:8px"><button id="trGo">Treinar este trecho</button><button id="trAll">Partitura inteira</button></div></div>
  </section>
- <section class="grp"><h3>👀 O que aparece na tela</h3>
-  <div class="f"><span class="lb">Visualização</span><div class="seg"><button class="vis" data-v="score">Partitura</button><button class="vis" data-v="fall">Queda de notas</button></div></div>
-  <div class="f"><span class="lb">Partitura</span><div class="seg"><button class="view" data-v="linha">Linha atual (grande)</button><button class="view" data-v="tudo">Inteira (rola e tem zoom)</button></div></div>
-  <div class="f"><span class="lb">Escrever junto das notas</span><div class="seg"><button class="show" data-v="f">Dedos</button><button class="show" data-v="n">Nomes</button><button class="show" data-v="c">Contagem</button><button class="show" data-v="x">Nada</button></div></div>
-  <div class="f"><span class="lb">Nomes das notas</span><div class="seg"><button class="nmb" data-v="en">C D E F G</button><button class="nmb" data-v="pt">Dó Ré Mi Fá Sol</button></div></div>
-  <div class="f"><button id="cntX"></button><span class="lb">Liga ou desliga o "Compasso 1 · tempo 1…" só no exercício aberto; nos outros continua o padrão abaixo.</span></div>
-  <div class="f"><span class="lb">Ligar e desligar (padrão de todos os exercícios)</span><div class="stack"><button class="sw" data-k="cnt" data-n="Contagem"></button><button class="sw" data-k="hl" data-n="Acender a nota da vez"></button><button class="sw" data-k="kb" data-n="Teclado"></button><button class="sw" data-k="live" data-n="Cores enquanto toca"></button></div></div>
- </section>
- <section class="grp"><h3>🔈 Sons do jogo, dos conceitos e do recorde</h3>
-  <div class="f"><span class="lb">Saem por (sem o cabo do piano, saem pelo Mac)</span><div class="seg"><button class="jvs" data-v="piano">Piano</button><button class="jvs" data-v="mac">Mac</button><button class="jvs" data-v="celular">Este celular</button></div></div>
- </section>
- <section class="grp"><h3>🎹 Som guia (a música)</h3>
+ <nav class="ajMenu" aria-label="Mais ajustes">
+  <button class="ajIt" data-pg="som"><b>Som e metrônomo</b><span>som guia, outra mão, cliques, ouvir o que eu toquei</span></button>
+  <button class="ajIt" data-pg="tela"><b>Tela e partitura</b><span>linha ou inteira, dedos e nomes, teclado, cores</span></button>
+  <button class="ajIt" data-pg="ajuda"><b>Ajudas e contagem</b><span>preparação, subir o andamento, exigência, avisos</span></button>
+  <button class="ajIt" data-pg="cel"><b>Este celular</b><span>tema, letra, sempre deitado, tela acesa</span></button>
+ </nav>
+ </div>
+ <div class="pg" data-pg="som" hidden>
+ <section class="grp"><h3>Som guia (a música)</h3>
   <div class="f"><button class="sw" data-k="pno" data-n="Som guia"></button></div>
   <div class="f"><span class="lb">Sai por</span><div class="seg"><button class="out" data-v="mac">Mac</button><button class="out" data-v="piano">Piano</button></div></div>
   <div class="f" data-only="pno-piano"><span class="lb">Volume no piano</span><div class="seg num"><button class="vol" data-c="pvol" data-k="pv" data-d="-10">−</button><b id="pvV">—</b><button class="vol" data-c="pvol" data-k="pv" data-d="10">+</button></div></div>
+  <div class="f" data-only="mao1"><button class="sw" data-k="outra" data-n="O app toca a outra mão"></button><span class="lb ex">No modo com tempo, você ouve a mão que não está treinando.</span></div>
  </section>
- <section class="grp"><h3>🥁 Metrônomo</h3>
+ <section class="grp"><h3>Metrônomo</h3>
   <div class="f"><button class="sw" data-k="clk" data-n="Cliques"></button></div>
   <div class="f"><span class="lb">Sai por</span><div class="seg"><button class="ckout" data-v="mac">Mac</button><button class="ckout" data-v="piano">Piano (bateria)</button></div></div>
   <div class="f" data-only="clk-piano"><span class="lb">Som no piano</span><div class="seg"><button class="cks" data-v="metro">Metrônomo</button><button class="cks" data-v="wood">Madeira</button><button class="cks" data-v="claves">Claves</button><button class="cks" data-v="stick">Aro da caixa</button></div></div>
   <div class="f" data-only="clk-piano"><span class="lb">Volume no piano</span><div class="seg num"><button class="vol" data-c="pcvol" data-k="pcv" data-d="-10">−</button><b id="pcvV">—</b><button class="vol" data-c="pcvol" data-k="pcv" data-d="10">+</button></div></div>
   <div class="f"><button id="ckTest">▶ Testar clique</button></div>
  </section>
+ <section class="grp"><h3>Gravação</h3>
+  <div class="f"><button id="ouvirB">▶ Ouvir o que eu toquei</button><span class="lb ex">Sai no Mac ou no piano, com o pedal e a força que você usou.</span></div>
+  <div class="f"><span class="lb">Volume da gravação</span><div class="seg num"><button id="rvDn">−</button><b id="rvV">—</b><button id="rvUp">+</button></div></div>
+ </section>
+ <section class="grp"><h3>Sons do jogo, dos conceitos e do recorde</h3>
+  <div class="f"><span class="lb">Saem por</span><div class="seg"><button class="jvs" data-v="piano">Piano</button><button class="jvs" data-v="mac">Mac</button><button class="jvs" data-v="celular">Este celular</button></div><span class="lb ex">Sem o cabo do piano, saem pelo Mac.</span></div>
+ </section>
+ </div>
+ <div class="pg" data-pg="tela" hidden>
+ <section class="grp"><h3>Partitura</h3>
+  <div class="f"><span class="lb">Visualização</span><div class="seg"><button class="vis" data-v="score">Partitura</button><button class="vis" data-v="fall">Queda de notas</button></div></div>
+  <div class="f"><span class="lb">Partitura</span><div class="seg"><button class="view" data-v="linha">Linha atual (grande)</button><button class="view" data-v="tudo">Inteira (rola e tem zoom)</button></div></div>
+  <div class="f"><span class="lb">Escrever junto das notas</span><div class="seg"><button class="show" data-v="f">Dedos</button><button class="show" data-v="n">Nomes</button><button class="show" data-v="c">Contagem</button><button class="show" data-v="x">Nada</button></div></div>
+  <div class="f"><span class="lb">Nomes das notas</span><div class="seg"><button class="nmb" data-v="en">C D E F G</button><button class="nmb" data-v="pt">Dó Ré Mi Fá Sol</button></div></div>
+  <div class="f"><button id="meiaB"></button><span class="lb ex">Na segunda metade da linha, os compassos que você já tocou dão lugar ao começo da próxima linha, para você ler antes de chegar lá.</span></div>
+  <div class="f"><button id="lupaB"></button><span class="lb ex">Os botões 🔍− e 🔍+ que aparecem por cima da partitura inteira. Desligado, eles somem e o zoom fica como está.</span></div>
+ </section>
+ <section class="grp"><h3>Ligar e desligar</h3>
+  <div class="f"><button id="cntX"></button><span class="lb ex">Liga ou desliga o "Compasso 1 · tempo 1…" só no exercício aberto; nos outros continua o padrão abaixo.</span></div>
+  <div class="f"><span class="lb">Padrão de todos os exercícios</span><div class="stack"><button class="sw" data-k="cnt" data-n="Contagem"></button><button class="sw" data-k="hl" data-n="Acender a nota da vez"></button><button class="sw" data-k="kb" data-n="Teclado"></button><button class="sw" data-k="live" data-n="Cores enquanto toca"></button></div></div>
+ </section>
+ </div>
+ <div class="pg" data-pg="ajuda" hidden>
+ <section class="grp"><h3>Antes de começar</h3>
+  <div class="f"><span class="lb">Preparação</span><div class="seg"><button class="pre" data-v="clk">Cliques (1 compasso)</button><button class="pre" data-v="sec">Esperar em silêncio</button></div></div>
+  <div class="f" data-only="pre-clk"><span class="lb">Quantos cliques de contagem ("1, 2, 3... já!")</span><div class="seg num"><button id="preNDn">−1</button><b id="preNV">—</b><button id="preNUp">+1</button></div></div>
+  <div class="f" data-only="pre-sec"><span class="lb">Segundos de espera depois de apertar "Começar"</span><div class="seg num"><button id="preDn">−1</button><b id="preV">—</b><button id="preUp">+1</button></div></div>
+ </section>
+ <section class="grp"><h3>Andamento e exigência</h3>
+  <div class="f"><button class="sw" data-k="subir" data-n="Subir o andamento sozinho"></button><span class="lb ex">Acertou 90% ou mais: sobe 5 BPM e começa de novo, até o alvo.</span></div>
+  <div class="f" data-only="subir"><span class="lb">Andamento alvo</span><div class="seg num"><button id="alvoDn">−5</button><b id="alvoV">—</b><button id="alvoUp">+5</button></div></div>
+  <div class="f"><span class="lb">Exigência do ritmo</span><div class="seg"><button class="tol" data-v="ini">Iniciante</button><button class="tol" data-v="nor">Normal</button><button class="tol" data-v="exi">Exigente</button></div><span class="lb ex">Fica verde até 150, 100 ou 60 ms fora do tempo.</span></div>
+ </section>
  <section class="grp"><h3>Facilidades</h3>
-  <div class="f"><span class="lb">Tema desta tela</span><div class="seg"><button class="tema" data-v="auto">Automático</button><button class="tema" data-v="light">Claro</button><button class="tema" data-v="dark">Escuro</button></div></div>
-  <div class="f"><span class="lb">Tamanho da letra nesta tela</span><div class="seg"><button class="letra" data-v="1">Normal</button><button class="letra" data-v="1.15">Grande</button><button class="letra" data-v="1.3">Maior</button></div></div>
-  <div class="f"><div class="stack"><button class="sw" data-k="ini" data-n="Abrir no Início (botões grandes)"></button><button class="sw" data-k="simples" data-n="Tela simples (no Mac)"></button><button class="sw" data-k="voz" data-n="Ler o resultado em voz alta (no Mac)"></button><button class="sw" data-k="pcmd" data-n="Comandos pelo piano"></button><button class="sw" data-k="avisos" data-n="Avisos com dicas"></button><button class="sw" data-k="tut" data-n="Passo a passo para quem começa"></button></div><span class="lb">Comandos pelo piano: as teclas mais graves. O 1º Lá = Começar/Parar, o Si = Recomeçar, o Dó = preparar o treino sugerido, o Ré = próxima etapa da rotina.</span></div>
-  <div class="f"><button id="deitB"></button><span class="lb">Ligado: o app fica sempre deitado, mesmo com a rotação do celular bloqueada (no Android ele entra em tela cheia no primeiro toque).</span></div>
-  <div class="f"><button id="acesaB"></button><span class="lb">Enquanto esta tela estiver aberta, o celular não apaga sozinho (começa no primeiro toque na tela).</span></div>
+  <div class="f"><div class="stack"><button class="sw" data-k="ini" data-n="Abrir no Início (botões grandes)"></button><button class="sw" data-k="simples" data-n="Tela simples (no Mac)"></button><button class="sw" data-k="voz" data-n="Ler o resultado em voz alta (no Mac)"></button><button class="sw" data-k="pcmd" data-n="Comandos pelo piano"></button><button class="sw" data-k="avisos" data-n="Avisos com dicas"></button><button class="sw" data-k="tut" data-n="Passo a passo para quem começa"></button><button class="sw" data-k="trc" data-n="Tocar no compasso para escolher e repetir trechos"></button><button class="sw" data-k="espT" data-n="Modo Espera no tempo da música"></button><button class="sw" data-k="somR" data-n="Gravar o som do piano nos replays"></button></div><span class="lb ex">Comandos pelo piano: as teclas mais graves. O 1º Lá = Começar/Parar, o Si = Recomeçar, o Dó = preparar o treino sugerido, o Ré = próxima etapa da rotina.</span></div>
   <div class="f"><button id="tutVer">Ver o passo a passo agora</button></div>
  </section>
- <p class="lb">O piano continua ligado no Mac pelo USB; o Mac corrige e manda a tela para cá. Deixe o Chrome do Mac aberto e o Mac acordado. Se a tela ainda apagar, ligue "Tela sempre acesa" acima, ou no celular: Ajustes → Tela e Brilho → Bloqueio Automático → Nunca (durante o treino).</p>
+ </div>
+ <div class="pg" data-pg="cel" hidden>
+ <section class="grp"><h3>Aparência</h3>
+  <div class="f"><span class="lb">Tema desta tela</span><div class="seg"><button class="tema" data-v="auto">Automático</button><button class="tema" data-v="light">Claro</button><button class="tema" data-v="dark">Escuro</button></div></div>
+  <div class="f"><span class="lb">Tamanho da letra nesta tela</span><div class="seg"><button class="letra" data-v="1">Normal</button><button class="letra" data-v="1.15">Grande</button><button class="letra" data-v="1.3">Maior</button></div></div>
+  <div class="f"><span class="lb">Perfil (histórico e recordes de cada pessoa)</span><select id="perfSel"></select></div>
+ </section>
+ <section class="grp"><h3>Tela</h3>
+  <div class="f"><button id="deitB"></button><span class="lb ex">Ligado: o app fica sempre deitado, mesmo com a rotação do celular bloqueada (no Android ele entra em tela cheia no primeiro toque).</span></div>
+  <div class="f"><button id="acesaB"></button><span class="lb ex">Enquanto esta tela estiver aberta, o celular não apaga sozinho (começa no primeiro toque na tela).</span></div>
+  <p class="lb">O piano continua ligado no Mac pelo USB; o Mac corrige e manda a tela para cá. Deixe o Chrome do Mac aberto e o Mac acordado. Se a tela ainda apagar, ligue "Tela sempre acesa" acima, ou no celular: Ajustes → Tela e Brilho → Bloqueio Automático → Nunca (durante o treino).</p>
+ </section>
+ </div>
 </div>
-<div class="bar" id="bar"><button id="iniBtn">Início</button><button id="go">Começar</button><button id="jvDica" style="display:none">Dica</button><button id="sairJ" style="display:none">Sair do jogo</button><button id="reset">Recomeçar</button><button id="viewBtn"></button><span id="zoomF"><button id="zOut" title="Partitura menor">🔍−</button><b id="zV">100%</b><button id="zIn" title="Partitura maior">🔍+</button></span><button class="vol" data-c="pvol" data-k="pv" data-d="-10" title="Guia mais baixo">🔉</button><button class="vol" data-c="pvol" data-k="pv" data-d="10" title="Guia mais alto">🔊</button><button id="repBtn">Resultado</button><button id="more">Opções</button></div>
+<div class="bar" id="bar"><button id="iniBtn">Início</button><button id="go">Começar</button><button id="jvDica" style="display:none">Dica</button><button id="sairJ" style="display:none">Sair do jogo</button><button id="reset">Recomeçar</button><span id="selIco" class="selico" style="display:none"></span><button id="viewBtn"></button><span id="zoomF"><button id="zOut" title="Partitura menor">🔍−</button><b id="zV">100%</b><button id="zIn" title="Partitura maior">🔍+</button></span><button class="vol" data-c="pvol" data-k="pv" data-d="-10" title="Guia mais baixo">🔉</button><button class="vol" data-c="pvol" data-k="pv" data-d="10" title="Guia mais alto">🔊</button><button id="repBtn">Resultado</button><button id="more">Ajustes</button></div>
 <div class="off" id="off">Sem conexão com o Mac.<br><br>Confira se o "Abrir Treino de Piano" está ligado no Mac, com o app aberto no Chrome, e se o iPhone está no mesmo Wi-Fi.</div>
 <script src="queda.js"></script>
 <script src="nosleep.js" onerror="this.remove()"></script>
 <script>
 var ENSAIO=/[?&]ensaio\b/.test(location.search);
+/* registro: o que acontece nesta tela vai para registro/AAAA-MM-DD.log no Mac (ou fica no app do iPhone até ele reencontrar o Mac) */
+var REGC=[],REGDE=/[?&]app\b/.test(location.search)?'app':'cel';
+function reg(t){if(ENSAIO)return;try{REGC.push(new Date().toTimeString().slice(0,8)+' '+(/Android/i.test(navigator.userAgent)?'android ':/iPhone|iPad/.test(navigator.userAgent)?'iphone ':'')+String(t).replace(/\s+/g,' ').slice(0,600));if(REGC.length>300)REGC.shift();if(!reg.t)reg.t=setTimeout(regEnvia,3000)}catch(e){}}
+function regEnvia(){clearTimeout(reg.t);reg.t=null;if(!REGC.length)return;var b=REGC.join('\n');REGC=[];try{fetch('/api/registro?de='+REGDE,{method:'POST',body:b,keepalive:true}).catch(function(){})}catch(e){}}
+window.addEventListener('error',function(e){reg('ERRO '+(e.message||'')+' '+String(e.filename||'').split('/').pop()+':'+(e.lineno||''))});
+window.addEventListener('pagehide',function(){reg('tela fechada ou recarregada');regEnvia()});
+document.addEventListener('visibilitychange',function(){reg(document.visibilityState==='visible'?'voltou para a tela':'saiu da tela')});
+reg('abriu '+location.host+location.pathname+location.search+' · arquivo de '+document.lastModified);
+
 var V=null,S=null,lastOk=0,lastNew=0,start=Date.now(),VIEW='linha';
 try{VIEW=localStorage.getItem('cel_view')||'linha'}catch(e){}
 var $=function(id){return document.getElementById(id)};
@@ -343,7 +497,27 @@ function fit(){var bh=$('bar').offsetHeight;if(fit.bh!==bh){fit.bh=bh;document.b
  if(cx[sy0]){yi=cx[sy0][0];ai=cx[sy0][1]-yi}
  full=[0,yi,lg,ai];
  sv.setAttribute('viewBox',full.join(' '));
- var w=box.clientWidth-8,h=Math.max(80,Math.min(w*full[3]/full[2],free));sv.style.height=h+'px'}
+ var w=box.clientWidth-8,h=Math.max(80,Math.min(w*full[3]/full[2],free));sv.style.height=h+'px';try{meia()}catch(e){}}
+/* virada pela metade (como a virada de página dos apps de partitura): na 2ª metade da linha, os compassos já tocados, à esquerda,
+   dão lugar ao começo da próxima linha. Assim dá para ler o que vem antes de chegar lá. Desliga em Ajustes → Tela e partitura */
+var MEIA=true;try{MEIA=localStorage.getItem('cel_meia')!=='0'}catch(e){}
+function meiaFundo(){var e=$('score');while(e){var c=getComputedStyle(e).backgroundColor;if(c&&c!=='transparent'&&!/rgba\(.*,\s*0\)$/.test(c))return c;e=e.parentElement}return '#fff'}
+function meiaM(){var L=S&&S.lin;if(!L)return null;var nb=relNb(S);if(nb!=null&&nb>=0&&S.rel)return Math.floor(nb/S.rel.beats);return L.m}
+function meia(){var sv=$('score').querySelector('svg'),o=document.getElementById('meiaV'),L=S&&S.lin;
+ var m=MEIA&&VIEW!=='tudo'&&S&&S.run&&!S.fall&&L&&L.per>1?meiaM():null,sy=m==null?null:Math.floor(m/L.per),mi=m==null?0:m%L.per;
+ var prox=sv&&sy!=null?sv.querySelector('g[data-sy="'+(sy+1)+'"]'):null;
+ if(!sv||m==null||sy!==S.sy||mi<Math.max(1,Math.floor(L.per/2))||!prox){if(o)o.remove();meia.k='';return}
+ var vb=(sv.getAttribute('viewBox')||'').split(' ').map(Number),k=[sy,mi,vb.join(','),prox.childNodes.length].join('|');
+ if(o&&o.parentNode===sv&&meia.k===k)return;meia.k=k;if(o)o.remove();
+ var NS='http://www.w3.org/2000/svg',x=Math.round(L.x0+mi*L.mw),y0=vb[1],h=vb[3],el=function(t,a){var e=document.createElementNS(NS,t);for(var n in a)e.setAttribute(n,a[n]);return e};
+ var g=el('g',{id:'meiaV'}),cp=el('clipPath',{id:'meiaClip',clipPathUnits:'userSpaceOnUse'});cp.appendChild(el('rect',{x:-40,y:y0+230,width:x+40,height:h}));
+ var dfs=el('defs',{});dfs.appendChild(cp);g.appendChild(dfs);
+ g.appendChild(el('rect',{x:-40,y:y0,width:x+40,height:h,fill:meiaFundo()}));
+ var cl=prox.cloneNode(true);cl.removeAttribute('data-sy');Array.prototype.forEach.call(cl.querySelectorAll('[id]'),function(n){n.removeAttribute('id')});
+ var w=el('g',{transform:'translate(0,-230)','clip-path':'url(#meiaClip)'});w.appendChild(cl);g.appendChild(w);
+ g.appendChild(el('line',{x1:x,x2:x,y1:y0+6,y2:y0+h-6,stroke:'#378ADD','stroke-width':3,'stroke-dasharray':'8 6','stroke-linecap':'round'}));
+ var tx=el('text',{x:x-8,y:y0+20,'text-anchor':'end','font-size':15,'font-weight':700,fill:'#378ADD'});tx.textContent='próxima linha';g.appendChild(tx);
+ sv.appendChild(g)}
 function setZm(z,cx,cy){var box=$('score'),sv=box.querySelector('svg');if(!sv)return;cx=cx==null?box.clientWidth/2:cx;cy=cy==null?box.clientHeight/2:cy;
  var fx=(box.scrollLeft+cx)/Math.max(1,sv.clientWidth),fy=(box.scrollTop+cy)/Math.max(1,sv.clientHeight);
  ZM=Math.max(0.4,Math.min(4,z));try{localStorage.setItem('cel_zoom',ZM)}catch(e){}
@@ -352,8 +526,10 @@ window.addEventListener('resize',fit);window.addEventListener('orientationchange
 /* ---------- queda de notas (iPhone): o Mac manda as notas e a hora em que a música começou; aqui anima sozinho ---------- */
 var FALL=null,PNB=null,FLOOP=false;
 var LET=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],SOL=['Dó','Dó♯','Ré','Mi♭','Mi','Fá','Fá♯','Sol','Lá♭','Lá','Si♭','Si'];
+var POFF=0,PDRAG=null,PARRASTOU=false;
+var GOI={play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="5.5" width="4" height="13" rx="1"/><rect class="ch" x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>',ini:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="5" y="6" width="2.6" height="12" rx="1"/><path class="ch" d="M19 6v12l-9.5-6z"/></svg>'};
 function phNb(){var F=FALL;if(!F)return 0;if(F.run&&F.mode==='time'&&F.t0)return ((Date.now()+(OFF||0))-F.t0)/1000/F.spb;
- var t=F.run&&F.mode==='wait'&&F.wb!=null?F.wb:(F.m&&F.m.notes.length?F.m.notes[0][0]-1:0);PNB=PNB==null?t:PNB+(t-PNB)*0.18;return PNB}
+ var t=F.run&&F.mode==='wait'&&F.wb!=null?F.wb:F.nbP!=null?F.nbP:(F.m&&F.m.notes.length?F.m.notes[0][0]-1:0);if(!F.run)t+=POFF;else POFF=0;PNB=PNB==null?t:PNB+(t-PNB)*0.18;return PNB}
 function fallLoop(){if(FLOOP)return;FLOOP=true;(function f(){if(!S||!S.fall){FLOOP=false;return}
  var F=FALL,dark=celEscuro(),nm=S.nomes==='pt'?SOL:LET;
  Queda.draw($('fallCv'),F.m,phNb(),{dark:dark,live:(S.opt||{}).live!==false||!F.run,played:F.played||{},show:S.show,cName:function(m){return nm[m%12]+(Math.floor(m/12)-1)}});
@@ -375,7 +551,11 @@ function openRes(){RESHID='';if(RES){$('res').classList.add('show');$('res').scr
 var FESTA_T=0;function festa(f){if(!f||f.ts===FESTA_T)return;FESTA_T=f.ts;var d=document.createElement('div'),b=document.createElement('div');d.className='festa';b.className='festa-box';b.innerHTML='<b>'+f.t+'</b>'+(f.s?'<span>'+f.s+'</span>':'');d.appendChild(b);
  var cores=['#378ADD','#639922','#EF9F27','#D4537E','#7F77DD'];for(var k=0;k<24;k++){var p=document.createElement('i'),a=k/24*2*Math.PI,r=110+Math.random()*80;p.style.setProperty('--dx',Math.round(Math.cos(a)*r)+'px');p.style.setProperty('--dy',Math.round(Math.sin(a)*r)+'px');p.style.background=cores[k%5];b.appendChild(p)}
  document.body.appendChild(d);setTimeout(function(){d.classList.add('sai')},2400);setTimeout(function(){d.remove()},2900)}
-function paint(s){
+/* som do piano nos replays com o cabo no iPhone: o Mac põe uma chave (somk) enquanto a tentativa dura; o app grava a entrada USB e manda ao Mac */
+var SOMK=null;
+function somPiano(s){if(!APPN)return;var k=(s&&s.somk)||null;if(k===SOMK)return;
+ try{if(SOMK)webkit.messageHandlers.acao.postMessage({somPiano:{parar:SOMK}});if(k)webkit.messageHandlers.acao.postMessage({somPiano:{gravar:k,dif:Math.round(OFF||0)}})}catch(e){}SOMK=k}
+function paint(s){try{somPiano(s)}catch(e){}
  try{festa(s.festa)}catch(e){}
  $('title').textContent=s.title||'';if(relNb(s)==null||relNb(s)<0)$('cd').innerHTML=s.cd||'';$('errs').innerHTML=s.errs||'';$('midi').innerHTML=s.midi||'';
  var ink=myInk(),loc=relNb(s)!=null,fix=function(h){h=h.replace(/ id="(score|kb)"/,'');if(loc)h=h.replace(/<rect[^>]*fill:#B5D4F4;opacity:0\.45[^>]*><\/rect>/g,'').split('#185FA5').join(s.ink||ink);return s.ink&&s.ink!==ink?h.split(s.ink).join(ink):h};
@@ -388,8 +568,8 @@ function paint(s){
   if(FULL&&(rep||s.score!==paint.ls)){paint.ls=s.score;var tmp=document.createElement('div');tmp.innerHTML=fix(s.score);Array.prototype.forEach.call(tmp.querySelectorAll('g[data-sy]'),function(g){
    var old=bx.querySelector('g[data-sy="'+g.getAttribute('data-sy')+'"]');if(old)old.parentNode.replaceChild(g,old)})}}
  else{/* só troca a partitura quando ela mudou (a contagem muda a cada tempo, a partitura não) */var nh=fix(s.score||'');if(nh!==paint.lh||bx.dataset.k!==''){paint.lh=nh;bx.innerHTML=nh;bx.dataset.k='';rep=true}}
- paintRes(s);
- var lsy=relSy(s);if(lsy!=null)s.sy=lsy;S=s;paintFall(s);fit();relLoop();/* só devolve a rolagem quando a partitura foi trocada inteira, e nunca no meio da descida para a linha seguinte */
+ paintRes(s);try{paintTreino(s)}catch(e){}try{somEsp(s)}catch(e){}
+ var lsy=relSy(s);if(lsy!=null)s.sy=lsy;S=s;paintFall(s);try{paintSel(s)}catch(e){}fit();relLoop();/* só devolve a rolagem quando a partitura foi trocada inteira, e nunca no meio da descida para a linha seguinte */
  if(VIEW==='tudo'&&rep&&!fit.moved){bx.scrollTop=st;bx.scrollLeft=sl}
  /* o Mac precisa saber se esta tela quer a partitura inteira (ele desenha à parte para cá) */
  if(s.celv&&s.celv!==VIEW&&Date.now()-(paint.cv||0)>2000){paint.cv=Date.now();cmd({cmd:'celvista',v:VIEW})}
@@ -398,7 +578,8 @@ function paint(s){
  document.querySelectorAll('.pre').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.pre==='sec'?'sec':'clk'))});$('rvV').textContent=(s.recv!=null?s.recv:'—')+'%';$('alvoV').textContent=(s.alvo||'—')+' BPM';$('preNV').textContent=s.preN?s.preN+(s.preN>1?' cliques':' clique'):'Um compasso';$('preV').textContent=(s.preS!=null?s.preS:'—')+' s';
  /* trecho: só refaz a lista quando muda (para não fechar a lista enquanto você escolhe) */
  if(s.tr){var tk=JSON.stringify(s.tr);if($('trA').dataset.k!==tk){$('trA').dataset.k=tk;var o=s.tr.l.map(function(t,i){return '<option value="'+(i+1)+'">'+t+'</option>'}).join('');$('trA').innerHTML=o;$('trB').innerHTML=o;$('trA').value=s.tr.v[0];$('trB').value=s.tr.v[1]}}document.querySelectorAll('[data-only]').forEach(function(d){d.style.display=only[d.dataset.only]?'':'none'});
- var go=$('go');go.textContent=s.run?'Parar':'Começar';go.classList.toggle('stop',!!s.run);
+ var go=$('go'),gk=(s.run?'pause':'play')+(s.pausa?1:0),gn=s.run?'Pausar':s.pausa?'Continuar de onde parou':'Começar do começo';if(go.dataset.k!==gk||!go.querySelector('svg')){go.dataset.k=gk;go.innerHTML=GOI[s.run?'pause':'play']}go.setAttribute('aria-label',gn);go.title=gn;go.classList.toggle('stop',!!s.run);go.classList.toggle('pausado',!!s.pausa);
+ var rs=$('reset');if(!rs.querySelector('svg')){rs.innerHTML=GOI.ini;rs.setAttribute('aria-label','Voltar ao começo');rs.title='Voltar ao começo'}
  document.querySelectorAll('.mode').forEach(function(b){b.classList.toggle('on',b.dataset.v===s.mode)});
  $('pvV').textContent=(s.pv!=null?s.pv:'—')+'%';$('pcvV').textContent=(s.pcv!=null?s.pcv:'—')+'%';
  document.querySelectorAll('.nmb').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.nomes||'en'))});
@@ -439,13 +620,29 @@ var ES=null,ESt=0,RELIGA=0;
 function listen(){if(ES)try{ES.close()}catch(x){}ESt=Date.now();var es=ES=new EventSource('/api/stream');es.onopen=function(){FIRST=true;lastOk=Date.now()};
  es.onmessage=function(e){var t1=Date.now();lastOk=lastNew=t1;try{var s=JSON.parse(e.data);S=s;paint(s);measure(s,t1)}catch(x){}};
  es.addEventListener('ping',function(){lastOk=Date.now()});
+ es.addEventListener('midi',function(e){lastOk=Date.now();celMidiOut(e)});
  es.onerror=function(){/* o EventSource reconecta sozinho; o vigia abaixo cobre quando ele trava */}}
-function religa(){var now=Date.now();if(now-ESt<2000)return;RELIGA++;listen()}
+function religa(){var now=Date.now();if(now-ESt<2000)return;RELIGA++;reg('religou o canal com o Mac (sem sinal há '+(now-lastOk)+' ms)');listen()}
 setInterval(function(){if(Date.now()-lastOk>2500)religa()},500);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&Date.now()-lastOk>1500)religa()});
 window.addEventListener('online',religa);
 setInterval(function(){var now=Date.now(),ok=now-lastOk<3000&&now-lastNew<30000;
- $('link').innerHTML='<span class="dot '+(ok?'ok':'bad')+'"></span>Mac';$('off').classList.toggle('show',!ok&&now-start>4000)},500);
+ $('link').innerHTML='<span class="dot '+(ok?'ok':'bad')+'"></span>Mac';(function(v){if(v!==!!religa.off){religa.off=v;reg(v?'mostrou "Sem conexão com o Mac"':'conexão com o Mac voltou')}})(!ok&&now-start>4000);$('off').classList.toggle('show',!ok&&now-start>4000)},500);
+/* trecho por toque (o Mac decide): tocar num compasso da partitura ou da queda escolhe o trecho; a barrinha acima dos botões repete, para e limpa */
+var SIC={rep:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>',x:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',stop:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="6.5" width="11" height="11" rx="2"/></svg>'};
+function paintSel(s){var b=$('selIco'),x=s&&s.sel,h='',ic=function(c,n,i,on){return '<button data-sc="'+c+'"'+(on?' class="on"':'')+' aria-label="'+n+'" title="'+n+'">'+SIC[i]+'</button>'};
+ /* só ícones, na barra de baixo (nunca em cima do teclado). Repetindo: o próprio Parar encerra e a volta aparece no aviso de cima */
+ if(x&&!x.off&&!s.jogo&&!x.loop){if(x.er)h=ic('selerr','Parar e repetir o que errei','rep',1);else if(x.a!=null&&!s.run)h=ic('selrep','Repetir '+(x.a===x.b?'o compasso '+x.a:'os compassos '+x.a+' a '+x.b)+' sem parar','rep',1)+ic('selclr','Desmarcar o trecho','x')}
+ if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h}b.style.display=h?'flex':'none';$('reset').classList.toggle('selhide',!!h)}
+$('selIco').addEventListener('click',function(e){var t=e.target.closest('[data-sc]');if(t)cmd({cmd:t.dataset.sc})});
+$('score').addEventListener('click',function(e){if(!S||S.run||!S.sel||S.sel.off)return;var r=e.target.closest&&e.target.closest('[data-mm]');if(r)cmd({cmd:'selm',v:+r.dataset.mm})});
+/* parado ou pausado: arrastar a queda para cima e para baixo mostra a música toda (tocar sem arrastar escolhe o compasso) */
+$('fallCv').addEventListener('touchstart',function(e){var F=FALL;if(!F||F.run)return;PDRAG={y:e.touches[0].clientY,o:POFF};PARRASTOU=false},{passive:true});
+$('fallCv').addEventListener('touchmove',function(e){if(!PDRAG)return;var dy=e.touches[0].clientY-PDRAG.y;if(Math.abs(dy)>8)PARRASTOU=true;if(!PARRASTOU)return;e.preventDefault();var F=FALL,tot=F&&F.m&&F.m.notes.length?Math.max.apply(null,F.m.notes.map(function(n){return n[0]+n[1]})):0;POFF=Math.max(-tot-4,Math.min(tot+4,PDRAG.o+dy/Queda.ppb(this)))},{passive:false});
+$('fallCv').addEventListener('touchend',function(){PDRAG=null});
+$('fallCv').addEventListener('click',function(e){if(PARRASTOU){PARRASTOU=false;return}var F=FALL;if(!F||!F.m||F.run||!S||!S.sel||S.sel.off)return;var r=this.getBoundingClientRect(),b=Queda.beatAt(this,phNb(),e.clientY-r.top);if(b==null)return;
+ var i=Math.floor(b/(F.m.beats||4)),mn=F.m.x&&F.m.x.mn;if(i<0)return;var n=mn?mn[i]:i+1;if(n!=null)cmd({cmd:'selm',v:n})});
+
 $('go').onclick=function(){cmd({cmd:S&&S.jogo?'jgo':'go'})};
 $('repBtn').onclick=openRes;
 document.addEventListener('click',function(e){if(e.target.id==='repClose'){RESHID=RES;$('res').classList.remove('show')}});
@@ -568,6 +765,7 @@ function paintIni(s){var I=s.ini;if(!I)return;var h='';
   (I.volta?'<button class="ini-b" data-c="retoma" data-k="'+I.volta.k+'">'+ilu('continuar','ini')+'<b>Continuar de onde parei</b><span>'+I.volta.t+'</span></button>':'')+
   '<button class="ini-b" data-c="jabrir">'+ilu('jogo','ini')+'<b>Jogo das notas</b><span>ler as notas na pauta</span></button>'+
   '<button class="ini-b" data-c="concA">'+ilu('conceitos','ini')+'<b>Conceitos</b><span>o que o livro já ensinou</span></button>'+
+  '<button class="ini-b" data-c="replays">'+ilu('continuar','ini')+'<b>Replays</b><span>ouvir, comparar e mandar o que você tocou</span></button>'+
   '<button class="ini-b" data-c="opc">'+ilu('musicas','ini')+'<b>Escolher exercício</b><span>músicas, livro, aquecimento</span></button></div>'+
   '<h3 style="margin:18px 0 6px">Rotina de hoje</h3><div class="rot">'+I.rot.map(function(r,i){return '<button class="'+(r[1]?'feito':'')+'" data-c="etapa" data-k="'+r[2]+'" data-t="'+r[3]+'"><i>'+(r[1]?'✓':i+1)+'</i><span>'+r[0]+'</span></button>'}).join('')+'</div>'+
   (s.ritn?'<h3 style="margin:18px 0 6px">Ritmo novo a cada vez</h3><div class="rot">'+s.ritn.map(function(r){return '<button data-c="rnovo" data-k="'+r[0]+'"><i>♩</i><span>'+r[1]+'</span></button>'}).join('')+'</div>':'');
@@ -576,6 +774,7 @@ $('iniBody').addEventListener('click',function(e){var b=e.target.closest('button
  if(b.dataset.perf){cmd({cmd:'perfil',v:b.dataset.perf});return}
  if(c==='opc'){$('ini').classList.remove('open');$('sheet').classList.add('open');return}
  if(c==='concA'){abrirConc();return}
+ if(c==='replays'){abrirReplays();return}
  if(c==='prox')cmd({cmd:'prox'});else if(c==='retoma')cmd({cmd:'retoma',v:b.dataset.k});else if(c==='jabrir')cmd({cmd:'jabrir'});else if(c==='etapa')cmd({cmd:'etapa',v:b.dataset.k,test:b.dataset.t==='1'});else if(c==='rnovo')cmd({cmd:'rnovo',v:b.dataset.k});
  $('ini').classList.remove('open')});
 $('iniBtn').onclick=function(){if(S)paintIni(S);$('ini').classList.add('open');$('ini').scrollTop=0};$('iniClose').onclick=function(){$('ini').classList.remove('open')};
@@ -609,6 +808,11 @@ function acesaPinta(){var b=$('acesaB');b.textContent='Tela sempre acesa: '+(ACE
 function acesaAplica(){if(ENSAIO||!window.NoSleep)return;if(!NOSL)NOSL=new NoSleep();if(ACESA&&!NOSLON){try{var p=NOSL.enable();NOSLON=true;if(p&&p.catch)p.catch(function(){NOSLON=false})}catch(e){NOSLON=false}}else if(!ACESA&&NOSLON){try{NOSL.disable()}catch(e){}NOSLON=false}}
 document.addEventListener('pointerdown',function(){if(ACESA&&!NOSLON)acesaAplica()},true);
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'){NOSLON=false}});
+/* lupa de zoom por cima da partitura inteira: dá para desligar (padrão: ligada, como era) */
+function lupaPinta(){var on=!document.documentElement.classList.contains('semlupa'),b=$('lupaB');if(!b)return;b.textContent='Lupa de zoom na partitura inteira: '+(on?'ligado':'desligado');b.classList.toggle('on',on)}
+function meiaPinta(){var b=$('meiaB');if(!b)return;b.textContent='Virada pela metade: '+(MEIA?'ligado':'desligado');b.classList.toggle('on',MEIA)}
+$('meiaB').onclick=function(){MEIA=!MEIA;try{localStorage.setItem('cel_meia',MEIA?'1':'0')}catch(e){}meiaPinta();meia()};meiaPinta();
+$('lupaB').onclick=function(){var off=document.documentElement.classList.toggle('semlupa');try{localStorage.setItem('cel_lupa',off?'0':'1')}catch(e){}lupaPinta();fit()};lupaPinta();
 $('acesaB').onclick=function(){ACESA=!ACESA;try{localStorage.setItem('cel_acesa',ACESA?'1':'0')}catch(e){}acesaPinta();acesaAplica()};acesaPinta();
 /* sempre deitado (padrão ligado). Android: tela cheia + trava deitado no primeiro toque. iPhone (não deixa travar): desenha girado quando o celular está em pé */
 var DEIT=true;try{DEIT=localStorage.getItem('cel_deitado')!=='0'}catch(e){}var DEITOK=false;
@@ -621,11 +825,11 @@ document.addEventListener('fullscreenchange',function(){if(!document.fullscreenE
 $('deitB').onclick=function(){DEIT=!DEIT;try{localStorage.setItem('cel_deitado',DEIT?'1':'0')}catch(e){}if(!DEIT&&document.fullscreenElement){try{screen.orientation.unlock()}catch(e){}document.exitFullscreen().catch(function(){})}deitado();if(DEIT)deitTrava()};
 deitado();
 /* passo a passo do iPhone (na primeira vez, se "Passo a passo" estiver ligado no Mac; ou em Opções → Ver o passo a passo) */
-var TUTC=[['#iniBtn','Início: a rotina de hoje, continuar de onde parou, o jogo das notas e os conceitos.'],['#go','Começar e Parar. O Mac ouve o piano e corrige; aqui você vê a partitura.'],['#more','Opções: mãos, andamento, som, metrônomo, tema, letra maior e as outras facilidades.']];
+var TUTC=[['#iniBtn','Início: a rotina de hoje, continuar de onde parou, o jogo das notas e os conceitos.'],['#go','Começar e Parar. O Mac ouve o piano e corrige; aqui você vê a partitura.'],['#more','Ajustes: mãos, modo e andamento em cima; som, tela, ajudas e este celular cada um na sua tela.']];
 function tutCel(i){i=i||0;TUTI=i;var o=document.getElementById('tutO');if(o)o.remove();document.querySelectorAll('.tut-alvo').forEach(function(e){e.classList.remove('tut-alvo')});
  if(i>=TUTC.length){TUTI=-1;try{localStorage.setItem('cel_tutvisto','1')}catch(e){}return}var e=document.querySelector(TUTC[i][0]);if(!e){tutCel(i+1);return}e.classList.add('tut-alvo');
  var r=e.getBoundingClientRect(),d=document.createElement('div');d.id='tutO';d.className='tut';d.innerHTML='<div class="tut-box"><b>Passo '+(i+1)+' de '+TUTC.length+'</b><p>'+TUTC[i][1]+'</p><div class="row"><button id="tutP" style="background:#378ADD;color:#fff">'+(i<TUTC.length-1?'Próximo':'Entendi')+'</button><button id="tutF">Fechar</button></div></div>';
- document.body.appendChild(d);var b=d.firstChild,w=Math.min(340,window.innerWidth-24);b.style.width=w+'px';b.style.left=Math.max(12,Math.min(window.innerWidth-w-12,r.left+r.width/2-w/2))+'px';b.style.top=Math.max(12,r.top-14-b.offsetHeight)+'px';
+ document.body.appendChild(d);var b=d.firstChild,w=Math.min(340,window.innerWidth-24);b.style.width='min('+w+'px, calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)))';w=b.offsetWidth;var L=Math.max(12,Math.min(window.innerWidth-w-12,r.left+r.width/2-w/2));/* longe da ilha da câmera e das bordas arredondadas */b.style.left='clamp(calc(env(safe-area-inset-left) + 12px), '+L+'px, calc(100vw - env(safe-area-inset-right) - 12px - '+w+'px))';b.style.top=Math.max(12,r.top-14-b.offsetHeight)+'px';
  $('tutP').onclick=function(){tutCel(i+1)};$('tutF').onclick=function(){tutCel(TUTC.length)}}
 $('tutVer').onclick=function(){$('sheet').classList.remove('open');tutCel(0)};
 var TUTI=-1;window.addEventListener('resize',function(){if(document.getElementById('tutO')&&TUTI>=0)setTimeout(function(){tutCel(TUTI)},250)});
@@ -642,18 +846,173 @@ function relLoop(){if(relLoop.on)return;relLoop.on=true;(function f(){var nb=rel
     if(!r||r.parentNode!==grp){if(r)r.remove();r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.id='hlLocal';r.setAttribute('rx','6');r.setAttribute('style','fill:#B5D4F4;opacity:0.45');r.setAttribute('width','32');r.setAttribute('height','142');grp.insertBefore(r,grp.firstChild)}
     var tt=40+g[1]*230;r.setAttribute('x',g[2]-16);r.setAttribute('y',tt-10)}
    if(S.sy!==g[1]){S.sy=g[1];fit()}}
-  var m=Math.floor(nb/R.beats);if(nb<R.fim&&(S.opt||{}).cnt){var txt='Compasso '+(R.mm?R.mm[m]:m+1)+' · tempo '+(Math.floor(nb-m*R.beats)+1);if($('cd').textContent!==txt)$('cd').textContent=txt}}
+  var m=Math.floor(nb/R.beats);if(m!==relLoop.mm){relLoop.mm=m;try{meia()}catch(e){}}if(nb<R.fim&&(S.opt||{}).cnt){var txt='Compasso '+(R.mm?R.mm[m]:m+1)+' · tempo '+(Math.floor(nb-m*R.beats)+1);if($('cd').textContent!==txt)$('cd').textContent=txt}}
  requestAnimationFrame(f)})()}
 var EXTRA1=true;
 /* continuar de onde parou depois de recarregar (atualização): guarda qual tela estava aberta (Opções, Início, Conceitos),
    a rolagem dela, se o resultado estava aberto ou fechado e a rolagem da partitura; ao voltar, põe tudo igual
    (e não abre o Início sozinho de novo) */
+/* piano ligado no iPhone (app "Treino de Piano" do iPhone): o app chama nativeMidi com as mensagens do cabo e a hora do iPhone
+   em que cada tecla foi tocada. Aqui a hora vira a do Mac (OFF) e tudo vai para o Mac, que corrige como se o cabo estivesse nele */
+window.nativeMidi=function(lista,som){if(ENSAIO||!Array.isArray(lista)||!lista.length)return;var o=OFF||0;
+ cmd({cmd:'midi',som:som?1:0,m:lista.map(function(x){return [x[0]|0,x[1]|0,x[2]|0,Math.round((+x[3]||Date.now())+o)]})})};
+window.nativeMidiStatus=function(t){var e=$('midi');if(e)e.textContent=t;var n=/: (.+)$/.exec(t||''),nome=n&&n[1]!=='sem cabo'?n[1]:'';if(nome!==CABO){CABO=nome;if(APPN)cmd({cmd:'iphcabo',v:nome})}};
+/* notas pelo som (só no app do iPhone): o app ouve o piano pelo microfone e confere as notas que o Mac espera.
+   Esta tela passa ao app as próximas notas (com a hora já no relógio do iPhone) e mostra a opção nos Ajustes */
+var APPN=/[?&]app\b/.test(location.search)&&window.webkit&&webkit.messageHandlers&&webkit.messageHandlers.acao;
+if(APPN)$("rcCam").hidden=false;
+function somEsp(s){if(!APPN)return;var e=s&&s.esp,o=OFF||0,k=JSON.stringify(e||null);if(k===somEsp.k)return;somEsp.k=k;
+ try{webkit.messageHandlers.acao.postMessage({esp:e?{modo:e.modo,l:e.l.map(function(x){return [x[0]==null?null:x[0]-o,x[1]]})}:null})}catch(x){}}
+window.nativeSomEstado=function(st){var b=$('somB'),c=$('calB'),t=$('somT');var on=!!st.ligado;
+ /* o Mac desliga o som guia enquanto as notas vêm do microfone (senão o microfone ouviria o guia) */
+ clearInterval(nativeSomEstado.t);if(on){cmd({cmd:'somfonte',v:1});nativeSomEstado.t=setInterval(function(){cmd({cmd:'somfonte',v:1})},8000)}else if(nativeSomEstado.on)cmd({cmd:'somfonte',v:0});nativeSomEstado.on=on;
+ if(!b)return;
+ b.textContent='Notas pelo som do piano: '+(on?'ligado':'desligado');b.classList.toggle('on',on);
+ if(t)t.textContent=st.calibrado?'Calibrado: '+st.calibrado+' teclas do seu piano.':'Ainda sem calibrar: funciona, mas acerta mais depois de calibrar.';
+ if(c)c.style.display=on?'':'none'};
+if(APPN){var sg=document.querySelector('.pg[data-pg="cel"]');if(sg){var d=document.createElement('section');d.className='grp';
+ d.innerHTML='<h3>Notas pelo som</h3><div class="f"><button id="somB"></button><span class="lb ex">Sem o cabo: o iPhone ouve o piano pelo microfone. Confere as notas, os acordes e o ritmo. Não dá para saber quando o dedo saiu da tecla nem o pedal. O som guia fica desligado enquanto isso.</span></div><div class="f"><button id="calB">Calibrar o som do piano</button><span class="lb" id="somT"></span></div>';
+ sg.insertBefore(d,sg.firstChild);
+ $('somB').onclick=function(){webkit.messageHandlers.acao.postMessage({som:!$('somB').classList.contains('on')})};
+ $('calB').onclick=function(){webkit.messageHandlers.acao.postMessage({calibrar:1});$('sheet').classList.remove('open')};
+ nativeSomEstado({ligado:false});try{webkit.messageHandlers.acao.postMessage({estado:1})}catch(x){}}}
+/* piano ligado no iPhone: o Mac manda o guia, o metrônomo e a gravação por aqui (evento "midi" do canal);
+   a hora vira a do iPhone e o app toca no piano pelo cabo. Também avisa o Mac, a cada 8 s, que o cabo está aqui */
+function celMidiOut(e){if(!APPN)return;try{var l=JSON.parse(e.data),o=OFF||0,ag=Date.now();
+ webkit.messageHandlers.acao.postMessage({midiOut:l.map(function(x){var t=x[x.length-1];return [x.slice(0,-1),Math.max(0,t-o-ag)]})})}catch(x){}}
+var CABO='';function caboAviso(){if(APPN&&CABO)cmd({cmd:'iphcabo',v:CABO})}setInterval(caboAviso,8000);
+/* ---------- replays no celular: a mesma lista do Mac (pasta replays/); ouvir toca pelo Mac ou pelo piano,
+   compartilhar pede ao Mac o áudio e abre a folha de compartilhar (WhatsApp, AirDrop...) ---------- */
+var RC=null,RCAB=null,RCD={},RCNOME=false,RCCONF=null;
+function rcEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')}
+function rcQuando(t){var d=new Date(t),h=new Date(),hm=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),o=new Date(h);o.setDate(h.getDate()-1);
+ return d.toDateString()===h.toDateString()?'hoje '+hm:d.toDateString()===o.toDateString()?'ontem '+hm:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+hm}
+function rcDur(ms){var s=Math.round(ms/1000);return Math.floor(s/60)+':'+('0'+s%60).slice(-2)}
+function rcMao(m){return m.mao==='d'?'mão direita':m.mao==='e'?'mão esquerda':'as duas mãos'}
+function rcLinha(l){var p=l.slice().reverse().slice(-30).map(function(m){return m.pct});if(p.length<2)return '';
+ var pts=p.map(function(v,i){return (i*100/(p.length-1)).toFixed(1)+','+(27-v/100*24).toFixed(1)}).join(' '),u=pts.split(' ').pop().split(',');
+ return '<svg class="rc-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="#378ADD" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="'+u[0]+'" cy="'+u[1]+'" r="3.5" fill="#378ADD"/></svg>'}
+function rcRolo(d,m){var ons=[],abre={};(d.notas||[]).forEach(function(r){if(r[3]){abre[r[0]]=r}else if(abre[r[0]]){var a=abre[r[0]];ons.push([a[0],a[2],r[2],a[4]]);delete abre[r[0]]}});
+ Object.keys(abre).forEach(function(k){var a=abre[k];ons.push([a[0],a[2],a[2]+400,a[4]])});if(!ons.length)return '';
+ var lo=Math.min.apply(null,ons.map(function(o){return o[0]}))-2,hi=Math.max.apply(null,ons.map(function(o){return o[0]}))+2,W=1000,H=160,dur=m.dur||1,sx=W/dur,sy=H/(hi-lo+1),cor={o:'#C0DD97',w:'#FAC775',b:'#F7C1C1',x:'#F7C1C1'};
+ var h='<svg class="rc-rolo" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Teclas tocadas, na cor da correção">';
+ ons.forEach(function(o){h+='<rect x="'+(o[1]*sx).toFixed(1)+'" y="'+((hi-o[0])*sy).toFixed(1)+'" width="'+Math.max(4,(o[2]-o[1])*sx).toFixed(1)+'" height="'+Math.max(3,sy-1).toFixed(1)+'" rx="2" fill="'+(cor[o[3]]||cor.o)+'"/>'});
+ var ini=m.ini||0,fim=m.fim||dur;return h+'<rect id="rcFora1" x="0" y="0" width="'+(ini*sx).toFixed(1)+'" height="'+H+'" class="rc-fora"/><rect id="rcFora2" x="'+(fim*sx).toFixed(1)+'" y="0" width="'+((dur-fim)*sx).toFixed(1)+'" height="'+H+'" class="rc-fora"/></svg>'}
+var RCT=[];
+function rcCarregar(){var pf=(S&&S.perfil)||'p0',so=function(l){return l.filter(function(m){return (m.perfil||'p0')===pf}).sort(function(a,b){return b.t-a.t})};
+ fetch('/api/tentativas',{cache:'no-store'}).then(function(r){return r.ok?r.json():[]}).then(function(l){RCT=so(l);if(RC&&!RCAB&&$('repS').classList.contains('open'))rcMostrar()}).catch(function(){});
+ return fetch('/api/replays',{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(l){RC=so(l);return RC})}
+function rcDados(id){return RCD[id]?Promise.resolve(RCD[id]):fetch('/api/replays?id='+id,{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){RCD[id]=j;return j})}
+function rcMostrar(){var b=$('repCel');(RC?Promise.resolve(RC):rcCarregar()).then(function(l){
+  if(RCAB){var m=l.filter(function(x){return x.id===RCAB})[0];if(!m){RCAB=null;return rcMostrar()}var j=RCD[m.id],dur=m.dur||1,ini=m.ini||0,fim=m.fim||dur;
+   var c=[[m.ok,'#C0DD97','certas'],[m.quase,'#FAC775','quase'],[m.erradas,'#F7C1C1','erradas'],[m.faltaram,'#D3D1C7','faltaram']].filter(function(x){return x[0]});
+   $('rcTit').textContent='‹ Replays';
+   b.innerHTML='<div class="rc-det">'+(RCNOME?'<div class="rc-renome"><input id="rcNomeIn" value="'+rcEsc(m.nome||m.titulo)+'" maxlength="80" aria-label="Nome do replay"><button data-rc="nomeok" class="rc-go">Guardar</button><button data-rc="nomeno">Cancelar</button></div>':'<h3>'+rcEsc(m.nome||m.titulo)+'</h3>')+
+    '<span class="lb">'+rcEsc(m.titulo)+' · '+rcQuando(m.t)+' · '+rcDur(fim-ini)+' · '+rcMao(m)+' · '+(m.modo==='time'?m.bpm+' BPM':'Espera')+'</span>'+
+    '<div class="rc-nota"><b class="rc-pct">'+m.pct+'%</b><div class="rc-bar">'+c.map(function(x){return '<span style="flex:'+x[0]+';background:'+x[1]+'"></span>'}).join('')+'</div><span class="lb">'+c.map(function(x){return x[0]+' '+x[2]}).join(' · ')+'</span></div>'+
+    (j?rcRolo(j.dados,m):'<p class="lb">Carregando as teclas…</p>')+
+    '<div class="rc-corte"><label>Começo <input type="range" id="rcIni" min="0" max="'+dur+'" step="100" value="'+ini+'"></label><label>Fim <input type="range" id="rcFim" min="0" max="'+dur+'" step="100" value="'+fim+'"></label><span class="lb" id="rcCorteT">'+rcDur(ini)+' a '+rcDur(fim)+'</span><button data-rc="corte">Guardar corte</button></div>'+
+    '<div class="rc-acoes">'+rcIc('ouvir','Ouvir',0,'on')+rcIc('parar','Parar')+(RCVID[m.id]?rcIc('video','Ver o vídeo desta vez',0,'on'):'')+rcIc('partilha','Compartilhar')+rcIc('estrela',m.est?'Guardado sempre (tocar para tirar)':'Guardar sempre',m.est?'estrelaOn':0,m.est?'on':'')+rcIc('nome','Renomear')+'<span class="rc-sep"></span>'+
+    (RCCONF===m.id?'<span class="rc-conf">Apagar? Fica 30 dias na lixeira. <button data-rc="apagasim" class="rc-del">Apagar</button><button data-rc="apagano">Não</button></span>':rcIc('apagar','Apagar',0,'rc-del'))+'</div>'+
+    '<span class="lb" id="rcAviso"></span>'+
+    (j&&j.dados.res?'<details class="rc-fb"><summary>Ver o resultado desta vez</summary><div class="rc-fbin">'+String(j.dados.res).replace(/<div class="fbtop">[\s\S]*?<\/div>/,'').replace(/ data-act="[^"]*"/g,' disabled')+'</div></details>':'')+'</div>';
+   if(APPN&&!(m.id in RCVID)){RCVID[m.id]=false;try{webkit.messageHandlers.acao.postMessage({videoDe:{id:m.id,ini:rcVini(m),fim:m.t}})}catch(x){}}
+   if(!j)rcDados(m.id).then(function(){if(RCAB===m.id)rcMostrar()}).catch(function(){});
+   var a=$('rcIni'),z=$('rcFim');if(a&&z){var mv=function(){var i=+a.value,f=+z.value;if(i>f-500){if(this===a)a.value=i=Math.max(0,f-500);else z.value=f=i+500}var W=1000/dur,r1=$('rcFora1'),r2=$('rcFora2');
+    if(r1)r1.setAttribute('width',(i*W).toFixed(1));if(r2){r2.setAttribute('x',(f*W).toFixed(1));r2.setAttribute('width',((dur-f)*W).toFixed(1))}$('rcCorteT').textContent=rcDur(i)+' a '+rcDur(f)};a.oninput=mv;z.oninput=mv}
+   var ni=$('rcNomeIn');if(ni){ni.focus();ni.select()}return}
+  $('rcTit').textContent='Evolução e replays';var T=RCT||[];
+  if(!l.length&&!T.length){b.innerHTML='<div class="rc-vazio"><b>Ainda não há tentativas.</b><span class="lb">Termine uma música: a nota de cada vez aparece aqui. Para guardar o som, toque em "Salvar replay" no resultado.</span></div>'+rcLixH();if(RCLIXA)rcLix();return}
+  var gs={},rs={},ord=[];T.forEach(function(m){if(!gs[m.ex]){gs[m.ex]=[];ord.push(m.ex)}gs[m.ex].push(m)});
+  l.forEach(function(m){if(!rs[m.ex])rs[m.ex]=[];rs[m.ex].push(m);if(!gs[m.ex]){gs[m.ex]=[];ord.push(m.ex)}if(!T.some(function(x){return x.id===m.id}))gs[m.ex].push(m)});
+  ord.sort(function(a,c){return gs[c][0].t-gs[a][0].t});
+  b.innerHTML='<div class="rc-lista">'+ord.map(function(ex){var g=gs[ex].sort(function(a,c){return c.t-a.t}),u=g[0],dif=u.pct-g[g.length-1].pct,best=Math.max.apply(null,g.map(function(m){return m.pct})),r=rs[ex]||[];
+   return '<div class="rc-ex"><div class="rc-exh"><div><b>'+rcEsc(u.titulo)+'</b><span class="lb">'+g.length+(g.length>1?' tentativas':' tentativa')+' · recorde '+best+'% · última '+rcQuando(u.t)+'</span></div><div class="rc-ev">'+rcLinha(g)+'<b class="rc-pct">'+u.pct+'%</b>'+(g.length>1?'<span class="rc-dif'+(dif<0?' neg':'')+'">'+(dif>=0?'+':'')+dif+'</span>':'')+'</div></div>'+
+    (r.length?'<div class="rc-tries">'+r.map(function(m){return '<button data-rcid="'+m.id+'">'+(m.est?'★ ':'')+'<b>'+m.pct+'%</b> '+(m.nome?rcEsc(m.nome)+' · ':'')+rcQuando(m.t)+'</button>'}).join('')+'</div>':'')+'</div>'}).join('')+'</div>'+rcLixH();if(RCLIXA)rcLix()}).catch(function(){
+  b.innerHTML='<div class="rc-vazio"><b>Os replays ficam no Mac.</b><span class="lb">Abra o app com o Mac ligado (o Treino de Piano aberto no Chrome) para ver, ouvir e compartilhar.</span></div>'})}
+function rcMeta(m){return fetch('/api/replays?id='+m.id+'&acao=meta',{method:'POST',body:JSON.stringify(m)}).then(function(){RC=null;rcMostrar()})}
+function rcAviso(t){var a=$('rcAviso');if(a)a.textContent=t}
+/* compartilhar: o Mac faz o áudio (com o piano do app, só o trecho do corte); no app do iPhone vira m4a e abre a folha do iOS */
+function rcPartilha(m){var k=Date.now().toString(36),nome=((m.nome||m.titulo)+' '+m.pct+'%').replace(/[\/\\:*?"<>|]+/g,'-').slice(0,70),n=0;
+ rcAviso('O Mac está preparando o áudio… Se este replay ainda não tem o som do piano, o piano toca a música para gravar: leva o tempo dela.');cmd({cmd:'repaudio',v:m.id,k:k});
+ (function espera(){fetch('/api/replays?id='+m.id+'&audio='+k,{cache:'no-store'}).then(function(r){
+   if(r.status!==200){if(++n<1200)return setTimeout(espera,500);rcAviso('O Mac não respondeu. Confira se o Treino de Piano está aberto nele.');return}
+   rcAviso('');var url=location.origin+'/api/replays?id='+m.id+'&audio='+k;
+   if(APPN){webkit.messageHandlers.acao.postMessage({compartilhar:{url:url,nome:nome}});return}
+   return r.blob().then(function(b){var f=new File([b],nome+'.wav',{type:'audio/wav'});
+    if(navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],title:nome}).catch(function(){});location.href=url})}).catch(function(){if(++n<1200)setTimeout(espera,500)})})()}
+function rcAcao(a){var m=(RC||[]).filter(function(x){return x.id===RCAB})[0];if(!m)return;
+ if(a==='video'){try{webkit.messageHandlers.acao.postMessage({verVideo:{ini:rcVini(m),fim:m.t}})}catch(x){}return}
+ if(a==='ouvir')cmd({cmd:'repouvir',v:m.id});else if(a==='parar')cmd({cmd:'repparar',v:m.id});
+ else if(a==='estrela'){m.est=!m.est;rcMeta(m)}else if(a==='nome'){RCNOME=true;rcMostrar()}else if(a==='nomeno'){RCNOME=false;rcMostrar()}
+ else if(a==='nomeok'){var v=($('rcNomeIn').value||'').trim();m.nome=v===m.titulo?'':v.slice(0,80);RCNOME=false;rcMeta(m)}
+ else if(a==='corte'){var i=+$('rcIni').value,f=+$('rcFim').value;m.ini=i<=0?0:i;m.fim=f>=m.dur?0:f;rcMeta(m)}
+ else if(a==='partilha')rcPartilha(m);
+ else if(a==='apagar'){RCCONF=m.id;rcMostrar()}else if(a==='apagano'){RCCONF=null;rcMostrar()}
+ else if(a==='apagasim')fetch('/api/replays?id='+m.id+'&acao=apagar',{method:'POST'}).then(function(){RCCONF=null;RCAB=null;RC=null;rcMostrar()})}
+/* vídeos da câmera (só no app do iPhone): o replay acha o vídeo gravado na mesma hora */
+var RCVID={};
+function rcVini(m){return m.t-(m.dur||0)+(m.ini||0)-1500}
+function rcVideo(id,tem){RCVID[id]=tem;if(tem&&RCAB===id)rcMostrar()}
+function rcVideosMudaram(){RCVID={};if($("repS").classList.contains("open"))rcMostrar()}
+/* lixeira: o que foi apagado fica 30 dias e dá para recuperar */
+var RCLIXA=false;
+function rcLixH(){return '<details class="rc-lix" id="rcLixD"'+(RCLIXA?' open':'')+'><summary>Lixeira (apagados nos últimos 30 dias)</summary><div id="rcLix"><p class="lb">Carregando…</p></div></details>'}
+function rcLix(){var d=$('rcLix');if(!d)return;fetch('/api/replays?lixeira=1',{cache:'no-store'}).then(function(r){return r.json()}).then(function(l){var pf=(S&&S.perfil)||'p0';
+ l=l.filter(function(m){return (m.perfil||'p0')===pf}).sort(function(a,b){return b.t-a.t});
+ d.innerHTML=l.length?'<div class="rc-tries">'+l.map(function(m){return '<button data-rclix="'+m.id+'"><b>'+m.pct+'%</b> '+rcEsc(m.nome||m.titulo)+' · '+rcQuando(m.t)+' · Recuperar</button>'}).join('')+'</div>':'<p class="lb">A lixeira está vazia.</p>'}).catch(function(){d.innerHTML='<p class="lb">Não consegui ler a lixeira.</p>'})}
+document.addEventListener('toggle',function(e){if(e.target&&e.target.id==='rcLixD'){RCLIXA=e.target.open;if(RCLIXA)rcLix()}},true);
+/* ícones de traço dos replays (como os do app) */
+var RCI={ouvir:'<path class="ch" d="M8 5.5v13l10.5-6.5z"/>',parar:'<rect class="ch" x="6.5" y="6.5" width="11" height="11" rx="2"/>',
+ video:'<rect x="3" y="6.5" width="12.5" height="11" rx="2"/><path d="M15.5 10.5l5-3v9l-5-3"/>',partilha:'<path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M6 11.5v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-7"/>',
+ estrela:'<path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',estrelaOn:'<path class="ch" d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
+ nome:'<path d="M4.5 19.5h4l10-10-4-4-10 10z"/><path d="M13 7l4 4"/>',apagar:'<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/>'};
+function rcIc(acao,nome,ic,cls){return '<button data-rc="'+acao+'" class="rc-ic'+(cls?' '+cls:'')+'" aria-label="'+nome+'" title="'+nome+'"><svg viewBox="0 0 24 24" aria-hidden="true">'+RCI[ic||acao]+'</svg></button>'}
+function abrirReplays(){RC=null;RCAB=null;RCNOME=false;RCCONF=null;$('ini').classList.remove('open');$('repS').classList.add('open');$('repS').scrollTop=0;$('repCel').innerHTML='<p class="lb">Carregando…</p>';rcMostrar()}
+$('repS').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+ if(b.id==='repFechar'){$('repS').classList.remove('open');return}
+ if(b.id==='rcCam'){try{webkit.messageHandlers.acao.postMessage({camera:1})}catch(x){}return}
+ if(b.id==='rcTit'){if(RCAB){RCAB=null;RCNOME=false;RCCONF=null;rcMostrar()}return}
+ if(b.dataset.rclix){fetch('/api/replays?id='+b.dataset.rclix+'&acao=recuperar',{method:'POST'}).then(function(){RC=null;rcMostrar()});return}
+ if(b.dataset.rcid){RCAB=+b.dataset.rcid;RCNOME=false;RCCONF=null;rcMostrar();$('repS').scrollTop=0;return}
+ if(b.dataset.rc)rcAcao(b.dataset.rc)});
+/* ---------- versão 2: sinal da conexão num lugar só (toque mostra piano, Mac e atraso) e o que está sendo treinado ---------- */
+function paintTreino(s){var m={d:'Mão direita',e:'Mão esquerda'}[s.mao]||'';$('treinoLb').textContent=s.jogo?'':[m,s.mode==='wait'?'Espera':(s.bpm?s.bpm+' BPM':'')].filter(Boolean).join(' · ')}
+setInterval(function(){var now=Date.now(),ok=now-lastOk<3000&&now-lastNew<30000,mid=!!(S&&/dot ok/.test(S.midi||'')),l=LASTLAT,c=!ok?'bad':(!mid||(l!=null&&l>100))?'warn':'ok';
+ /* quem corrige agora: o Mac (Mac · 35 ms) ou o próprio iPhone, sem o Mac (iPhone sozinho) */
+ var soz=location.hostname==='127.0.0.1';if(soz)c=mid?'soz':'warn';
+ $('connDot').className='dot '+c;$('connMs').textContent=soz?'iPhone sozinho':ok?'Mac · '+(l!=null?l+' ms':'…'):'sem Mac';
+ $('conn').title=(soz?'Quem corrige: este iPhone (sem o Mac)':'Quem corrige: o Mac')+' · Piano: '+(mid?'conectado':'desligado')+(soz?'':' · Mac: '+(ok?'conectado':'sem conexão')+(l!=null?' · atraso '+l+' ms':''))},500);
+$('conn').onclick=function(){this.parentNode.classList.toggle('det')};
+/* Ajustes em duas camadas: em cima o treino; cada assunto abre uma tela própria com "‹ Ajustes" para voltar */
+var AJT={som:'Som e metrônomo',tela:'Tela e partitura',ajuda:'Ajudas e contagem',cel:'Este celular'};
+function ajPg(p){p=AJT[p]?p:'';document.querySelectorAll('#sheet .pg').forEach(function(d){d.hidden=d.dataset.pg!==p});$('ajHome').hidden=!!p;$('ajVolta').hidden=!p;$('ajTit').textContent=p?AJT[p]:'Ajustes';$('sheet').dataset.pg=p;$('sheet').scrollTop=0}
+document.querySelectorAll('.ajIt').forEach(function(b){b.onclick=function(){ajPg(b.dataset.pg)}});
+$('ajVolta').onclick=function(){ajPg('')};
+$('more').addEventListener('click',function(){ajPg('')});
+document.querySelectorAll('#sheet .f').forEach(function(f){if(!f.querySelector(':scope>.ex'))return;var q=document.createElement('button');q.className='exq';q.textContent='?';q.setAttribute('aria-label','O que é isto?');q.setAttribute('aria-expanded','false');
+ f.classList.add('hasq');f.insertBefore(q,f.firstChild);q.onclick=function(){var on=f.classList.toggle('exon');q.setAttribute('aria-expanded',on?'true':'false')}});
+/* endereço fixo: aberto pelo número do Mac (192.168…), que muda quando o roteador reinicia, oferece abrir pelo nome do Mac (….local),
+   que não muda. Só oferece se este celular encontrar o Mac pelo nome; os ajustes passam sozinhos (celAjVolta) */
+(function(){if(ENSAIO||!/^\d+\.\d+\.\d+\.\d+$/.test(location.hostname))return;try{if(localStorage.getItem('cel_fixo_nao'))return}catch(e){}
+ fetch('/api/info',{cache:'no-store'}).then(function(r){return r.json()}).then(function(i){if(!i.host)return;var base='http://'+i.host+':'+(i.port||location.port),im=new Image(),t=setTimeout(function(){im.src=''},4000);
+  im.onload=function(){clearTimeout(t);var d=document.createElement('div');d.className='fixo';d.innerHTML='<b>Endereço que não muda</b><span>Você abriu pelo número do Mac, que muda quando o roteador reinicia (e o ícone para de abrir). Abra pelo nome do Mac e adicione à Tela de Início de novo. Os seus ajustes vão junto.</span><div class="row"><button class="sim">Abrir pelo nome do Mac</button><button class="nao">Agora não</button></div>';
+   d.querySelector('.sim').onclick=function(){celAjManda.u='';celAjManda();setTimeout(function(){location.href=base+'/celular.html'},400)};
+   d.querySelector('.nao').onclick=function(){try{localStorage.setItem('cel_fixo_nao','1')}catch(e){}d.remove()};document.body.appendChild(d)};
+  im.src=base+'/icones/icone-192.png?'+Date.now()}).catch(function(){})})();
+/* ajustes desta tela (cel_*) guardados também no Mac: o app da Tela de Início, ou um endereço novo, começa com eles */
+var DEVC=/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/.test(navigator.userAgent)?'iphone':'outro';
+function celAj(){var o={},n=0;try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/^cel_/.test(k)&&k!=='cel_migrou'){o[k]=localStorage.getItem(k);n++}}}catch(e){}return n?o:null}
+function celAjManda(){if(ENSAIO)return;var a=celAj();if(!a)return;var j=JSON.stringify(a);if(j===celAjManda.u)return;celAjManda.u=j;cmd({cmd:'celaj',v:{d:DEVC,a:a}})}
+function celAjVolta(s){if(ENSAIO||!s||!s.celaj||!s.celaj[DEVC])return false;try{if(celAj()||localStorage.getItem('cel_migrou'))return false;var a=s.celaj[DEVC];
+ Object.keys(a).forEach(function(k){if(/^cel_/.test(k)&&k!=='cel_migrou')localStorage.setItem(k,String(a[k]))});reg('trouxe os ajustes desta tela guardados no Mac');localStorage.setItem('cel_migrou','1');location.reload();return true}catch(e){return false}}
+setInterval(celAjManda,30000);window.addEventListener('pagehide',function(){celAjManda.u='';celAjManda()});
 function celSalva(){if(ENSAIO)return;try{var ab=['sheet','ini','conc'].filter(function(id){return $(id).classList.contains('open')})[0]||'';
- sessionStorage.setItem('cel_sessao',JSON.stringify({t:Date.now(),ab:ab,abY:ab?$(ab).scrollTop:0,reshid:RESHID,res:$('res').classList.contains('show'),resY:$('res').scrollTop,y:window.scrollY,boxY:$('score').scrollTop,tut:document.getElementById('tutO')?TUTI:-1}))}catch(e){}}
+ sessionStorage.setItem('cel_sessao',JSON.stringify({t:Date.now(),ab:ab,abY:ab?$(ab).scrollTop:0,reshid:RESHID,res:$('res').classList.contains('show'),resY:$('res').scrollTop,y:window.scrollY,boxY:$('score').scrollTop,tut:document.getElementById('tutO')?TUTI:-1,pg:$('sheet').dataset.pg||''}))}catch(e){}}
 window.addEventListener('pagehide',celSalva);window.addEventListener('beforeunload',celSalva);
 var CELS=null;try{if(!ENSAIO){CELS=JSON.parse(sessionStorage.getItem('cel_sessao'));sessionStorage.removeItem('cel_sessao');if(CELS&&Date.now()-CELS.t>3600000)CELS=null}}catch(e){CELS=null}
 if(CELS&&CELS.reshid)RESHID=CELS.reshid;
-function celVolta(s){var c=CELS;CELS=null;if(c.ab){if(c.ab==='conc')abrirConc();else{if(c.ab==='ini')paintIni(s);$(c.ab).classList.add('open')}setTimeout(function(){$(c.ab).scrollTop=c.abY||0},150)}
+function celVolta(s){var c=CELS;CELS=null;if(c.ab==='sheet')ajPg(c.pg||'');if(c.ab){if(c.ab==='conc')abrirConc();else{if(c.ab==='ini')paintIni(s);$(c.ab).classList.add('open')}setTimeout(function(){$(c.ab).scrollTop=c.abY||0},150)}
  if(c.res&&$('res').classList.contains('show'))setTimeout(function(){$('res').scrollTop=c.resY||0},200);
  setTimeout(function(){window.scrollTo(0,c.y||0);if(c.boxY)$('score').scrollTop=c.boxY},200);if(c.tut>=0)setTimeout(function(){tutCel(c.tut)},500)}
 /* sons que o Mac manda tocar aqui (opção "Este celular"): piano sampleado, os mesmos arquivos do Mac. O celular só deixa tocar som depois de um toque na tela */
@@ -666,7 +1025,7 @@ var CSRC=[],CTK=0;
 function celCorta(){CTK++;CSRC.forEach(function(x){try{x.g.gain.cancelScheduledValues(CAC.currentTime);x.g.gain.setTargetAtTime(0,CAC.currentTime,0.02);x.s.stop(CAC.currentTime+0.12)}catch(e){}});CSRC=[]}
 function celToca(sm){if(!sm||sm.id===SOMV||ENSAIO)return;SOMV=sm.id;if(!CAC)return;if(sm.corta)celCorta();var tk=CTK;Promise.all(sm.n.map(function(n){return celLoad(n[0])})).then(function(){if(tk!==CTK)return;var t0=CAC.currentTime+0.05;sm.n.forEach(function(n){var b=CBUF[n[0]];if(!b)return;var s=CAC.createBufferSource(),g=CAC.createGain();s.buffer=b;s.connect(g);g.connect(CAC.destination);var t=t0+(n[1]||0);g.gain.setValueAtTime(n[3]||0.8,t);g.gain.setTargetAtTime(0,t+(n[2]||0.8),0.08);s.start(t);s.stop(t+(n[2]||0.8)+0.8);if(sm.corta)CSRC.push({s:s,g:g})})})}
 function paintExtra(s){var cx=$('cntX');if(cx){var on=!!(s.opt||{}).cnt;cx.textContent='Contagem neste exercício: '+(on?'ligada':'desligada');cx.classList.toggle('on',on)}paintJogo(s);document.querySelectorAll('.jvs').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.saida||'piano'))});if(SOMV===''&&s.som)SOMV=s.som.id;else celToca(s.som);paintUltCel(s);paintIni(s);paintConc(s);
- if(EXTRA1){EXTRA1=false;if(CELS){celVolta(s);return}var o=s.opt||{};try{if((o.simples||o.ini!==false)&&!s.run&&!s.res&&!s.jogo)$('iniBtn').click();if(o.tut!==false&&!localStorage.getItem('cel_tutvisto')&&!ENSAIO)setTimeout(function(){tutCel(0)},800)}catch(e){}}}
+ if(EXTRA1){if(celAjVolta(s))return;EXTRA1=false;setTimeout(celAjManda,3000);if(CELS){celVolta(s);return}var o=s.opt||{};try{if((o.simples||o.ini!==false)&&!s.run&&!s.res&&!s.jogo)$('iniBtn').click();if(o.tut!==false&&!localStorage.getItem('cel_tutvisto')&&!ENSAIO)setTimeout(function(){tutCel(0)},800)}catch(e){}}}
 
 paintView();listen();
 window.APP_OK=true;

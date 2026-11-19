@@ -38,3 +38,16 @@ PROMPT-NOVA-SESSAO.md
 *.antes-*
 CLAUDE.md.ANtes-do-livro
 CLAUDE.md.*.bak
+
+# app do iPhone: endereço do Mac (tem o nome do Mac) e arquivos do Xcode
+ios/TreinoPiano/EnderecoPadrao.swift
+ios/build/
+ios/build-sim/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# registro do que acontece (Mac, celular, iPhone): tem dados pessoais
+registro/
+
+# replays (o que ele tocou): dados pessoais
+replays/

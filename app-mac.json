@@ -1,0 +1,15 @@
+{
+  "id": "/treino-piano.html",
+  "name": "Treino de Piano",
+  "short_name": "Treino de Piano",
+  "start_url": "/treino-piano.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F4F6F9",
+  "theme_color": "#F4F6F9",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/icones/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icones/icone-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

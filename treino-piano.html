@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Treino de piano</title>
 <script>/* tema escolhido no app (Automático, Claro ou Escuro), antes de desenhar a página */try{var t_=localStorage.getItem('tema_app');if(t_==='light'||t_==='dark')document.documentElement.setAttribute('data-theme',t_)}catch(e){}</script>
+<link rel="manifest" href="app-mac.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icones/icone-192.png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="theme-color" content="#F4F6F9">
 <link rel="stylesheet" href="treino-piano.css">
 </head>
 <body>
@@ -27,7 +31,7 @@
 <details class="card fold" id="f_ex" open>
  <summary>Exercícios <span class="lb sumx">Hoje, Livro, Ler notas, Conceitos, Músicas…</span></summary>
  <div class="row" id="tabs" style="margin:10px 0 12px">
-  <button class="tg tab" data-t="hoje">Hoje</button><button class="tg tab" data-t="aq">Aquecimento</button><button class="tg tab" data-t="livro">Livro</button><button class="tg tab" data-t="ritmo">Ritmo</button><button class="tg tab" data-t="leit">Ler notas</button><button class="tg tab" data-t="conc">Conceitos</button><button class="tg tab" data-t="mus">Músicas</button><button class="tg tab" data-t="hist">Histórico</button></div>
+  <button class="tg tab" data-t="hoje">Hoje</button><button class="tg tab" data-t="aq">Aquecimento</button><button class="tg tab" data-t="livro">Livro</button><button class="tg tab" data-t="ritmo">Ritmo</button><button class="tg tab" data-t="leit">Ler notas</button><button class="tg tab" data-t="conc">Conceitos</button><button class="tg tab" data-t="mus">Músicas</button><button class="tg tab" data-t="rep">Replays</button><button class="tg tab" data-t="hist">Histórico</button></div>
  <div id="panel"></div>
 </details>
 
@@ -63,6 +67,9 @@
    <div class="fld"><button class="tg sw" data-k="voz" data-n="Ler o resultado em voz alta"></button><span class="lb" style="display:block;margin-top:4px">O Mac fala a nota e o que treinar a seguir; você não precisa ler.</span></div>
    <div class="fld"><button class="tg sw" data-k="pcmd" data-n="Comandos pelo piano"></button><span class="lb" style="display:block;margin-top:4px">As teclas mais graves do piano: o 1º Lá = Começar/Parar, o Si = Recomeçar, o Dó = preparar o treino sugerido, o Ré = próxima etapa da rotina.</span></div>
    <div class="fld"><button class="tg sw" data-k="avisos" data-n="Avisos com dicas"></button><span class="lb" style="display:block;margin-top:4px">Quando algo não funciona, o aviso diz o que fazer (ex.: conferir o cabo).</span></div>
+   <div class="fld"><button class="tg sw" data-k="espT" data-n="Modo Espera no tempo da música"></button><span class="lb" style="display:block;margin-top:4px">No modo Espera, a música anda no andamento e para em cada nota até você tocar. Desligado: passa para a próxima nota assim que você acerta.</span></div>
+   <div class="fld"><button class="tg sw" data-k="somR" data-n="Gravar o som do piano nos replays"></button><span class="lb" style="display:block;margin-top:4px">Durante cada tentativa, grava o som que o piano manda pelo cabo (no Mac ou no iPhone). Ao apertar "Salvar replay", o som fica guardado, e ouvir e compartilhar usam o som de verdade. Na primeira vez, o Chrome pede permissão.</span></div>
+   <div class="fld"><button class="tg sw" data-k="trc" data-n="Tocar no compasso para escolher e repetir trechos"></button><span class="lb" style="display:block;margin-top:4px">Toque no primeiro e no último compasso do trecho, na partitura ou na queda de notas, e aperte "Repetir sem parar". Os compassos errados ficam em vermelho enquanto você toca.</span></div>
    <div class="fld"><button class="tg sw" data-k="tut" data-n="Passo a passo para quem começa"></button><button id="tutVer" style="margin-top:6px">Ver o passo a passo agora</button></div>
   </section>
   <section class="aj"><h3>Som guia (a música)</h3>
@@ -88,6 +95,7 @@
  <div id="aviso" class="aviso" role="status" style="display:none"></div>
  <div class="cdwrap"><div id="cd"><span class="lb">Escolha um exercício e aperte "Começar"</span></div><button id="cntBtn" class="cnt-btn" type="button"></button></div>
  <div class="row" style="justify-content:flex-end;margin:-4px 0 4px"><span id="trBox" class="row" style="gap:6px;margin-right:auto"><span class="lb">Trecho</span><select id="trA" title="Primeira linha"></select><span class="lb">até</span><select id="trB" title="Última linha"></select><button id="trGo">Treinar</button><button id="trAll" title="Voltar para a música toda">Música toda</button></span><span id="zoomBox" class="row" style="display:none;gap:6px"><span class="lb">Zoom</span><button id="zOut" title="Diminuir">−</button><b id="zV">100%</b><button id="zIn" title="Aumentar">+</button><button id="zFit">Largura da tela</button></span><button id="vistaBtn" style="display:none"></button></div>
+ <div id="selBox" class="selbox" style="display:none" aria-live="polite"></div>
  <div id="scoreBox"><svg id="score" width="100%" role="img" aria-label="Partitura"></svg></div>
  <canvas id="fallCv" style="display:none;width:100%;height:64vh;border-radius:10px;border:1px solid var(--bd)"></canvas>
  <div id="errs"></div>
@@ -99,6 +107,7 @@
 </main>
 <script src="queda.js"></script>
 <script src="conteudo-pessoal.js" onerror="this.remove()"></script>
+<script src="qr.js"></script>
 <script src="treino-piano.js"></script>
 </body>
 </html>
