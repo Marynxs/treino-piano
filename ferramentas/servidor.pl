@@ -105,20 +105,27 @@ while (my $c = $srv->accept) {
   if ($path eq '/api/stream') {
     print $c "HTTP/1.0 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-store\r\nConnection: close\r\n\r\nretry: 500\n\n";
     my ($sent, $n) = ('', 0); my $mo = slurp("$tmp/midiout.v") // 0;
+    my $ev = $q{espelho} ? 'espelho' : 'estado';   # ?espelho=1: a tela do iPhone quando ele corrige (o Mac só mostra e comanda)
     while (1) {
       my $mv = slurp("$tmp/midiout.v") // 0;
       $mo = 0 if $mv < $mo;
-      if ($mv ne $mo) { for (split /\n/, (slurp("$tmp/midiout.log") // '')) { if (/^(\d+)\t(.*)$/ && $1 > $mo) { print $c "event: midi\ndata: $2\n\n" or last } } $mo = $mv }
-      my $cur = slurp("$tmp/estado.v") // '';
-      if ($cur ne '' && $cur ne $sent) { my $d = slurp("$tmp/estado.json") // ''; $d =~ s/[\r\n]+/ /g; print $c "data: $d\n\n" or last; $sent = $cur }
+      if (!$q{espelho} && $mv ne $mo) { for (split /\n/, (slurp("$tmp/midiout.log") // '')) { if (/^(\d+)\t(.*)$/ && $1 > $mo) { print $c "event: midi\ndata: $2\n\n" or last } } $mo = $mv }
+      my $cur = slurp("$tmp/$ev.v") // '';
+      if ($cur ne '' && $cur ne $sent) { my $d = slurp("$tmp/$ev.json") // ''; $d =~ s/[\r\n]+/ /g; print $c "data: $d\n\n" or last; $sent = $cur }
       elsif (++$n % 10 == 0) { print $c "event: ping\ndata: 1\n\n" or last }
       select(undef, undef, undef, 0.01);
     }
     close $c; exit 0;
   }
+  # Espelho: o iPhone corrigindo manda a tela dele (POST); a aba do Mac pergunta a idade (?info=1) para mostrar o espelho.
+  if ($path eq '/api/espelho') {
+    if ($meth eq 'POST') { my $body = ''; read($c, $body, $len) if $len && $len < 5_000_000; spit("$tmp/espelho.json", $body); spit("$tmp/espelho.v", int(Time::HiRes::time() * 1000)); reply($c, '200 OK', 'application/json', '{"ok":true}'); close $c; exit 0 }
+    my @s = stat("$tmp/espelho.v"); my $idade = @s ? time - $s[9] : 99999;
+    reply($c, '200 OK', 'application/json', qq({"idade":$idade})); close $c; exit 0;
+  }
   # Fila de comandos do iPhone: cada linha "número<TAB>json". GET ?id=N devolve os comandos depois de N.
   if ($path eq '/api/cmd') {
-    my $f = "$tmp/cmd.log";
+    my $f = $q{espelho} ? "$tmp/cmd-espelho.log" : "$tmp/cmd.log";   # ?espelho=1: comandos do Mac para o iPhone (o iPhone busca)
     if ($meth eq 'POST') {
       my $body = ''; read($c, $body, $len) if $len && $len < 100_000; $body =~ s/[\r\n]+/ /g;
       if (open(my $fh, '+>>', $f)) { flock($fh, 2); seek($fh, 0, 0); my @l = <$fh>; my $n = @l && $l[-1] =~ /^(\d+)/ ? $1 + 1 : 1;
@@ -128,7 +135,7 @@ while (my $c = $srv->accept) {
       my $since = ($q{id} // '') =~ /^\d+$/ ? $q{id} : undef; my $end = time + 20; my (@new, $last);
       while (1) {
         my @l = split /\n/, (slurp($f) // ''); $last = @l && $l[-1] =~ /^(\d+)/ ? $1 : 0;
-        my $dono = ($q{src} // '') eq (slurp("$tmp/owner") // '');
+        my $dono = $q{espelho} || ($q{src} // '') eq (slurp("$tmp/owner") // '');
         @new = defined $since && $dono ? map { /^(\d+)\t(.*)$/ && $1 > $since ? $2 : () } @l : ();
         last if !defined $since || @new || !$q{wait} || time >= $end || $last < $since; select(undef, undef, undef, 0.01) }
       reply($c, '200 OK', 'application/json', '{"last":' . $last . ',"cmds":[' . join(',', @new) . ']}');
@@ -345,6 +352,7 @@ my $ld = $q{lixeira} ? "$dir/lixeira" : $dir;
       if (!$n) { reply($c, '404 Not Found', 'text/plain', 'sem cópia'); close $c; exit 0 }
       reply($c, '200 OK', 'application/json', slurp("$dir/$n") // '{}'); close $c; exit 0;
     }
+    if (($q{v} // '') =~ /^(\d+)$/) { my $w = $1; my ($n) = grep { $_ eq "iphone-$w.json" } @f; if (!$n) { reply($c, '404 Not Found', 'text/plain', 'sem essa entrega'); close $c; exit 0 } reply($c, '200 OK', 'application/json', slurp("$dir/$n") // '{}'); close $c; exit 0 }   # uma entrega certa (o Mac usa a anterior como base)
     my $depois = ($q{depois} // '') =~ /^(\d+)$/ ? $1 : 0;
     my ($n) = reverse grep { (/(\d+)/)[0] > $depois } @f;
     if (!$n) { reply($c, '204 No Content', 'text/plain', ''); close $c; exit 0 }

@@ -40,7 +40,7 @@ enum Pendente {
 }
 
 final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMessageHandler {
-    enum Modo { case procurando, mac, sozinho }
+    enum Modo { case procurando, mac, sozinho, iphone }   // iphone = o iPhone corrige com o Mac ligado (cabo no iPhone)
     private var modo = Modo.procurando
     private var web: WKWebView!            // a tela que você vê
     private var cerebro: WKWebView?        // a página do Mac rodando aqui (só sem o Mac, ou para entregar os dados)
@@ -52,6 +52,14 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
     private var falhas = 0
     private var entregando = false
     private var ultimoCabo = ""
+    private var ultimaEntrega = Date()
+    /// "O iPhone corrige quando o piano está nele" (Ajustes do app; começa ligado)
+    private var iphoneCorrige: Bool {
+        get { UserDefaults.standard.object(forKey: "iphoneCorrige") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "iphoneCorrige") }
+    }
+    private var caboNoIphone: Bool { !midi.entradas.isEmpty || ProcessInfo.processInfo.arguments.contains("-fingirCabo") }   // -fingirCabo: teste no simulador
+    private var querIphone: Bool { iphoneCorrige && caboNoIphone }
 
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -73,6 +81,7 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
         ouvido.aoTocar = { [weak self] l in self?.notasSom(l) }
         if somLigado { ligarSom(true) }
         NotificationCenter.default.addObserver(self, selector: #selector(voltou), name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(foiProFundo), name: UIApplication.didEnterBackgroundNotification, object: nil)
         procurar()
         // para conferir as telas no simulador: -abrirCamera, -abrirVideo
         let args = ProcessInfo.processInfo.arguments
@@ -110,11 +119,19 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
     @objc private func voltou() {
         guard modo != .mac else { return }
         Task { @MainActor in
-            if await macResponde() { entrarMac(); return }
+            if modo == .iphone, servidor.rodando, await localResponde() { return }
+            if await macResponde() { if querIphone { entrarIphone() } else { entrarMac() }; return }
             if modo == .sozinho, servidor.rodando, await localResponde() { return }
             Registro.anotar("voltou para a tela: religando o modo sozinho")
             entrarSozinho()
         }
+    }
+
+    /// Foi para o fundo com o iPhone corrigindo: entrega ao Mac o que treinou (o iOS dá alguns segundos)
+    @objc private func foiProFundo() {
+        guard modo == .iphone else { return }
+        let id = UIApplication.shared.beginBackgroundTask(withName: "entregar")
+        entregarDoCerebro { UIApplication.shared.endBackgroundTask(id) }
     }
 
     private func localResponde() async -> Bool {
@@ -134,12 +151,13 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
         modo = .procurando
         aviso("Procurando o Mac…", "Se ele não responder em alguns segundos, o iPhone treina sozinho.")
         Task { @MainActor in
-            if await macResponde(4) { entrarMac() } else { entrarSozinho() }
+            if await macResponde(4) { if querIphone { entrarIphone() } else { entrarMac() } } else { entrarSozinho() }
         }
     }
 
     private func entrarMac() {
         modo = .mac
+        servidor.mac = nil
         Registro.mac = Endereco.base
         Registro.anotar("modo Mac: \(Endereco.atual)")
         falhas = 0
@@ -153,21 +171,34 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
         vigiar()
     }
 
-    private func entrarSozinho() {
+    /// Cabo no iPhone com o Mac ligado: o iPhone corrige (como sozinho, sem o Wi-Fi no meio das notas);
+    /// replays, evolução e som vão ao Mac na hora; os treinos (histórico, recordes) vão de tempos em tempos.
+    private func entrarIphone() {
+        Task { @MainActor in
+            if let n = try? await Copia.atualizarArquivos(mac: Endereco.base), n > 0 { Registro.anotar("copiou \(n) arquivo(s) do Mac") }
+            try? await Copia.atualizarDados(mac: Endereco.base)
+            self.entrarSozinho(comMac: true)
+        }
+    }
+
+    private func entrarSozinho(comMac: Bool = false) {
         guard Copia.temCopia else {
             erro("Não encontrei o Mac em \(Endereco.atual).", "Para treinar sem o Mac, abra o app uma vez em casa com o Mac ligado: ele guarda uma cópia aqui.")
             return
         }
         servidor.parar()   // sempre um servidor novo: o de antes pode ter sido desligado pelo iOS
+        servidor.mac = comMac ? Endereco.base : nil
         do { try servidor.iniciar() } catch { erro("Não consegui ligar o modo sem o Mac.", error.localizedDescription); return }
-        modo = .sozinho
+        modo = comMac ? .iphone : .sozinho
+        falhas = 0
+        ultimaEntrega = Date()
         Pendente.tem = true
-        Registro.mac = nil
-        Registro.anotar("modo sozinho: o Mac não respondeu")
-        abrirCerebro(enviar: false)
+        Registro.mac = comMac ? Endereco.base : nil
+        Registro.anotar(comMac ? "modo iPhone corrige: o piano está no iPhone; o Mac recebe replays e treinos" : "modo sozinho: o Mac não respondeu")
+        abrirCerebro(enviar: false, comMac: comMac)
         if let u = URL(string: Endereco.local + "/celular.html?app=1") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-                guard let self, self.modo == .sozinho else { return }
+                guard let self, self.modo == .sozinho || self.modo == .iphone else { return }
                 self.web.load(URLRequest(url: u, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 8))
             }
         }
@@ -175,38 +206,94 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
     }
 
     /// A página do Mac rodando no iPhone, atrás da tela que você vê.
-    private func abrirCerebro(enviar: Bool) {
+    private func abrirCerebro(enviar: Bool, comMac: Bool = false) {
         pararCerebro()
         let c = novaWeb(cerebro: true)
         c.frame = view.bounds
         view.insertSubview(c, belowSubview: web)
         cerebro = c
-        if let u = URL(string: Endereco.local + "/treino-piano.html?cerebro=1" + (enviar ? "&enviar=1" : "")) { c.load(URLRequest(url: u)) }
+        if let u = URL(string: Endereco.local + "/treino-piano.html?cerebro=1" + (enviar ? "&enviar=1" : "") + (comMac ? "&commac=1" : "")) { c.load(URLRequest(url: u)) }
     }
 
     private func pararCerebro() {
         cerebro?.configuration.userContentController.removeScriptMessageHandler(forName: "midiOut")
         cerebro?.removeFromSuperview()
         cerebro = nil
-        if modo != .sozinho && !entregando { servidor.parar() }
+        if modo != .sozinho && modo != .iphone && !entregando { servidor.parar() }
     }
 
     /// Com o Mac: confere se ele continua aí. Sem o Mac: confere se ele voltou (e só troca com o exercício parado).
     private func vigiar() {
         vigia?.invalidate()
         vigia = Timer.scheduledTimer(withTimeInterval: modo == .mac ? 10 : 15, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            Task { @MainActor in
-                let ok = await self.macResponde()
-                switch self.modo {
-                case .mac:
-                    if ok { self.falhas = 0; try? await Copia.atualizarDados(mac: Endereco.base) }
-                    else { self.falhas += 1; Registro.anotar("Mac não respondeu (\(self.falhas)ª vez)"); if self.falhas >= 2, Copia.temCopia { self.entrarSozinho() } }
-                case .sozinho:
-                    if ok && !self.servidor.tocando { self.entrarMac() }
-                default: break
-                }
+            Task { @MainActor in await self?.conferir() }
+        }
+    }
+
+    /// Decide o modo: Mac, iPhone corrige (cabo no iPhone) ou sozinho. Nunca troca no meio da música.
+    @MainActor private func conferir() async {
+        let ok = await macResponde()
+        switch modo {
+        case .mac:
+            if ok {
+                falhas = 0; try? await Copia.atualizarDados(mac: Endereco.base)
+                if querIphone, !(await macTocando()) { entrarIphone() }
+            } else { falhas += 1; Registro.anotar("Mac não respondeu (\(falhas)ª vez)"); if falhas >= 2, Copia.temCopia { entrarSozinho() } }
+        case .iphone:
+            if !ok {
+                falhas += 1
+                if falhas >= 2 { servidor.mac = nil; Registro.mac = nil; modo = .sozinho; Registro.anotar("o Mac sumiu: o iPhone segue sozinho") }
+            } else {
+                falhas = 0
+                if !querIphone && !servidor.tocando { entrarMac(); return }   // tirou o cabo ou desligou a opção: volta ao Mac (e entrega os treinos)
+                if Date().timeIntervalSince(ultimaEntrega) > (ProcessInfo.processInfo.arguments.contains("-entregaRapida") ? 20 : 300) && !servidor.tocando { entregarDoCerebro(nil) }
             }
+        case .sozinho:
+            if ok && !servidor.tocando { if querIphone { entrarIphone() } else { entrarMac() } }
+        default: break
+        }
+        estadoQuem()
+    }
+
+    /// Música tocando na tela do Mac (para não trocar de modo no meio)
+    @MainActor private func macTocando() async -> Bool {
+        await withCheckedContinuation { k in
+            web.evaluateJavaScript("(window.S&&S.run)?1:0") { v, _ in k.resume(returning: (v as? Int) == 1) }
+        }
+    }
+
+    private func estadoQuem() {
+        let m = modo == .iphone ? "iphone" : modo == .sozinho ? "sozinho" : modo == .mac ? "mac" : "procurando"
+        web.evaluateJavaScript("window.nativeQuem&&window.nativeQuem({iphone:\(iphoneCorrige),cabo:\(caboNoIphone),modo:'\(m)'})", completionHandler: nil)
+    }
+
+    /// iPhone corrigindo com o Mac ligado: manda ao Mac os treinos feitos aqui, sem parar a página que corrige.
+    /// O Mac junta partindo da entrega anterior (não conta nada duas vezes).
+    private func entregarDoCerebro(_ fim: (() -> Void)?) {
+        guard modo == .iphone, !entregando, let c = cerebro else { fim?(); return }
+        entregando = true
+        ultimaEntrega = Date()
+        let js = "(function(){if(typeof djAtual!=='function')return 'null';window.__RESULTADO={usou:RAWGET('sync_macv')||'',dados:djAtual()};return JSON.stringify(window.__RESULTADO)})()"
+        c.evaluateJavaScript(js) { [weak self] valor, _ in
+            guard let self else { fim?(); return }
+            guard let s = valor as? String, s != "null", let d = s.data(using: .utf8),
+                  let obj = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+                  let dados = obj["dados"], let corpo = try? JSONSerialization.data(withJSONObject: dados),
+                  let u = URL(string: Endereco.base + "/api/dados?de=iphone&usou=\(obj["usou"] as? String ?? "")") else {
+                self.entregando = false; fim?(); return
+            }
+            var r = URLRequest(url: u, timeoutInterval: 20)
+            r.httpMethod = "POST"
+            r.httpBody = corpo
+            URLSession.shared.dataTask(with: r) { _, resp, _ in
+                let ok = (resp as? HTTPURLResponse)?.statusCode == 200
+                DispatchQueue.main.async {
+                    self.entregando = false
+                    if ok { c.evaluateJavaScript("cerebroEnviado()", completionHandler: nil); Registro.anotar("mandou ao Mac os treinos feitos no iPhone") }
+                    else { Registro.anotar("não conseguiu mandar os treinos ao Mac (tenta de novo depois)") }
+                    fim?()
+                }
+            }.resume()
         }
     }
 
@@ -248,13 +335,15 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
 
     private func notas(_ lista: [[Double]]) {
         guard let dados = try? JSONSerialization.data(withJSONObject: lista), let json = String(data: dados, encoding: .utf8) else { return }
-        if modo == .sozinho, let c = cerebro { c.evaluateJavaScript("window.__midiIn&&window.__midiIn(\(json))", completionHandler: nil) }
+        if modo == .sozinho || modo == .iphone, let c = cerebro { c.evaluateJavaScript("window.__midiIn&&window.__midiIn(\(json))", completionHandler: nil) }
         else { web.evaluateJavaScript("window.nativeMidi&&window.nativeMidi(\(json))", completionHandler: nil) }
     }
 
     private func portasMudaram() {
         let t = midi.entradas.first.map { "Piano no iPhone: \($0.nome)" } ?? "Piano no iPhone: sem cabo"
-        if t != ultimoCabo { ultimoCabo = t; Registro.anotar(t) }
+        if t != ultimoCabo { ultimoCabo = t; Registro.anotar(t)
+            if modo == .mac || modo == .iphone { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in Task { @MainActor in await self?.conferir() } } }   // cabo entrou ou saiu: confere o modo já
+        }
         web.evaluateJavaScript("window.nativeMidiStatus&&window.nativeMidiStatus(\(String(reflecting: t)))", completionHandler: nil)
         mandarPortas()
     }
@@ -361,14 +450,14 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
 
     private func notasSom(_ lista: [[Double]]) {
         guard let dados = try? JSONSerialization.data(withJSONObject: lista), let json = String(data: dados, encoding: .utf8) else { return }
-        if modo == .sozinho, let c = cerebro { c.evaluateJavaScript("window.__fonteSom=true;window.__midiIn&&window.__midiIn(\(json))", completionHandler: nil) }
+        if modo == .sozinho || modo == .iphone, let c = cerebro { c.evaluateJavaScript("window.__fonteSom=true;window.__midiIn&&window.__midiIn(\(json))", completionHandler: nil) }
         else { web.evaluateJavaScript("window.nativeMidi&&window.nativeMidi(\(json),true)", completionHandler: nil) }
     }
 
     // MARK: páginas
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        if webView === cerebro { mandarPortas(); estadoSom() } else { portasMudaram(); estadoSom() }
+        if webView === cerebro { mandarPortas(); estadoSom() } else { portasMudaram(); estadoSom(); estadoQuem() }
     }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         guard webView === web, modo == .mac else { return }
@@ -414,8 +503,11 @@ final class ControladorWeb: UIViewController, WKNavigationDelegate, WKScriptMess
                 Compartilhar.audio(url: u, nome: (c["nome"] as? String) ?? "Replay", de: self)
             }
             if o["camera"] != nil { abrirCamera() }
-            if let sp = o["somPiano"] as? [String: Any], modo == .mac {   // som do piano no replay (cabo no iPhone)
+            if let b = o["iphoneCorrige"] as? Bool { iphoneCorrige = b; Registro.anotar("o iPhone corrige com o cabo nele: " + (b ? "ligado" : "desligado")); estadoQuem(); Task { @MainActor in await self.conferir() } }
+            if o["quem"] != nil { estadoQuem() }
+            if let sp = o["somPiano"] as? [String: Any], modo == .mac || modo == .iphone {   // som do piano no replay (cabo no iPhone)
                 if let k = sp["parar"] as? String { gravadorReplay.parar(chave: k, mac: Endereco.base) }
+                if let k = sp["enviar"] as? String { gravadorReplay.enviar(chave: k, mac: Endereco.base) }
                 if let k = sp["gravar"] as? String {
                     gravadorReplay.gravar(chave: k, dif: (sp["dif"] as? NSNumber)?.doubleValue ?? 0, mac: Endereco.base, ocupado: camera != nil || ouvido.ligado)
                 }

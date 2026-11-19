@@ -13,7 +13,7 @@ var PERFIS=[{id:'p0',nome:'Perfil 1'}],PERFIL='p0',RAWDEL=null,RAWSET=null,RAWGE
  S.getItem=function(key){return g.call(this,k.call(this,key))};
  S.setItem=function(key,v){var rk=k.call(this,key);if(this===localStorage&&g.call(this,rk)===String(v))return;var x=s.call(this,rk,v);if(this===localStorage)marca(rk);return x};
  S.removeItem=function(key){var rk=k.call(this,key);if(this===localStorage&&g.call(this,rk)!==null)marca(rk);return r.call(this,rk)}})();
-var CEREBRO=/[?&]cerebro\b/.test(location.search);
+var CEREBRO=/[?&]cerebro\b/.test(location.search);var COMMAC=CEREBRO&&/[?&]commac\b/.test(location.search);/* iPhone corrigindo com o Mac ligado: replays e estatísticas vão ao Mac */
 if(CEREBRO)try{cerebroJunta()}catch(e){window.__JUNTA_ERRO=String(e)}
 /* ---------- registro: o que acontece vai para registro/AAAA-MM-DD.log no Mac (ajuda a descobrir problemas depois) ---------- */
 var REGF=[];
@@ -272,7 +272,7 @@ function viaPiano(){return document.getElementById('outdev').value==='piano'&&MO
 function mq(t,kind,ch,note,vel,dur){var p=soundPerf(ctx(),t);vel=Math.max(1,Math.min(127,Math.round(vel)));
  MQ.push({p:p,k:kind,d:[0x90|ch,note,vel]});MQ.push({p:p+dur*1000,k:'off',d:[0x80|ch,note,0]})}
 function midiTick(){if(!MQ.length||!MOUT)return;var now=performance.now(),keep=[];
- MQ.forEach(function(x){if(x.p>now+(MOUT.remoto?350:120)){keep.push(x);return}/* pelo iPhone: manda 350 ms antes (o Wi-Fi no meio) */
+ MQ.forEach(function(x){if(x.p>now+(MOUT.remoto?800:120)){keep.push(x);return}/* pelo iPhone: manda 800 ms antes (engasgos do Wi-Fi de até 0,8 s não fazem o guia sumir) (o Wi-Fi no meio) */
   if((x.k==='pno'&&!OPT.pno)||(x.k==='acc'&&!OPT.outra)||(x.k==='clk'&&!OPT.clk))return;
   try{MOUT.send(x.d,Math.max(x.p,now));if(x.k==='off')delete MON[(x.d[0]&0x0f)+'_'+x.d[1]];else MON[(x.d[0]&0x0f)+'_'+x.d[1]]=x.d}catch(e){}});MQ=keep}
 function midiStop(){MQ=[];if(!MOUT)return;try{Object.keys(MON).forEach(function(k){var d=MON[k];MOUT.send([0x80|(d[0]&0x0f),d[1],0])});[1,2,9].forEach(function(ch){MOUT.send([0xB0|ch,123,0])})}catch(e){}MON={}}
@@ -536,7 +536,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
    e repetir de novo, na aba Hoje e no Início do celular. Guarda sozinho ao parar de repetir; o ícone de marcador guarda
    ou tira na hora. Dominado = 3 voltas seguidas sem erro. ---------- */
 function trLer(){try{return JSON.parse(localStorage.getItem('piano_trechos'))||[]}catch(e){return []}}
-function trGrava(l){try{localStorage.setItem('piano_trechos',JSON.stringify(l.slice(0,30)))}catch(e){}try{selPinta(true)}catch(e){}if(TAB==='hoje'&&!run)showPanel();try{snap()}catch(e){}}
+function trGrava(l){try{localStorage.setItem('piano_trechos',JSON.stringify(l.slice(0,30)))}catch(e){}try{selPinta(true)}catch(e){}if(TAB==='hoje'&&!run)showPanel();if(window.CEL_SOON)CEL_SOON()}
 function trChave(id,a,b){return id+'|'+a+'|'+b}
 function trAqui(){return SEL&&CUR?trLer().filter(function(t){return t.k===trChave(selBase().id,SEL.a,SEL.b)})[0]:null}
 function trGuardar(manual){if(!SEL||!CUR)return;var e=selBase(),k=trChave(e.id,SEL.a,SEL.b),l=trLer(),t=l.filter(function(x){return x.k===k})[0];
@@ -603,7 +603,7 @@ function nbAgora(){if(MODE==='wait')return WT?WT.beat:waitBeat();return startPer
 function pausar(){if(!run||!CUR)return;var nb=nbAgora(),B=CUR.beats,ini=Math.max(0,Math.floor(nb/B)*B);
  GOID++;timers.forEach(clearAt);timers=[];stopSched();pararSubir();run=false;RECON=false;
  PAUSA={nb:nb,ini:ini,wt:WT?WT.beat:null,mode:MODE};startPerf=0;clearInterval(WTI);WT=null;
- reg('pausou '+CUR.id+' no compasso '+(Math.floor(nb/B)+1));show('Pausado no compasso '+selNum(Math.min(CUR.ms.length-1,Math.floor(nb/B)))+'. Toque no play para continuar daqui, ou volte ao começo.',true);goPinta();render()}
+ reg('pausou '+CUR.id+' no compasso '+(Math.floor(nb/B)+1));show('Pausado no compasso '+selNum(Math.min(CUR.ms.length-1,Math.floor(nb/B))),true);goPinta();render()}
 function continuar(){if(!PAUSA||!CUR)return;var p=PAUSA;PAUSA=null;
  if(p.mode!==MODE){resetAll();document.getElementById('go').click();return}
  /* as notas do compasso onde parou em diante voltam a valer */
@@ -613,10 +613,15 @@ function continuar(){if(!PAUSA||!CUR)return;var p=PAUSA;PAUSA=null;
  agendaTempo(p.ini)}
 /* ícones do botão principal e do voltar ao começo (no Mac e, pelo estado, no celular) */
 var GOI={play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="5.5" width="4" height="13" rx="1"/><rect class="ch" x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>',
- ini:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="5" y="6" width="2.6" height="12" rx="1"/><path class="ch" d="M19 6v12l-9.5-6z"/></svg>'};
+ ini:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="5" y="6" width="2.6" height="12" rx="1"/><path class="ch" d="M19 6v12l-9.5-6z"/></svg>',
+ rec:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path class="ch" d="M20.5 3.5v6h-6z"/></svg>'};
 function goPinta(){var g=document.getElementById('go'),r=document.getElementById('reset');if(!g)return;
  var k=run?'pause':'play',n=run?'Pausar':PAUSA?'Continuar de onde parou':'Começar do começo';if(g.dataset.k!==k+(PAUSA?1:0)||!g.querySelector('svg')){g.dataset.k=k+(PAUSA?1:0);g.innerHTML=GOI[k]}g.setAttribute('aria-label',n);g.title=n;g.classList.toggle('pausado',!!PAUSA);
- if(r&&(r.dataset.k!=='ini'||!r.querySelector('svg'))){r.dataset.k='ini';r.innerHTML=GOI.ini;r.setAttribute('aria-label','Voltar ao começo');r.title='Voltar ao começo'}}
+ if(r){var rn=(run||PAUSA||(LOOP&&LOOP.pausa))?(LOOP?'Recomeçar o trecho':'Recomeçar do começo'):'Voltar ao começo';if(r.dataset.k!=='rec'||!r.querySelector('svg')){r.dataset.k='rec';r.innerHTML=GOI.rec}if(r.title!==rn){r.setAttribute('aria-label',rn);r.title=rn}}}
+/* recomeçar: tocando ou pausado, volta ao começo e já toca de novo (repetindo um trecho, recomeça o trecho); parado, só volta ao começo */
+function recomecar(){if(!CUR)return;if(!(run||PAUSA||(LOOP&&LOOP.pausa))){resetAll();return}
+ if(LOOP&&SEL){if(LOOP.tm)clearTimeout(LOOP.tm);LOOP=null;reg('recomeçou o trecho '+selNome());resetAll();selRepetir();return}
+ reg('recomeçou do começo');resetAll();document.getElementById('go').click()}
 /* modo com tempo: agenda som, cliques e correção a partir do tempo nb0 (0 = do começo; pausa = continua do compasso onde parou) */
 function agendaTempo(nb0){
  var ms=[];allEv().forEach(function(e){if(e.midis)ms=ms.concat(e.midis)});
@@ -626,11 +631,13 @@ function agendaTempo(nb0){
   else{var ns=+document.getElementById('preS').value;for(var q=0;q<ns;q++)(function(n,tt){at(tt,function(){show('Prepare as mãos: '+n,true)})})(ns-q,t+q);t+=ns}
   t-=nb0*spb;/* t = hora do tempo 0 (no passado, se continuando) */
   startPerf=soundPerf(c,t);var lagS=Math.max(0,(startPerf-(performance.now()+(t-c.currentTime)*1000))/1000)+0.005;var lat=(+document.getElementById('lat').value)/1000;
-  EV.forEach(function(e){if(e.beat<nb0-1e-6)return;var tt=t+e.beat*spb;at(tt+lagS,render);at(tt+e.dur*spb+lagS,render);/* acende e apaga a nota azul na hora em que o som sai */(e.midis||[67]).forEach(function(m){if(e.midis)tone(m,tt,e.dur*spb*0.95,e.pos===0?0.9:0.6)});(function(b,t2){at(t2,function(){markMissed(b+0.5001)})})(e.beat,tt+0.5*spb+lat+0.05)});
+  /* piano no iPhone: as notas chegam pelo Wi-Fi, às vezes atrasadas (mas com a hora certa em que você tocou); espera mais 1,2 s antes de dar como faltou */
+  var gr=(typeof pianoIphone==='function'&&pianoIphone()&&!curIn)?1.2:0;
+  EV.forEach(function(e){if(e.beat<nb0-1e-6)return;var tt=t+e.beat*spb;at(tt+lagS,render);at(tt+e.dur*spb+lagS,render);/* acende e apaga a nota azul na hora em que o som sai */(e.midis||[67]).forEach(function(m){if(e.midis)tone(m,tt,e.dur*spb*0.95,e.pos===0?0.9:0.6)});(function(b,t2){at(t2,function(){markMissed(b+0.5001)})})(e.beat,tt+0.5*spb+lat+0.05+gr)});
   EVX.forEach(function(e){if(e.midis&&e.beat>=nb0-1e-6)e.midis.forEach(function(m){tone(m,t+e.beat*spb,e.dur*spb*0.95,e.pos===0?0.75:0.5,true)})});
   var tot=CUR.ms.length*B;for(var b=Math.ceil(nb0-1e-6);b<tot;b++){click(t+b*spb,b%B===0);(function(tt,n,mm){at(tt,function(){show('Compasso '+mm+' · tempo '+n);render()})})(t+b*spb,b%B+1,Math.floor(b/B)+1)}
-  at(t+tot*spb+0.8+lat,finish)})}
-document.getElementById('reset').onclick=resetAll;
+  at(t+tot*spb+0.8+lat+gr,finish)})}
+document.getElementById('reset').onclick=recomecar;
 /* ---------- histórico e dia ---------- */
 var H={days:{}},lastAct=0;
 try{H=JSON.parse(localStorage.getItem('piano_hist'))||H}catch(e){}
@@ -935,7 +942,7 @@ function instHtml(i){var ipu='http://'+i.ip+':'+i.port+'/celular.html',u=i.host?
  function snap(){var g=function(id){return document.getElementById(id)};
   return JSON.stringify({title:g('exTitle').textContent+(CUR&&CUR.parcial?' · ⚠ Incompleta':''),cd:g('cd').innerHTML,score:VIS==='fall'?'':g('score').outerHTML,scoreFull:celFull(),recv:+document.getElementById('recVol').value,alvo:+document.getElementById('alvo').value,perfis:PERFIS,perfil:PERFIL,pre:document.getElementById('pre').value,preS:+document.getElementById('preS').value,preN:+document.getElementById('preN').value,tr:(function(){var n=linhas();if(n<2)return null;var src=CUR.base||CUR,per=perTr(src),l=[];for(var i=1;i<=n;i++)l.push('Linha '+i+' (comp. '+((i-1)*per+1)+'–'+Math.min(i*per,src.ms.length)+')');return {l:l,v:trAtual()}})(),mao:MAO,celv:CELV,
    /* queda de notas: as notas e o relógio da música (hora do Mac em que começa o tempo 0); o iPhone anima sozinho */
-   rel:seguro(relSnap),sel:seguro(selSnap),pausa:!!PAUSA,somk:(typeof PG!=='undefined'&&PG.somk)||null,fall:VIS==='fall'?{m:fallModel(),t0:startPerf?Date.now()-performance.now()+startPerf:0,spb:spb,run:run,mode:MODE,wb:run&&MODE==='wait'?waitBeat():null,nbP:PAUSA?PAUSA.nb:null,played:played}:null,kb:OPT.kb?g('kb').outerHTML:'',errs:g('errs').innerHTML,res:g('res').innerHTML,saida:typeof JG!=='undefined'&&JG?JG.saida:'piano',som:typeof SOMCEL!=='undefined'&&SOMCEL&&Date.now()-SOMCEL.t<4000?SOMCEL:null,ult:run?'':g('exUlt').innerHTML,jogo:seguro(jSnap),conc:seguro(concCel),ini:run?null:seguro(celInicio),ritn:seguro(function(){return Object.keys(RITN).map(function(k){return [k,RITN[k].t]})}),festa:FESTA&&Date.now()-FESTA.ts<6000?FESTA:null,
+   rel:seguro(relSnap),sel:seguro(selSnap),pausa:!!PAUSA,somk:(typeof PG!=='undefined'&&PG.somk)||null,somenv:(typeof PG!=='undefined'&&PG.somenv)||null,fall:VIS==='fall'?{m:fallSnap(),t0:startPerf?Date.now()-performance.now()+startPerf:0,spb:spb,run:run,mode:MODE,wb:run&&MODE==='wait'?waitBeat():null,nbP:PAUSA?PAUSA.nb:null,played:played}:null,kb:OPT.kb?g('kb').outerHTML:'',errs:(function(){var h=g('errs').innerHTML,i=h.lastIndexOf(' · ');return i<0?h:h.slice(i+3)})(),res:g('res').innerHTML,saida:typeof JG!=='undefined'&&JG?JG.saida:'piano',som:typeof SOMCEL!=='undefined'&&SOMCEL&&Date.now()-SOMCEL.t<4000?SOMCEL:null,ult:run?'':g('exUlt').innerHTML,jogo:seguro(jSnap),conc:seguro(concCel),ini:run?null:seguro(celInicio),ritn:seguro(function(){return Object.keys(RITN).map(function(k){return [k,RITN[k].t]})}),festa:FESTA&&Date.now()-FESTA.ts<6000?FESTA:null,
    run:run,mode:MODE,show:SHOW,opt:OPT,bpm:+g('bpm').value,midi:g('midiStat').innerHTML,cur:CUR&&CUR.id,ink:getComputedStyle(document.body).getPropertyValue('--ink').trim()||'#1f1f1d',
    sy:curSys(),hid:document.hidden,tol:document.getElementById('tol').value,out:document.getElementById('outdev').value,clk:document.getElementById('clkdev').value,cs:document.getElementById('clksnd').value,nomes:NOMES,lin:seguro(linSnap),esp:seguro(espSnap),celaj:seguro(function(){return JSON.parse(localStorage.getItem('piano_celaj')||'null')}),pv:+document.getElementById('pnoVol').value,pcv:+document.getElementById('pclkVol').value,ex:allEx().filter(function(e){return !oculta(e.id)&&livroVisivel(e)}).map(function(e){return [e.g,e.id,e.title]})})}
  /* só uma aba do Mac comanda o iPhone: vira dona ao abrir, ao ganhar foco ou ao receber nota do piano */
@@ -1028,6 +1035,13 @@ var VIS='score';try{VIS=localStorage.getItem('piano_vis')||'score'}catch(e){}
 /* modelo para o queda.js: [tempo, duração, midi, mão, dedo, estado, nome] (nota "qualquer tecla" = midi null) */
 function fallModel(){if(!CUR)return null;var notes=[];allEv().forEach(function(e){if(e.tcd)return;if(e.midis)e.midis.forEach(function(m,j){var i=e.nidx?e.nidx[j]:j;notes.push([e.beat,e.dur,m,e.h,(e.f||'').split('-')[i]||e.f||'',e.x?'x':e.st||null,e.notes?nmT(e.notes[i]):''])});else notes.push([e.beat,e.dur,null,e.h,e.f||'',e.st||null,''])});
  if(!CUR._rng||CUR._rngN!==notes.length){CUR._rng=Queda.range(notes);CUR._rngN=notes.length}return {lo:CUR._rng[0],hi:CUR._rng[1],beats:CUR.beats,notes:notes,x:typeof selQueda==='function'?selQueda():null}}
+/* para o celular: a música da queda (27 KB numa música grande) só vai quando muda, ou a cada 4 s para quem acabou de
+   conectar; a cor de cada nota vai sempre, numa letra por nota (st). Antes ia inteira ~17 vezes por segundo e o celular engasgava. */
+var FSN={k:'',t:0};
+function fallSnap(){var M=fallModel();if(!M)return null;var st='',cod={ok:'o',warn:'w',bad:'b',miss:'m',x:'x'},
+  base=M.notes.map(function(n){st+=n[5]?(cod[n[5]]||'.'):'.';return [n[0],n[1],n[2],n[3],n[4],null,n[6]]}),js=JSON.stringify(base),h=7,i;
+ for(i=0;i<js.length;i++)h=(h*31+js.charCodeAt(i))|0;var k=base.length+'.'+(h>>>0).toString(36),full=k!==FSN.k||Date.now()-FSN.t>4000;if(full){FSN.k=k;FSN.t=Date.now()}
+ return {k:k,st:st,x:M.x,lo:M.lo,hi:M.hi,beats:M.beats,notes:full?base:null}}
 /* tempo atual em tempos: com tempo = relógio da música; espera = desliza até a nota da vez; parado = um pouco antes da 1ª nota */
 var FNB=null;
 function waitBeat(){if(WT)return WT.beat;var g=curGroup();return g.length?g[0].beat:(EV.length?EV[EV.length-1].beat+EV[EV.length-1].dur:0)}
@@ -1846,7 +1860,7 @@ function bkDados(){var d={};for(var i=0;i<localStorage.length;i++){var k=localSt
    Pesa uns 7 KB por minuto de teclas, mais o resultado. Ouvir, cortar o começo e o fim (sem apagar nada), renomear,
    ★ guardar sempre, apagar (lixeira por 30 dias) e compartilhar (áudio .wav ou MIDI). O celular usa a mesma lista. */
 var REPS=null,REPABERTO=null,REPDADOS={},REPCONF=null,REPNOME=false,REPFIM=null;
-function repPode(){return /^https?:/.test(location.protocol)&&!/[?&](teste|ensaio)\b/.test(location.search)&&!CEREBRO}
+function repPode(){return /^https?:/.test(location.protocol)&&!/[?&](teste|ensaio)\b/.test(location.search)&&(!CEREBRO||COMMAC)}
 /* cor de cada tecla tocada: a do evento da partitura em que ela entrou (o = certa, w = quase, b = errada, x = a mais) */
 function repCores(){var fila=EV.map(function(e){return {st:e.st,falta:(e.midis||[]).slice()}}),i0=0,out=[];
  REC.forEach(function(r){if(!r[3])return;var achou=null;for(var i=i0;i<fila.length&&i<i0+8;i++){var k=fila[i].falta.indexOf(r[0]);if(k>=0){fila[i].falta.splice(k,1);achou=fila[i];break}}
@@ -1870,10 +1884,10 @@ function repBotao(salvo){var t=document.querySelector('#res .fbtop');if(!t)retur
  if(salvo===true){b.removeAttribute('data-act');b.disabled=true;b.innerHTML=REPSALIC+'Replay salvo'}
  else if(salvo){b.removeAttribute('data-act');b.disabled=true;b.innerHTML=REPSALIC+'Salvando…'}
  else{b.setAttribute('data-act','repsalvar');b.disabled=false;b.innerHTML=REPSALIC+'Salvar replay'}
- try{snap()}catch(e){}}
+ if(window.CEL_SOON)CEL_SOON()}
 function repSalvarAgora(){var p=REPPEND;if(!p)return;REPPEND=null;var r=document.getElementById('res');
  p.dados.res=r?r.innerHTML.replace(/<button class="rep-sal[\s\S]*?<\/button>/,''):'';repBotao('…');
- (p.som||Promise.resolve(null)).then(function(s){if(s){p.meta.som=1;p.meta.somOff=Math.round(p.t0-s.p0)}
+ (p.som||Promise.resolve(null)).then(function(s){return s&&s.iph?pgBaixaIph(s.k):s}).then(function(s){if(s){p.meta.som=1;p.meta.somOff=Math.round(p.t0-s.p0)}
   return fetch('/api/replays',{method:'POST',body:JSON.stringify(p.meta)+'\n'+JSON.stringify(p.dados)}).then(function(x){if(!x.ok)throw 0;
    return s?fetch('/api/replays?id='+p.meta.id+'&acao=som',{method:'POST',body:s.blob}).then(function(y){if(!y.ok)throw 0}):null})
   .then(function(){REPS=null;repBotao(true);show(s?'Replay salvo, com o som do seu piano.':'Replay salvo. Ele fica na aba Replays.',true);if(TAB==='rep')repMostrar();
@@ -2011,7 +2025,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
    "Salvar replay" guarda o som junto (meta.som, meta.somOff = ms da gravação onde fica o tempo 0 das teclas). Ouvir e
    compartilhar usam esse som. Replay sem som: o app toca as teclas no próprio piano e grava (repPorPiano), e guarda.
    Sem piano ligado: as amostras de sons/ (repWavAmostras). */
-var PG={st:null,nome:'',g:null,lim:0,fecha:0,somk:null};
+var PG={st:null,nome:'',g:null,lim:0,fecha:0,somk:null,somenv:null};
 function pgAgenda(){clearTimeout(PG.fecha);PG.fecha=setTimeout(pgFechar,15*60000)}
 function pgFechar(){if(PG.g)return pgAgenda();if(PG.st)PG.st.getTracks().forEach(function(t){t.stop()});PG.st=null}
 function pgEntrada(){if(PG.st&&PG.st.active){pgAgenda();return Promise.resolve(PG.st)}
@@ -2028,15 +2042,15 @@ function pgFim(r,mais){if(!r||r.state==='inactive')return Promise.resolve(null);
 function pgPode(){return !!(OPT.somR&&repPode()&&(curIn||pianoIphone()))}
 /* começa a gravar do lado onde está o cabo. g.pronto: já gravando; g.fim(ms a mais): {blob, p0 em performance.now} ou null; g.larga(): joga fora */
 function pgAbre(){var g={};
- if(curIn){g.pronto=pgEntrada().then(function(s){if(!s||g.fora)return false;return new Promise(function(ok){g.r=pgGravar(s,ok)})});
+ if(curIn&&!CEREBRO){g.pronto=pgEntrada().then(function(s){if(!s||g.fora)return false;return new Promise(function(ok){g.r=pgGravar(s,ok)})});
   g.fim=function(mais){g.fora=true;return Promise.race([g.pronto,new Promise(function(x){setTimeout(x,3000)})]).then(function(){return pgFim(g.r,mais)})};
   g.larga=function(){g.fora=true;g.pronto.then(function(){var r=g.r;if(r&&r.state!=='inactive'){r.partes.length=0;r.ondataavailable=null;try{r.stop()}catch(e){}}})};return g}
- if(pianoIphone()){var k='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),sai=function(){if(PG.somk===k){PG.somk=null;try{snap()}catch(e){}}};
-  PG.somk=k;try{snap()}catch(e){}g.pronto=new Promise(function(ok){setTimeout(function(){ok(true)},1500)});
-  g.fim=function(mais){return new Promise(function(ok){setTimeout(ok,mais||0)}).then(function(){sai();return pgBaixaIph(k)})};g.larga=sai;return g}
+ if(pianoIphone()||(COMMAC&&curIn)){var k='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),sai=function(){if(PG.somk===k){PG.somk=null;if(window.CEL_SOON)CEL_SOON()}};
+  PG.somk=k;if(window.CEL_SOON)CEL_SOON();g.pronto=new Promise(function(ok){setTimeout(function(){ok(true)},1500)});
+  g.fim=function(mais){return new Promise(function(ok){setTimeout(ok,mais||0)}).then(function(){sai();return {iph:true,k:k}})};g.baixa=function(){return pgBaixaIph(k)};g.larga=sai;return g}
  return null}
 /* o arquivo que o iPhone mandou (espera até 60 s: o Wi-Fi pode demorar) */
-function pgBaixaIph(k){var n=0;return new Promise(function(ok){(function v(){fetch('/api/somreplay?k='+k+'&info=1',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
+function pgBaixaIph(k){var n=0;PG.somenv=k;if(window.CEL_SOON)CEL_SOON();var fecha=function(x){if(PG.somenv===k){PG.somenv=null;if(window.CEL_SOON)CEL_SOON()}return x};return new Promise(function(ok0){var ok=function(x){ok0(fecha(x))};(function v(){fetch('/api/somreplay?k='+k+'&info=1',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(j){
   if(j&&j.erro){reg('som do piano no iPhone: '+j.erro);return ok(null)}
   if(j&&j.p0){fetch('/api/somreplay?k='+k,{cache:'no-store'}).then(function(r){if(!r.ok)throw 0;return r.blob()}).then(function(b){ok({blob:b,p0:j.p0-(Date.now()-performance.now())})}).catch(function(){ok(null)});return}
   if(++n<60)setTimeout(v,1000);else{reg('som do piano no iPhone: o arquivo não chegou');ok(null)}})})()})}
@@ -2179,9 +2193,11 @@ function bkAuto(){var hoje=dkey();try{if(localStorage['backup_dia']===hoje)retur
   fetch('/api/dados?de=mac',{method:'POST',body:j}).then(function(r){if(r.ok)ult=j}).catch(function(){})}
  function confere(){if(!ACTIVE||run||Date.now()-LASTUSE<60000||(lastAct&&Date.now()-lastAct<60000))return;var feito='0';try{feito=localStorage.getItem('sync_iphone')||'0'}catch(e){}
   fetch('/api/dados?de=iphone&depois='+encodeURIComponent(feito),{cache:'no-store'}).then(function(r){return r.status===200?r.json():null}).then(function(ip){if(!ip||!ip.dados)return;
-   return fetch('/api/dados?de=mac&v='+encodeURIComponent(ip.usou||''),{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(dm){
+   /* o iPhone corrigindo com o Mac ligado entrega várias vezes partindo da mesma cópia do Mac: a base é a entrega anterior (já juntada), senão contaria duas vezes */
+   var antU='';try{antU=localStorage.getItem('sync_iphone_usou')||''}catch(e){}var baseUrl=ip.usou&&antU===String(ip.usou)&&feito!=='0'?'/api/dados?de=iphone&v='+encodeURIComponent(feito):'/api/dados?de=mac&v='+encodeURIComponent(ip.usou||'');
+   return fetch(baseUrl,{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}).then(function(dm){
     return bkSalvar('auto').catch(function(){}).then(function(){if(run)return;var agora=djAtual(),base=dm&&dm.dados?dm.dados:agora;
-     reg('juntou os dados que o iPhone treinou sozinho ('+ip.v+(dm&&dm.dados?'':', sem a cópia-base')+')');djAplicar(djJuntar(base,agora,ip.dados));regEnvia();try{localStorage.setItem('sync_iphone',String(ip.v))}catch(e){}ult='';location.reload()})})}).catch(function(){})}
+     reg('juntou os dados que o iPhone treinou sozinho ('+ip.v+(dm&&dm.dados?'':', sem a cópia-base')+')');djAplicar(djJuntar(base,agora,ip.dados));regEnvia();try{localStorage.setItem('sync_iphone',String(ip.v));localStorage.setItem('sync_iphone_usou',String(ip.usou||''))}catch(e){}ult='';location.reload()})})}).catch(function(){})}
  setTimeout(manda,5000);setInterval(manda,30000);setInterval(confere,30000);window.dadosMandaAgora=manda})();
 function bkRestaurar(obj){if(!obj||obj.app!=='treino-piano'||!obj.dados)return Promise.reject(new Error('este arquivo não é um backup do Treino de piano'));
  return bkSalvar('manual').catch(function(){}).then(function(){var del=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/^piano_/.test(k))del.push(k)}
@@ -2274,6 +2290,7 @@ function codeOk(files,tx){var ok=true;tx.forEach(function(t,i){var f=files[i];if
  function check(){Promise.all(files.map(function(f){return fetch(f,{cache:'no-store'}).then(function(r){return r.ok?r.text():null}).catch(function(){return null})})).then(function(tx){
    var changed=false,stable=true;tx.forEach(function(t,i){var f=files[i];if(t==null)return;if(first[f]==null)first[f]=t;if(t!==first[f]){changed=true;if(seen[f]!==t)stable=false}seen[f]=t});
    if(!changed||!stable||run||Date.now()-LASTUSE<60000||(lastAct&&Date.now()-lastAct<60000))return;
+   if(typeof PAUSA!=='undefined'&&PAUSA)return;/* pausado no meio da música: não troca (perderia o ponto da pausa) */
    if(document.getElementById('res').innerHTML&&Date.now()-LASTUSE<300000)return;/* resultado na tela: espera 5 min para não sumir enquanto você lê */
    if(!codeOk(files,tx))return;
    ensaiar(function(){saveAtual();reg('atualizou sozinho (arquivos novos)');regEnvia();try{sessionStorage.setItem('piano_atualizado','1')}catch(e){}location.reload()})})}
@@ -2312,3 +2329,13 @@ try{if(OPT.tut!==false&&!TESTE&&!ENSAIO&&!localStorage.getItem('piano_tutvisto')
 PRONTO=true;sessaoVolta();praticaVis();
 window.APP_OK=true;/* chegou ao fim do início sem erro */
 if(!ENSAIO)connectMidi(true);
+/* ---------- espelho do iPhone: com o cabo no iPhone ("O iPhone corrige" ligado), quem corrige é o iPhone; esta aba mostra a tela
+   dele (celular.html?espelho=1) e os botões comandam o iPhone: play, trocar música, ajustes. Some quando o iPhone para de mandar. ---------- */
+(function(){if(CEREBRO||!/^https?:/.test(location.protocol)||/[?&](teste|ensaio)\b/.test(location.search))return;var on=false,box=null,esc=0;
+ function poe(v){if(v===on)return;on=v;
+  if(v){box=document.createElement('div');box.id='espBox';
+   box.innerHTML='<div class="esp-top"><div><b>O iPhone está corrigindo</b><span class="lb">O piano está no cabo do iPhone. Esta é a tela dele: os botões daqui comandam o iPhone.</span></div><button id="espEsc">Esconder por 5 min</button></div><iframe src="celular.html?espelho=1" title="Tela do iPhone"></iframe>';
+   document.body.appendChild(box);document.getElementById('espEsc').onclick=function(){esc=Date.now();poe(false)};reg('espelho do iPhone: aberto')}
+  else{if(box)box.remove();box=null}}
+ function confere(){if(run)return;fetch('/api/espelho?info=1',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){poe(j.idade<12&&Date.now()-esc>300000)}).catch(function(){})}
+ setInterval(confere,3000);confere()})();

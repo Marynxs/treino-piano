@@ -359,3 +359,9 @@ body.simples #go{font-size:20px;padding:12px 36px}
 .tr-i .selic{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .tr-i .selic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .tr-i .selgo{background:#378ADD;color:#fff}
+/* espelho do iPhone (quando o iPhone corrige) */
+#espBox{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column}
+#espBox .esp-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 20px;border-bottom:1px solid var(--bd)}
+#espBox .esp-top>div{display:flex;flex-direction:column;gap:2px}
+#espBox .esp-top button{min-height:44px;padding:8px 16px}
+#espBox iframe{flex:1;border:0;width:100%;display:block}

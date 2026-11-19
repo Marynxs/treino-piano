@@ -7,6 +7,7 @@ final class ServidorLocal {
     static let porta: UInt16 = 8765
     let raiz: URL            // cópia do app (Documents/site)
     let pastaBackups: URL    // Documents/backups
+    var mac: String?         // iPhone corrigindo com o Mac ligado: para onde vão replays, estatísticas e som
     private var ouvinte: NWListener?
     private let fila = DispatchQueue(label: "servidor-local")
     private var estado = Data(), estadoV = "", dono = ""
@@ -40,6 +41,7 @@ final class ServidorLocal {
         }
         o.start(queue: fila)
         ouvinte = o
+        if mac != nil { espGer += 1; let g = espGer; fila.async { self.buscarCmds(nil, g) } }
         let t = DispatchSource.makeTimerSource(queue: fila)
         t.schedule(deadline: .now() + 0.1, repeating: 0.1)
         t.setEventHandler { [weak self] in self?.pingar() }
@@ -50,6 +52,7 @@ final class ServidorLocal {
     func parar() {
         fila.sync {
             ping?.cancel(); ping = nil
+            espGer += 1; espDado = nil
             sse.values.forEach { $0.cancel() }; sse.removeAll()
             esperas.removeAll()
             ouvinte?.cancel(); ouvinte = nil
@@ -98,13 +101,15 @@ final class ServidorLocal {
         }
         caminho = caminho.removingPercentEncoding ?? caminho
         let json = "application/json"
+        // iPhone corrigindo com o Mac ligado: replays, estatísticas e o som do piano ficam no Mac (a página daqui só repassa)
+        if let m = mac, ["/api/replays", "/api/tentativas", "/api/somreplay"].contains(caminho) { repassar(c, metodo, m + alvo, corpo); return }
         switch caminho {
         case "/api/estado": estadoRota(c, metodo, q, corpo)
         case "/api/stream": abrirSSE(c)
         case "/api/cmd": cmdRota(c, metodo, q, corpo)
         case "/api/time": responder(c, "200 OK", json, Data("{\"t\":\(Int(Date().timeIntervalSince1970 * 1000))}".utf8))
         case "/api/log": responder(c, "200 OK", json, Data("{\"ok\":true}".utf8))
-        case "/api/info": responder(c, "200 OK", json, Data("{\"ip\":\"127.0.0.1\",\"host\":\"\",\"port\":\(Self.porta),\"sozinho\":true}".utf8))
+        case "/api/info": responder(c, "200 OK", json, Data("{\"ip\":\"127.0.0.1\",\"host\":\"\",\"port\":\(Self.porta),\"sozinho\":true,\"commac\":\(mac != nil)}".utf8))
         case "/api/backup": backupRota(c, metodo, q, corpo)
         case "/api/backups": listaBackups(c)
         case "/api/registro":
@@ -114,6 +119,21 @@ final class ServidorLocal {
             if caminho.hasPrefix("/api/") { responder(c, "404 Not Found", "text/plain; charset=utf-8", Data("Só no Mac.".utf8)); return }
             arquivo(c, caminho == "/" ? "/treino-piano.html" : caminho)
         }
+    }
+
+    /// Repassa o pedido ao Mac e devolve a resposta dele.
+    private func repassar(_ c: NWConnection, _ metodo: String, _ url: String, _ corpo: Data) {
+        guard let u = URL(string: url) else { responder(c, "400 Bad Request", "text/plain", Data()); return }
+        var r = URLRequest(url: u, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 60)
+        r.httpMethod = metodo
+        if metodo == "POST" { r.httpBody = corpo }
+        URLSession.shared.dataTask(with: r) { [weak self] d, resp, _ in
+            guard let self else { return }
+            let h = resp as? HTTPURLResponse
+            let st = h.map { "\($0.statusCode) " + ($0.statusCode == 200 ? "OK" : "Erro") } ?? "502 Bad Gateway"
+            let tipo = h?.value(forHTTPHeaderField: "Content-Type") ?? "text/plain"
+            self.fila.async { self.responder(c, st, tipo, d ?? Data("o Mac não respondeu".utf8)) }
+        }.resume()
     }
 
     private func responder(_ c: NWConnection, _ status: String, _ tipo: String, _ corpo: Data, _ extra: String = "") {
@@ -148,6 +168,7 @@ final class ServidorLocal {
             if q["claim"] != nil, !src.isEmpty { dono = src }
             if src != dono { responder(c, "409 Conflict", "application/json", Data("{\"ok\":false,\"dono\":false}".utf8)); return }
             estado = corpo
+            if mac != nil { espDado = corpo }   // espelho no Mac: vai a cópia mais nova (pingar)
             estadoV = (q["v"].flatMap { Int($0) }).map(String.init) ?? String(Int(Date().timeIntervalSince1970))
             responder(c, "200 OK", "application/json", Data("{\"ok\":true}".utf8))
             mandarSSE(estado)
@@ -185,11 +206,51 @@ final class ServidorLocal {
         return Data("data: \(s)\n\n".utf8)
     }
     private func mandarSSE(_ d: Data) { let l = linhaSSE(d); sse.values.forEach { mandar($0, l) } }
-    private func pingar() { let l = Data("event: ping\ndata: 1\n\n".utf8); sse.values.forEach { mandar($0, l) } }
+    private func pingar() { let l = Data("event: ping\ndata: 1\n\n".utf8); sse.values.forEach { mandar($0, l) }; espelhar() }
     private func mandar(_ c: NWConnection, _ d: Data) {
         c.send(content: d, completion: .contentProcessed { [weak self] e in
             if e != nil { self?.sse.removeValue(forKey: ObjectIdentifier(c)); c.cancel() }
         })
+    }
+
+    // MARK: espelho no Mac (iPhone corrigindo com o Mac ligado)
+    // A tela daqui vai ao Mac (no máximo 5 por segundo, só a mais nova) e os botões do Mac voltam como comandos,
+    // que entram na mesma fila dos comandos desta tela: dá para dar play, trocar música e ajustes pelo Mac.
+    private var espDado: Data?
+    private var espIndo = false
+    private var espT = Date.distantPast
+    private var espGer = 0
+    private var espUlt: Data?   // a última tela mandada: repete a cada 5 s, para o Mac saber que o iPhone segue corrigindo
+
+    private func espelhar() {
+        guard let m = mac, !espIndo, let d = espDado ?? (Date().timeIntervalSince(espT) > 5 ? espUlt : nil), Date().timeIntervalSince(espT) >= 0.2, let u = URL(string: m + "/api/espelho") else { return }
+        espDado = nil; espUlt = d; espIndo = true; espT = Date()
+        var r = URLRequest(url: u, timeoutInterval: 5)
+        r.httpMethod = "POST"; r.httpBody = d
+        URLSession.shared.dataTask(with: r) { [weak self] _, _, _ in self?.fila.async { self?.espIndo = false } }.resume()
+    }
+
+    /// Busca no Mac os comandos dados na tela do Mac (espera até 20 s por um novo)
+    private func buscarCmds(_ desde: Int?, _ g: Int) {
+        guard g == espGer, let m = mac, let u = URL(string: m + "/api/cmd?espelho=1&wait=1" + (desde.map { "&id=\($0)" } ?? "")) else { return }
+        let r = URLRequest(url: u, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 30)
+        URLSession.shared.dataTask(with: r) { [weak self] d, _, _ in
+            guard let self else { return }
+            self.fila.async {
+                guard g == self.espGer else { return }
+                guard let d, let o = try? JSONSerialization.jsonObject(with: d) as? [String: Any], let last = (o["last"] as? NSNumber)?.intValue else {
+                    self.fila.asyncAfter(deadline: .now() + 2) { self.buscarCmds(desde, g) }; return
+                }
+                if desde != nil, let l = o["cmds"] as? [Any], !l.isEmpty {
+                    for x in l {
+                        if let j = try? JSONSerialization.data(withJSONObject: x), let s = String(data: j, encoding: .utf8) { self.ultimoCmd += 1; self.cmds.append((self.ultimoCmd, s)) }
+                    }
+                    if self.cmds.count > 200 { self.cmds.removeFirst(self.cmds.count - 200) }
+                    self.acordar()
+                }
+                self.buscarCmds(last, g)
+            }
+        }.resume()
     }
 
     // MARK: comandos (o celular manda, o cérebro lê)

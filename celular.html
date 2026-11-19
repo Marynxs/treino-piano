@@ -31,7 +31,8 @@ h1{font-size:15px;font-weight:600;margin:0;flex:1;min-width:0;white-space:nowrap
 #cd .lb{white-space:normal;font-size:14px}
 #score{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:4px;overflow:hidden;margin-top:6px}
 #score svg,#kb svg{display:block;width:100%;height:auto}
-#errs{font-size:12px;margin:6px 0;min-height:16px}
+#errs{font-size:12px;margin:6px 0;height:16px;line-height:16px;overflow:hidden;white-space:nowrap}
+#cd{overflow:hidden;white-space:nowrap}#cd .um,#errs .um{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cd .lb,#cd .um .lb{white-space:nowrap}
 #kb{margin-top:6px}
 @media (orientation:landscape) and (max-height:500px){#kb svg{max-height:22vh;width:auto;margin:0 auto}.top{gap:6px}#cd{min-height:28px;font-size:15px;margin:2px 0}h1{font-size:14px}.bar{padding-top:4px}.bar button{min-height:38px;padding:6px 12px}#go{min-height:40px}#ult{display:none!important}}
 /* relatório do fim: no iPhone abre em tela cheia por cima da partitura, com letra grande e rolagem */
@@ -253,6 +254,8 @@ html,body{overflow-x:hidden}
 .bar button{min-height:44px;padding:8px 16px}
 #selIco{order:6;display:flex;gap:12px;align-items:center}#selIco button{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}#selIco svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}#selIco .on{background:#378ADD;color:#fff}#reset.selhide{display:none!important}#iniBtn{order:1}#viewBtn{order:2}#zoomF{order:3;gap:8px}#repBtn{order:4}#go{order:5;margin:0 auto;min-width:128px}#jvDica,#sairJ{order:6}#reset{order:7}#more{order:8}
 #bar #more,#bar #reset{margin-left:0}
+/* play e recomeçar juntos, no centro da barra */
+#bar #go{margin:0 0 0 auto}#bar #reset{order:5;margin:0 auto 0 0}
 /* zoom da partitura inteira: flutua no canto de baixo da partitura, logo acima da barra (não ocupa lugar na barra) */
 #bar #zoomF{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:calc(100% + 8px);gap:4px;padding:4px;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--bd),0 4px 14px rgba(0,0,0,.18)}
 #bar #zoomF button{min-height:40px;min-width:44px;padding:4px 10px}
@@ -460,7 +463,7 @@ html.rodado .rephead{padding-top:10px}
 <script>
 var ENSAIO=/[?&]ensaio\b/.test(location.search);
 /* registro: o que acontece nesta tela vai para registro/AAAA-MM-DD.log no Mac (ou fica no app do iPhone até ele reencontrar o Mac) */
-var REGC=[],REGDE=/[?&]app\b/.test(location.search)?'app':'cel';
+var REGC=[],REGDE=/[?&]app\b/.test(location.search)?'app':/[?&]espelho\b/.test(location.search)?'espelho':'cel';
 function reg(t){if(ENSAIO)return;try{REGC.push(new Date().toTimeString().slice(0,8)+' '+(/Android/i.test(navigator.userAgent)?'android ':/iPhone|iPad/.test(navigator.userAgent)?'iphone ':'')+String(t).replace(/\s+/g,' ').slice(0,600));if(REGC.length>300)REGC.shift();if(!reg.t)reg.t=setTimeout(regEnvia,3000)}catch(e){}}
 function regEnvia(){clearTimeout(reg.t);reg.t=null;if(!REGC.length)return;var b=REGC.join('\n');REGC=[];try{fetch('/api/registro?de='+REGDE,{method:'POST',body:b,keepalive:true}).catch(function(){})}catch(e){}}
 window.addEventListener('error',function(e){reg('ERRO '+(e.message||'')+' '+String(e.filename||'').split('/').pop()+':'+(e.lineno||''))});
@@ -472,7 +475,9 @@ var V=null,S=null,lastOk=0,lastNew=0,start=Date.now(),VIEW='linha';
 try{VIEW=localStorage.getItem('cel_view')||'linha'}catch(e){}
 var $=function(id){return document.getElementById(id)};
 function myInk(){return getComputedStyle(document.body).getPropertyValue('--ink').trim()||'#1f1f1d'}
-function cmd(c){if(ENSAIO)return;fetch('/api/cmd',{method:'POST',body:JSON.stringify(c)}).catch(function(){})}
+/* ?espelho=1: esta tela aberta no Mac mostra o iPhone (quando ele corrige) e os botões comandam o iPhone */
+var ESPELHO=/[?&]espelho\b/.test(location.search);
+function cmd(c){if(ENSAIO)return;fetch(ESPELHO?'/api/cmd?espelho=1':'/api/cmd',{method:'POST',body:JSON.stringify(c)}).catch(function(){})}
 function paintView(){$('viewBtn').textContent=VIEW==='linha'?'Ver inteira':'Ver linha';
  document.querySelectorAll('.view').forEach(function(b){b.classList.toggle('on',b.dataset.v===VIEW)})}
 /* "linha": só a linha da próxima nota, do tamanho da tela. "tudo": a partitura inteira, que rola dentro da caixa e tem zoom
@@ -527,17 +532,29 @@ window.addEventListener('resize',fit);window.addEventListener('orientationchange
 var FALL=null,PNB=null,FLOOP=false;
 var LET=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],SOL=['Dó','Dó♯','Ré','Mi♭','Mi','Fá','Fá♯','Sol','Lá♭','Lá','Si♭','Si'];
 var POFF=0,PDRAG=null,PARRASTOU=false;
-var GOI={play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="5.5" width="4" height="13" rx="1"/><rect class="ch" x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>',ini:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="5" y="6" width="2.6" height="12" rx="1"/><path class="ch" d="M19 6v12l-9.5-6z"/></svg>'};
+var GOI={play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',pause:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="5.5" width="4" height="13" rx="1"/><rect class="ch" x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>',ini:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="5" y="6" width="2.6" height="12" rx="1"/><path class="ch" d="M19 6v12l-9.5-6z"/></svg>',rec:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path class="ch" d="M20.5 3.5v6h-6z"/></svg>'};
 function phNb(){var F=FALL;if(!F)return 0;if(F.run&&F.mode==='time'&&F.t0)return ((Date.now()+(OFF||0))-F.t0)/1000/F.spb;
  var t=F.run&&F.mode==='wait'&&F.wb!=null?F.wb:F.nbP!=null?F.nbP:(F.m&&F.m.notes.length?F.m.notes[0][0]-1:0);if(!F.run)t+=POFF;else POFF=0;PNB=PNB==null?t:PNB+(t-PNB)*0.18;return PNB}
-function fallLoop(){if(FLOOP)return;FLOOP=true;(function f(){if(!S||!S.fall){FLOOP=false;return}
+function umaLinha(id,h){var e=$(id);if(e.dataset.h===h&&e.firstChild&&e.firstChild.className==='um')return;e.dataset.h=h;e.innerHTML=h?'<span class="um">'+h+'</span>':''}
+/* travadas: anota no registro (a cada 15 s, se houver) os quadros da queda que demoraram e as mensagens do Mac que demoraram para desenhar */
+var TRAV={q:0,qm:0,p:0,pm:0,pk:0,msg:0,t:Date.now()};
+function travAnota(){var T=TRAV;if(T.q||T.p)reg('desempenho em 15 s: '+T.msg+' mensagens do Mac'+(T.q?'; queda travou '+T.q+'x (maior '+T.qm+' ms)':'')+(T.p?'; desenho lento '+T.p+'x (maior '+T.pm+' ms, '+T.pk+' KB)':''));TRAV={q:0,qm:0,p:0,pm:0,pk:0,msg:0,t:Date.now()}}
+setInterval(function(){if(S&&S.run)travAnota();else TRAV={q:0,qm:0,p:0,pm:0,pk:0,msg:0,t:Date.now()}},15000);
+function fallLoop(){if(FLOOP)return;FLOOP=true;var ult=0;(function f(ts){if(!S||!S.fall){FLOOP=false;return}
+ if(ult&&ts-ult>120&&S.run&&!document.hidden){TRAV.q++;TRAV.qm=Math.max(TRAV.qm,Math.round(ts-ult))}ult=ts||0;
  var F=FALL,dark=celEscuro(),nm=S.nomes==='pt'?SOL:LET;
- Queda.draw($('fallCv'),F.m,phNb(),{dark:dark,live:(S.opt||{}).live!==false||!F.run,played:F.played||{},show:S.show,cName:function(m){return nm[m%12]+(Math.floor(m/12)-1)}});
+ if(F&&F.m)Queda.draw($('fallCv'),F.m,phNb(),{dark:dark,live:(S.opt||{}).live!==false||!F.run,played:F.played||{},show:S.show,cName:function(m){return nm[m%12]+(Math.floor(m/12)-1)}});
  requestAnimationFrame(f)})()}
+/* a música da queda vem só quando muda (m.notes); nas outras mensagens vem só a cor de cada nota (m.st, uma letra por nota) */
+var FBASE=null,FCOD={o:'ok',w:'warn',b:'bad',m:'miss',x:'x'};
+function fallM(m,prev){if(!m)return null;if(!m.k)return m;/* formato antigo: a música inteira */
+ if(m.notes)FBASE={k:m.k,n:m.notes,st:''};if(!FBASE||FBASE.k!==m.k)return prev||null;
+ if(FBASE.st!==m.st){var ns=FBASE.n;for(var i=0;i<ns.length;i++)ns[i][5]=FCOD[m.st.charAt(i)]||null;FBASE.st=m.st}
+ return {lo:m.lo,hi:m.hi,beats:m.beats,notes:FBASE.n,x:m.x}}
 function paintFall(s){var fall=!!s.fall;$('score').style.display=fall?'none':'';$('fallCv').style.display=fall?'block':'none';
  if(fall)$('kb').style.display='none';else $('kb').style.display='';$('viewBtn').style.display=fall?'none':'';
  document.querySelectorAll('.vis').forEach(function(b){b.classList.toggle('on',b.dataset.v===(fall?'fall':'score'))});
- if(fall){if(!FALL||FALL.run!==s.fall.run)PNB=null;FALL=s.fall;fallLoop()}else FALL=null}
+ if(fall){if(!FALL||FALL.run!==s.fall.run)PNB=null;var mm=fallM(s.fall.m,FALL&&FALL.m);FALL=s.fall;FALL.m=mm;fallLoop()}else FALL=null}
 /* relatório do fim em tela cheia: abre sozinho quando chega um resultado novo; "Ver partitura" fecha; o botão "Resultado" da barra reabre.
    Só redesenha quando o resultado muda (senão a rolagem voltaria ao topo a cada atualização) */
 var RES='',RESHID='';
@@ -553,11 +570,15 @@ var FESTA_T=0;function festa(f){if(!f||f.ts===FESTA_T)return;FESTA_T=f.ts;var d=
  document.body.appendChild(d);setTimeout(function(){d.classList.add('sai')},2400);setTimeout(function(){d.remove()},2900)}
 /* som do piano nos replays com o cabo no iPhone: o Mac põe uma chave (somk) enquanto a tentativa dura; o app grava a entrada USB e manda ao Mac */
 var SOMK=null;
-function somPiano(s){if(!APPN)return;var k=(s&&s.somk)||null;if(k===SOMK)return;
+var SOMENV=null;
+function somPiano(s){if(!APPN)return;var e=(s&&s.somenv)||null;if(e!==SOMENV){SOMENV=e;if(e)try{webkit.messageHandlers.acao.postMessage({somPiano:{enviar:e}})}catch(x){}}
+ var k=(s&&s.somk)||null;if(k===SOMK)return;
  try{if(SOMK)webkit.messageHandlers.acao.postMessage({somPiano:{parar:SOMK}});if(k)webkit.messageHandlers.acao.postMessage({somPiano:{gravar:k,dif:Math.round(OFF||0)}})}catch(e){}SOMK=k}
 function paint(s){try{somPiano(s)}catch(e){}
  try{festa(s.festa)}catch(e){}
- $('title').textContent=s.title||'';if(relNb(s)==null||relNb(s)<0)$('cd').innerHTML=s.cd||'';$('errs').innerHTML=s.errs||'';$('midi').innerHTML=s.midi||'';
+ /* aviso e erros numa linha só, e só redesenha quando muda: texto longo não empurra a tela para baixo e para cima */
+ if($('title').textContent!==(s.title||''))$('title').textContent=s.title||'';if(relNb(s)==null||relNb(s)<0)umaLinha('cd',s.cd||'');
+ var el=String(s.errs||'').split(' · ');umaLinha('errs',el[el.length-1]||'');if(paint.mi!==(s.midi||'')){paint.mi=s.midi||'';$('midi').innerHTML=paint.mi}
  var ink=myInk(),loc=relNb(s)!=null,fix=function(h){h=h.replace(/ id="(score|kb)"/,'');if(loc)h=h.replace(/<rect[^>]*fill:#B5D4F4;opacity:0\.45[^>]*><\/rect>/g,'').split('#185FA5').join(s.ink||ink);return s.ink&&s.ink!==ink?h.split(s.ink).join(ink):h};
  var bx=$('score'),st=bx.scrollTop,sl=bx.scrollLeft,rep=false;$('kb').innerHTML=fix(s.kb||'');
  /* partitura inteira: o Mac manda a inteira (scoreFull) só quando ela muda com o exercício parado; tocando, manda só as linhas da música,
@@ -579,7 +600,7 @@ function paint(s){try{somPiano(s)}catch(e){}
  /* trecho: só refaz a lista quando muda (para não fechar a lista enquanto você escolhe) */
  if(s.tr){var tk=JSON.stringify(s.tr);if($('trA').dataset.k!==tk){$('trA').dataset.k=tk;var o=s.tr.l.map(function(t,i){return '<option value="'+(i+1)+'">'+t+'</option>'}).join('');$('trA').innerHTML=o;$('trB').innerHTML=o;$('trA').value=s.tr.v[0];$('trB').value=s.tr.v[1]}}document.querySelectorAll('[data-only]').forEach(function(d){d.style.display=only[d.dataset.only]?'':'none'});
  var go=$('go'),gk=(s.run?'pause':'play')+(s.pausa?1:0),gn=s.run?'Pausar':s.pausa?'Continuar de onde parou':'Começar do começo';if(go.dataset.k!==gk||!go.querySelector('svg')){go.dataset.k=gk;go.innerHTML=GOI[s.run?'pause':'play']}go.setAttribute('aria-label',gn);go.title=gn;go.classList.toggle('stop',!!s.run);go.classList.toggle('pausado',!!s.pausa);
- var rs=$('reset');if(!rs.querySelector('svg')){rs.innerHTML=GOI.ini;rs.setAttribute('aria-label','Voltar ao começo');rs.title='Voltar ao começo'}
+ var rs=$('reset'),lp=s.sel&&s.sel.loop,rn=(s.run||s.pausa||lp)?(lp?'Recomeçar o trecho':'Recomeçar do começo'):'Voltar ao começo';if(rs.dataset.k!=='rec'){rs.dataset.k='rec';rs.innerHTML=GOI.rec}if(rs.title!==rn){rs.setAttribute('aria-label',rn);rs.title=rn}
  document.querySelectorAll('.mode').forEach(function(b){b.classList.toggle('on',b.dataset.v===s.mode)});
  $('pvV').textContent=(s.pv!=null?s.pv:'—')+'%';$('pcvV').textContent=(s.pcv!=null?s.pcv:'—')+'%';
  document.querySelectorAll('.nmb').forEach(function(b){b.classList.toggle('on',b.dataset.v===(s.nomes||'en'))});
@@ -610,15 +631,16 @@ function tick(){var a=Date.now();fetch('/api/time',{cache:'no-store'}).then(func
 tick();setInterval(tick,100);
 /* a 1ª mensagem depois de conectar é a tela que já estava guardada (antiga): não conta como atraso */
 var FIRST=true;
-function measure(s,t1){if(FIRST){FIRST=false;return}if(OFF==null||!s.t)return;var net=Math.round(t1+OFF-s.t),tot=Math.round(Date.now()+OFF-s.t);LASTLAT=tot;LAT.push([net,tot,s.hid?"mac escondido":"mac visivel"]);$('lat').textContent=tot+' ms'}
+function measure(s,t1){if(ESPELHO)return;if(FIRST){FIRST=false;return}if(OFF==null||!s.t)return;var net=Math.round(t1+OFF-s.t),tot=Math.round(Date.now()+OFF-s.t);LASTLAT=tot;LAT.push([net,tot,s.hid?"mac escondido":"mac visivel"]);$('lat').textContent=tot+' ms'}
 setInterval(function(){if(!LAT.length)return;var tots=LAT.map(function(x){return x[1]}).sort(function(a,b){return a-b}),big=LAT.filter(function(x){return x[1]>100});
  fetch('/api/log',{method:'POST',body:JSON.stringify({telas:LAT.length,mediana:tots[tots.length>>1],maior:tots[tots.length-1],acima100ms:big.length,picos:big.slice(0,10),wifiIdaVolta:(function(){var r=SAMP.map(function(x){return x.rtt}).sort(function(a,b){return a-b});return r.length?{menor:r[0],mediana:r[r.length>>1],maior:r[r.length-1]}:null})(),celular:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/.test(navigator.userAgent)?'iphone':'outro',religou:RELIGA})}).catch(function(){});LAT=[]},15000);
 /* canal contínuo: o servidor empurra a tela nova assim que o Mac muda (sem ficar perguntando) */
 /* religar: no Android (Samsung) o Wi-Fi cochila e o canal às vezes fica "aberto" sem passar nada, e o EventSource não percebe.
    Sem ping há 2,5 s: fecha e abre de novo (no máximo a cada 2 s); também ao voltar para a tela e quando o Wi-Fi volta */
 var ES=null,ESt=0,RELIGA=0;
-function listen(){if(ES)try{ES.close()}catch(x){}ESt=Date.now();var es=ES=new EventSource('/api/stream');es.onopen=function(){FIRST=true;lastOk=Date.now()};
- es.onmessage=function(e){var t1=Date.now();lastOk=lastNew=t1;try{var s=JSON.parse(e.data);S=s;paint(s);measure(s,t1)}catch(x){}};
+function listen(){if(ES)try{ES.close()}catch(x){}ESt=Date.now();var es=ES=new EventSource(ESPELHO?'/api/stream?espelho=1':'/api/stream');es.onopen=function(){FIRST=true;lastOk=Date.now()};
+ es.onmessage=function(e){var t1=Date.now();lastOk=lastNew=t1;try{var s=JSON.parse(e.data);S=s;paint(s);measure(s,t1)}catch(x){}
+  var dt=Date.now()-t1;TRAV.msg++;if(dt>40){TRAV.p++;if(dt>TRAV.pm){TRAV.pm=dt;TRAV.pk=Math.round(e.data.length/1024)}}};
  es.addEventListener('ping',function(){lastOk=Date.now()});
  es.addEventListener('midi',function(e){lastOk=Date.now();celMidiOut(e)});
  es.onerror=function(){/* o EventSource reconecta sozinho; o vigia abaixo cobre quando ele trava */}}
@@ -633,7 +655,7 @@ var SIC={rep:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 
 function paintSel(s){var b=$('selIco'),x=s&&s.sel,h='',ic=function(c,n,i,on){return '<button data-sc="'+c+'"'+(on?' class="on"':'')+' aria-label="'+n+'" title="'+n+'">'+SIC[i]+'</button>'};
  /* só ícones, na barra de baixo (nunca em cima do teclado). Repetindo: o próprio Parar encerra e a volta aparece no aviso de cima */
  if(x&&!x.off&&!s.jogo&&!x.loop){if(x.er)h=ic('selerr','Parar e repetir o que errei','rep',1);else if(x.a!=null&&!s.run)h=ic('selrep','Repetir '+(x.a===x.b?'o compasso '+x.a:'os compassos '+x.a+' a '+x.b)+' sem parar','rep',1)+ic('selclr','Desmarcar o trecho','x')}
- if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h}b.style.display=h?'flex':'none';$('reset').classList.toggle('selhide',!!h)}
+ if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h}b.style.display=h?'flex':'none'}/* o recomeçar fica sempre ao lado do play, também repetindo um trecho */
 $('selIco').addEventListener('click',function(e){var t=e.target.closest('[data-sc]');if(t)cmd({cmd:t.dataset.sc})});
 $('score').addEventListener('click',function(e){if(!S||S.run||!S.sel||S.sel.off)return;var r=e.target.closest&&e.target.closest('[data-mm]');if(r)cmd({cmd:'selm',v:+r.dataset.mm})});
 /* parado ou pausado: arrastar a queda para cima e para baixo mostra a música toda (tocar sem arrastar escolhe o compasso) */
@@ -696,7 +718,7 @@ var LASTUSE=Date.now();['pointerdown','touchstart'].forEach(function(t){document
  function ok(t,js){try{if(js){new Function(t);return true}var d=new DOMParser().parseFromString(t,'text/html'),g=true;d.querySelectorAll('script:not([src])').forEach(function(s){try{new Function(s.textContent)}catch(e){g=false}});return g}catch(e){return false}}
  setInterval(function(){Promise.all(files.map(function(f){return fetch(f,{cache:'no-store'}).then(function(r){return r.ok?r.text():null}).catch(function(){return null})})).then(function(tx){
   var ch=false,st=true;tx.forEach(function(t,i){var f=files[i];if(t==null)return;if(first[f]==null)first[f]=t;if(t!==first[f]){ch=true;if(seen[f]!==t)st=false}seen[f]=t});
-  if(!ch||!st||(S&&S.run)||Date.now()-LASTUSE<60000||$('sheet').classList.contains('open')||($('res').classList.contains('show')&&Date.now()-LASTUSE<300000))return;if(!ok(tx[0])||(tx[1]!=null&&!ok(tx[1],true)))return;var f=document.createElement('iframe'),done=false;f.style.cssText='position:fixed;width:400px;height:800px;left:-10000px;top:0;visibility:hidden';f.src=location.pathname+'?ensaio=1&v='+Date.now();
+  if(!ch||!st||(S&&(S.run||S.pausa))||Date.now()-LASTUSE<60000||$('sheet').classList.contains('open')||($('res').classList.contains('show')&&Date.now()-LASTUSE<300000))return;if(!ok(tx[0])||(tx[1]!=null&&!ok(tx[1],true)))return;var f=document.createElement('iframe'),done=false;f.style.cssText='position:fixed;width:400px;height:800px;left:-10000px;top:0;visibility:hidden';f.src=location.pathname+'?ensaio=1&v='+Date.now();
   f.onload=function(){setTimeout(function(){if(done)return;done=true;var good=false;try{good=f.contentWindow.APP_OK===true}catch(e){}f.remove();if(good)location.reload()},2500)};document.body.appendChild(f)})},20000)})();
 /* ---------- ilustrações do app: desenhos de traço simples, na cor do texto (claro e escuro) com detalhes em azul ----------
    ilu(nome, classe extra) devolve o <svg>. Classes nos desenhos: a = traço azul, af = preenchido azul-claro, f = preenchido na cor do texto */
@@ -877,6 +899,16 @@ if(APPN){var sg=document.querySelector('.pg[data-pg="cel"]');if(sg){var d=docume
  $('somB').onclick=function(){webkit.messageHandlers.acao.postMessage({som:!$('somB').classList.contains('on')})};
  $('calB').onclick=function(){webkit.messageHandlers.acao.postMessage({calibrar:1});$('sheet').classList.remove('open')};
  nativeSomEstado({ligado:false});try{webkit.messageHandlers.acao.postMessage({estado:1})}catch(x){}}}
+/* quem corrige com o cabo no iPhone (só no app): ligado = o próprio iPhone corrige, mesmo com o Mac ligado (sem o Wi-Fi no meio);
+   o Mac recebe os replays, a evolução e os treinos. Desligado = as notas vão ao Mac, como antes */
+window.nativeQuem=function(st){var b=$('quemB');if(!b)return;var on=!!st.iphone;b.textContent='O iPhone corrige quando o piano está nele: '+(on?'ligado':'desligado');b.classList.toggle('on',on)};
+if(APPN){var sg2=document.querySelector('.pg[data-pg="cel"]');if(sg2){var d2=document.createElement('section');d2.className='grp';
+ d2.innerHTML='<h3>Quem corrige</h3><div class="f"><button id="quemB"></button><span class="lb ex">Com o cabo do piano no iPhone, o próprio iPhone confere as notas, sem esperar o Wi-Fi: as cores e o som guia não atrasam. O Mac continua recebendo os replays, a evolução e os treinos. A troca acontece com a música parada.</span></div>';
+ sg2.insertBefore(d2,sg2.firstChild);
+ $('quemB').onclick=function(){webkit.messageHandlers.acao.postMessage({iphoneCorrige:!$('quemB').classList.contains('on')})};
+ nativeQuem({iphone:true});try{webkit.messageHandlers.acao.postMessage({quem:1})}catch(x){}}}
+/* no modo do iPhone, pergunta ao servidor daqui se o Mac está ligado junto (iPhone corrige) ou não (iPhone sozinho) */
+var COMMACP=false;if(location.hostname==='127.0.0.1')fetch('/api/info',{cache:'no-store'}).then(function(r){return r.json()}).then(function(i){COMMACP=!!i.commac}).catch(function(){});
 /* piano ligado no iPhone: o Mac manda o guia, o metrônomo e a gravação por aqui (evento "midi" do canal);
    a hora vira a do iPhone e o app toca no piano pelo cabo. Também avisa o Mac, a cada 8 s, que o cabo está aqui */
 function celMidiOut(e){if(!APPN)return;try{var l=JSON.parse(e.data),o=OFF||0,ag=Date.now();
@@ -983,8 +1015,8 @@ function paintTreino(s){var m={d:'Mão direita',e:'Mão esquerda'}[s.mao]||'';$(
 setInterval(function(){var now=Date.now(),ok=now-lastOk<3000&&now-lastNew<30000,mid=!!(S&&/dot ok/.test(S.midi||'')),l=LASTLAT,c=!ok?'bad':(!mid||(l!=null&&l>100))?'warn':'ok';
  /* quem corrige agora: o Mac (Mac · 35 ms) ou o próprio iPhone, sem o Mac (iPhone sozinho) */
  var soz=location.hostname==='127.0.0.1';if(soz)c=mid?'soz':'warn';
- $('connDot').className='dot '+c;$('connMs').textContent=soz?'iPhone sozinho':ok?'Mac · '+(l!=null?l+' ms':'…'):'sem Mac';
- $('conn').title=(soz?'Quem corrige: este iPhone (sem o Mac)':'Quem corrige: o Mac')+' · Piano: '+(mid?'conectado':'desligado')+(soz?'':' · Mac: '+(ok?'conectado':'sem conexão')+(l!=null?' · atraso '+l+' ms':''))},500);
+ $('connDot').className='dot '+c;$('connMs').textContent=ESPELHO?'Espelho do iPhone':soz?(COMMACP?'iPhone corrige':'iPhone sozinho'):ok?'Mac · '+(l!=null?l+' ms':'…'):'sem Mac';
+ $('conn').title=(soz?(COMMACP?'Quem corrige: este iPhone (o Mac recebe replays e treinos)':'Quem corrige: este iPhone (sem o Mac)'):'Quem corrige: o Mac')+' · Piano: '+(mid?'conectado':'desligado')+(soz?'':' · Mac: '+(ok?'conectado':'sem conexão')+(l!=null?' · atraso '+l+' ms':''))},500);
 $('conn').onclick=function(){this.parentNode.classList.toggle('det')};
 /* Ajustes em duas camadas: em cima o treino; cada assunto abre uma tela própria com "‹ Ajustes" para voltar */
 var AJT={som:'Som e metrônomo',tela:'Tela e partitura',ajuda:'Ajudas e contagem',cel:'Este celular'};
