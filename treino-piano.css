@@ -369,3 +369,4 @@ body.simples #go{font-size:20px;padding:12px 36px}
 #assBtn{min-width:56px}#assBtn svg{width:28px;height:28px;display:block;margin:0 auto}#assBtn svg .ch{fill:currentColor}
 #assBtn.on{background:#378ADD;color:#fff;border-color:#378ADD}
 .fbtop .ass-res{display:inline-flex;align-items:center;gap:8px}.fbtop .ass-res svg{width:20px;height:20px}.fbtop .ass-res svg .ch{fill:currentColor}
+.rep-acoes .ass-res{display:inline-flex;align-items:center;gap:8px}.rep-acoes .ass-res svg{width:20px;height:20px}.rep-acoes .ass-res svg .ch{fill:currentColor}

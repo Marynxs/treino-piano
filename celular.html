@@ -948,7 +948,7 @@ function rcMostrar(){var b=$('repCel');(RC?Promise.resolve(RC):rcCarregar()).the
     '<div class="rc-nota"><b class="rc-pct">'+m.pct+'%</b><div class="rc-bar">'+c.map(function(x){return '<span style="flex:'+x[0]+';background:'+x[1]+'"></span>'}).join('')+'</div><span class="lb">'+c.map(function(x){return x[0]+' '+x[2]}).join(' · ')+'</span></div>'+
     (j?rcRolo(j.dados,m):'<p class="lb">Carregando as teclas…</p>')+
     '<div class="rc-corte"><label>Começo <input type="range" id="rcIni" min="0" max="'+dur+'" step="100" value="'+ini+'"></label><label>Fim <input type="range" id="rcFim" min="0" max="'+dur+'" step="100" value="'+fim+'"></label><span class="lb" id="rcCorteT">'+rcDur(ini)+' a '+rcDur(fim)+'</span></div>'+
-    '<div class="rc-acoes">'+rcIc('ouvir','Ouvir',0,'on')+rcIc('parar','Parar')+(RCVID[m.id]?rcIc('video','Ver o vídeo desta vez',0,'on'):'')+rcIc('partilha','Compartilhar')+rcIc('estrela',m.est?'Guardado sempre (tocar para tirar)':'Guardar sempre',m.est?'estrelaOn':0,m.est?'on':'')+rcIc('nome','Renomear')+'<span class="rc-sep"></span>'+
+    '<div class="rc-acoes">'+rcIc('ouvir','Ouvir',0,'on')+rcIc('assistir','Assistir o que eu toquei',0,'on')+rcIc('parar','Parar')+(RCVID[m.id]?rcIc('video','Ver o vídeo desta vez',0,'on'):'')+rcIc('partilha','Compartilhar')+rcIc('estrela',m.est?'Guardado sempre (tocar para tirar)':'Guardar sempre',m.est?'estrelaOn':0,m.est?'on':'')+rcIc('nome','Renomear')+'<span class="rc-sep"></span>'+
     (RCCONF===m.id?'<span class="rc-conf">Apagar? Fica 30 dias na lixeira. <button data-rc="apagasim" class="rc-del">Apagar</button><button data-rc="apagano">Não</button></span>':rcIc('apagar','Apagar',0,'rc-del'))+'</div>'+
     '<span class="lb" id="rcAviso"></span>'+
     (j&&j.dados.res?'<details class="rc-fb"><summary>Ver o resultado desta vez</summary><div class="rc-fbin">'+String(j.dados.res).replace(/<div class="fbtop">[\s\S]*?<\/div>/,'').replace(/ data-act="[^"]*"/g,' disabled')+'</div></details>':'')+'</div>';
@@ -977,7 +977,7 @@ function rcPartilha(m){var k=Date.now().toString(36),nome=((m.nome||m.titulo)+' 
    if(APPN){webkit.messageHandlers.acao.postMessage({compartilhar:{url:url,nome:nome}});return}
    return r.blob().then(function(b){var f=new File([b],nome+'.wav',{type:'audio/wav'});
     if(navigator.canShare&&navigator.canShare({files:[f]}))return navigator.share({files:[f],title:nome}).catch(function(){});location.href=url})}).catch(function(){if(++n<1200)setTimeout(espera,500)})})()}
-function rcAcao(a){var m=(RC||[]).filter(function(x){return x.id===RCAB})[0];if(!m)return;
+function rcAcao(a){var m=(RC||[]).filter(function(x){return x.id===RCAB})[0];if(!m)return;if(a==='assistir'){cmd({cmd:'repassistir',v:m.id});$('repS').classList.remove('open');return}
  if(a==='video'){try{webkit.messageHandlers.acao.postMessage({verVideo:{ini:rcVini(m),fim:m.t}})}catch(x){}return}
  if(a==='ouvir')cmd({cmd:'repouvir',v:m.id});else if(a==='parar')cmd({cmd:'repparar',v:m.id});
  else if(a==='estrela'){m.est=!m.est;rcMeta(m)}else if(a==='nome'){RCNOME=true;rcMostrar()}else if(a==='nomeno'){RCNOME=false;rcMostrar()}
@@ -999,7 +999,7 @@ function rcLix(){var d=$('rcLix');if(!d)return;fetch('/api/replays?lixeira=1',{c
  d.innerHTML=l.length?'<div class="rc-tries">'+l.map(function(m){return '<button data-rclix="'+m.id+'"><b>'+m.pct+'%</b> '+rcEsc(m.nome||m.titulo)+' · '+rcQuando(m.t)+' · Recuperar</button>'}).join('')+'</div>':'<p class="lb">A lixeira está vazia.</p>'}).catch(function(){d.innerHTML='<p class="lb">Não consegui ler a lixeira.</p>'})}
 document.addEventListener('toggle',function(e){if(e.target&&e.target.id==='rcLixD'){RCLIXA=e.target.open;if(RCLIXA)rcLix()}},true);
 /* ícones de traço dos replays (como os do app) */
-var RCI={ouvir:'<path class="ch" d="M8 5.5v13l10.5-6.5z"/>',parar:'<rect class="ch" x="6.5" y="6.5" width="11" height="11" rx="2"/>',
+var RCI={assistir:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle class="ch" cx="12" cy="12" r="3.2"/>',ouvir:'<path class="ch" d="M8 5.5v13l10.5-6.5z"/>',parar:'<rect class="ch" x="6.5" y="6.5" width="11" height="11" rx="2"/>',
  video:'<rect x="3" y="6.5" width="12.5" height="11" rx="2"/><path d="M15.5 10.5l5-3v9l-5-3"/>',partilha:'<path d="M12 3.5v11M8 7.5l4-4 4 4"/><path d="M6 11.5v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-7"/>',
  estrela:'<path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',estrelaOn:'<path class="ch" d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.7L12 16.8l-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
  nome:'<path d="M4.5 19.5h4l10-10-4-4-10 10z"/><path d="M13 7l4 4"/>',apagar:'<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/>'};
