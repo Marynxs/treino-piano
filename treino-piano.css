@@ -368,5 +368,26 @@ body.simples #go{font-size:20px;padding:12px 36px}
 /* assistir o que eu toquei (olho ao lado do recomeçar; azul enquanto o replay roda) */
 #assBtn{min-width:56px}#assBtn svg{width:28px;height:28px;display:block;margin:0 auto}#assBtn svg .ch{fill:currentColor}
 #assBtn.on{background:#378ADD;color:#fff;border-color:#378ADD}
-.fbtop .ass-res{display:inline-flex;align-items:center;gap:8px}.fbtop .ass-res svg{width:20px;height:20px}.fbtop .ass-res svg .ch{fill:currentColor}
+.fbtop .ass-res{white-space:nowrap;display:inline-flex;align-items:center;gap:8px}.fbtop .ass-res svg{width:20px;height:20px}.fbtop .ass-res svg .ch{fill:currentColor}
 .rep-acoes .ass-res{display:inline-flex;align-items:center;gap:8px}.rep-acoes .ass-res svg{width:20px;height:20px}.rep-acoes .ass-res svg .ch{fill:currentColor}
+/* Mac seguindo o iPhone (o iPhone corrige) */
+.seg-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 16px;margin:0 0 12px;border-radius:12px;background:#378ADD;color:#fff}
+.seg-bar span{line-height:1.4}.seg-bar button{min-height:40px;padding:8px 16px;background:#fff;color:#185FA5;border:0;font-weight:600;flex:none}
+/* histórico em calendário */
+.cal-res{display:flex;flex-wrap:wrap;gap:8px 24px;margin:4px 0 12px;color:var(--tx2)}.cal-res b{color:var(--tx);font-size:18px}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:560px;margin-bottom:8px}.cal-nav b{font-size:18px}
+.cal-nav button{min-width:44px;min-height:44px;font-size:22px;padding:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;max-width:560px}
+.cal-s{text-align:center;font-size:12px;font-weight:600;color:var(--tx3);padding:2px 0}
+.cal-d{min-height:58px;padding:6px;border-radius:10px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;text-align:left;
+ background:color-mix(in srgb,#378ADD calc(var(--i,0)*32%),var(--card));border:1px solid var(--bd);color:var(--tx);font-weight:400}
+.cal-d.tem .cal-n{font-weight:700}.cal-d .cal-m{font-size:11px;color:var(--tx2)}
+.cal-d.hoje{border:2px solid #378ADD}.cal-d.sel{outline:3px solid #185FA5;outline-offset:1px}
+.cal-d:not(.tem){color:var(--tx3)}
+.cal-dica{margin-top:10px}
+.cal-det{margin-top:16px;padding:16px;border:1px solid var(--bd);border-radius:14px;background:var(--card);max-width:720px}
+.cal-det h3{margin:0 0 12px}.cal-det h4{margin:16px 0 6px}
+.cal-num{display:flex;flex-wrap:wrap;gap:12px 28px}.cal-num div{display:flex;flex-direction:column}.cal-num b{font-size:22px;font-variant-numeric:tabular-nums}.cal-num span{font-size:13px;color:var(--tx2)}
+.cal-lista{display:flex;flex-direction:column}.cal-lista div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:7px 0;border-bottom:1px solid var(--bd)}
+.cal-lista div:last-child{border-bottom:0}.cal-lista b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cal-linha{display:flex;flex-wrap:wrap;gap:6px}.cal-linha span{display:inline-flex;gap:6px;align-items:baseline;padding:4px 8px;border-radius:8px;background:var(--fill)}.cal-linha i{font-style:normal;font-size:12px;color:var(--tx2)}

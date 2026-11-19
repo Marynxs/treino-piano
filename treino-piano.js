@@ -79,7 +79,7 @@ add({id:'r_colch',g:'ritmo',title:'Colcheias',src:'Conceito',bpm:60,ms:rhythm([[
 add({id:'r_pont',g:'ritmo',title:'Semínima pontuada',src:'Conceito',bpm:60,ms:rhythm([[1.5,.5,1.5,.5],[1,1,2],[1.5,.5,2],[4]]),desc:'O ponto soma metade: 1 + ½ = 1 tempo e meio. Quase sempre vem seguida de uma colcheia. Conte "1 (e) 2 e".'});
 add({id:'r_mista',g:'ritmo',title:'Mínima pontuada em 3/4',src:'Conceito',bpm:66,beats:3,ms:rhythm([[1,1,1],[3],[1,2],[2,1],[3]]),desc:'Em 3/4 a mínima pontuada (3 tempos) enche o compasso. Bom para sentir o "UM-dois-três".'});
 /* ---------- estado ---------- */
-var OPT={cnt:true,hl:true,kb:true,pno:false,clk:true,live:true,outra:true,subir:false,simples:false,ini:true,voz:false,pcmd:false,avisos:true,tut:true,letra:1,trc:true,espT:true,somR:true},MODE='time',SHOW='f',run=false,timers=[],played={},startPerf=0,spb=1,CUR=null,EV=[],TAB='hoje';
+var OPT={cnt:true,hl:true,kb:true,pno:false,clk:true,live:true,outra:true,subir:false,simples:false,ini:true,voz:false,pcmd:false,avisos:true,tut:true,letra:1,trc:true,trcP:false,espT:true,somR:true},MODE='time',SHOW='f',run=false,timers=[],played={},startPerf=0,spb=1,CUR=null,EV=[],TAB='hoje';
 /* cada mão conta seus tempos no compasso (mãos juntas); com ex.seq as mãos se revezam e contam no mesmo relógio */
 function load_ex(ex){if(run)resetAll();CUR=ex;EV=[];var b=0;ex.ms.forEach(function(me,mi){var pos={};me.forEach(function(ev){var h=ev[3],k=ex.seq?'_':h;pos[k]=pos[k]||0;var notes=ev[1]===ANY?null:ev[1];
   EV.push({dur:ev[0],notes:notes,midis:notes?notes.map(mid):null,f:ev[2],h:h,m:mi,dyn:ex.dynm?ex.dynm[mi]:null,pos:pos[k],beat:b+pos[k],st:null,info:'',got:{},t0:null});pos[k]+=ev[0]});b+=ex.beats});
@@ -462,10 +462,10 @@ function report(c,pct,prev){var T=tol(),tm=MODE==='time',tips=[],h='',n=EV.lengt
  /* resumo */
  var co=coach(c,pct,tm,T),nvR=nivelAgora(),rec=recNivel(recKey(),nvR);
  var seg=[['ok','#C0DD97','#27500A','certas'],['warn','#FAC775','#633806','quase'],['bad','#F7C1C1','#791F1F','erradas'],['miss','#D3D1C7','#444441','faltaram']];
- h+='<div class="fb"><div class="fbhead"><span class="fbpct">'+pct+'%</span><span>'+(tm?'modo com tempo · '+(+document.getElementById('bpm').value)+' BPM · exigência '+document.getElementById('tol').selectedOptions[0].textContent.split(' (')[0].toLowerCase():'modo espera')+(prev!=null?' · seu melhor hoje: '+prev+'%':'')+(rec?' · recorde '+(CUR.mmap?'deste trecho ':'')+nivelNome(nvR)+': '+rec.pct+'%'+(pct>rec.pct?' <b>(novo recorde!)</b>':''):' · primeira vez '+(CUR.mmap?'deste trecho ':'')+nivelNome(nvR))+'</span></div>';
+ h+='<div class="fb"><div class="fbhead"><span class="fbpct">'+pct+'%</span><span>'+(tm?'modo com tempo · '+(+document.getElementById('bpm').value)+' BPM · exigência '+document.getElementById('tol').selectedOptions[0].textContent.split(' (')[0].toLowerCase():'modo espera')+recTexto(pct,recdHoje(recKey(),nvR),rec,nvR)+'</span></div>';
  h+='<div class="fbbar">'+seg.map(function(s){return c[s[0]]?'<span style="flex:'+c[s[0]]+';background:'+s[1]+';color:'+s[2]+'">'+c[s[0]]+' '+s[3]+'</span>':''}).join('')+'</div><div class="fbleg">'+seg.filter(function(s){return c[s[0]]}).map(function(s){return '<span><i style="background:'+s[1]+'"></i>'+c[s[0]]+' '+(c[s[0]]===1?{certas:'certa',quase:'quase',erradas:'errada',faltaram:'faltou'}[s[3]]:s[3])+'</span>'}).join('')+'</div>';
  /* o que se faz logo depois de ver o resultado fica no topo: tentar de novo e ouvir a gravação */
- h+='<div class="fbtop"><button data-act="repeat" class="fbgo">Tentar de novo</button><button data-act="ouvir">▶ Ouvir o que eu toquei</button><button data-act="assistir" class="ass-res">'+GOI.olho+'Assistir o que eu toquei</button></div>';
+ h+='<div class="fbtop"><button data-act="repeat" class="fbgo">Tentar de novo</button><button data-act="ouvir">▶ Ouvir o que eu toquei</button><button data-act="assistir" class="ass-res">'+GOI.olho+'Ver de novo</button></div>';
  h+=coachHtml(co);
  /* compassos com erro viram botões na cor do pior erro: um toque prepara o treino só daquele compasso */
  if(ms.length&&ms.length<CUR.ms.length){var pior={},rk={warn:1,miss:2,bad:3};EV.forEach(function(e){if(e.st&&e.st!=='ok'){var k=mnum(e);if(!pior[k]||rk[e.st]>rk[pior[k]])pior[k]=e.st}});
@@ -500,10 +500,12 @@ function paintTrecho(){var n=linhas(),a=document.getElementById('trA'),b=documen
 var SEL=null,LOOP=null;
 function selBase(){return CUR?CUR.base||CUR:null}
 function selNum(i){return CUR&&CUR.mmap?CUR.mmap[i]:i+1}
-function selTem(i){if(!SEL||!CUR||!OPT.trc||SEL.id!==selBase().id)return false;var n=selNum(i);return n>=SEL.a&&n<=SEL.b}
-function errMs(){var o={};if(!OPT.trc)return o;EV.forEach(function(e){if(e.st==='bad'||e.st==='miss')o[e.m]=1});return o}
+/* escolher compassos tocando: um ajuste por modo — na queda (OPT.trc, ligado de início) e na partitura (OPT.trcP, desligado de início) */
+function trcOn(){return VIS==='fall'?!!OPT.trc:!!OPT.trcP}
+function selTem(i){if(!SEL||!CUR||!trcOn()||SEL.id!==selBase().id)return false;var n=selNum(i);return n>=SEL.a&&n<=SEL.b}
+function errMs(){var o={};if(!trcOn())return o;EV.forEach(function(e){if(e.st==='bad'||e.st==='miss')o[e.m]=1});return o}
 function selNome(){return SEL?(SEL.a===SEL.b?'compasso '+SEL.a:'compassos '+SEL.a+' a '+SEL.b):''}
-function selToque(n){if(!OPT.trc||!CUR||run||!(n>=1))return;var id=selBase().id;
+function selToque(n){if(typeof SEGUE!=='undefined'&&SEGUE){segCmd({cmd:'selm',v:n});return}if(!trcOn()||!CUR||run||!(n>=1))return;var id=selBase().id;
  /* tocar fora do trecho aumenta até o compasso tocado (marca quantos quiser); tocar numa ponta tira aquele compasso; no meio, o trecho acaba ali */
  if(!SEL||SEL.id!==id)SEL={id:id,a:n,b:n};else if(n<SEL.a||n>SEL.b)SEL={id:id,a:Math.min(n,SEL.a),b:Math.max(n,SEL.b)};
  else if(SEL.a===SEL.b)SEL=null;else if(n===SEL.a)SEL={id:id,a:n+1,b:SEL.b};else if(n===SEL.b)SEL={id:id,a:SEL.a,b:n-1};else SEL={id:id,a:SEL.a,b:n};
@@ -512,13 +514,13 @@ function selLista(){var l=[];for(var k=SEL.a;k<=SEL.b;k++)l.push(k);return l}
 function selRepetir(){if(!SEL||!CUR)return;if(run)resetAll();practiceMeasures(selLista(),selNome());LOOP={volta:0,limpas:0,id:CUR.id,tm:0,pausa:false};reg('repetindo '+selNome());selPinta(true);document.getElementById('go').click()}
 function selUmaVez(){if(!SEL)return;LOOP=null;practiceMeasures(selLista(),selNome());selPinta(true)}
 function selLimpar(){SEL=null;loopParar();render()}
-function loopParar(){if(LOOP&&LOOP.volta>0&&OPT.trc)try{trGuardar()}catch(e){}if(LOOP&&LOOP.tm)clearTimeout(LOOP.tm);var era=!!LOOP;LOOP=null;if(era){document.getElementById('go').textContent=run?'Parar':'Começar';reg('parou de repetir')}selPinta(true)}
+function loopParar(){if(LOOP&&LOOP.volta>0&&(OPT.trc||OPT.trcP))try{trGuardar()}catch(e){}if(LOOP&&LOOP.tm)clearTimeout(LOOP.tm);var era=!!LOOP;LOOP=null;if(era){document.getElementById('go').textContent=run?'Parar':'Começar';reg('parou de repetir')}selPinta(true)}
 /* parar no meio e repetir o primeiro grupo de compassos errados (até 4 compassos seguidos) */
 function selErros(){if(!CUR||!run)return;var e=errMs(),ix=Object.keys(e).map(Number).sort(function(a,b){return a-b});if(!ix.length)return;
  var ns=ix.map(selNum),a=ns[0],b=a;ns.forEach(function(n){if(n<=a+3)b=Math.max(b,n)});resetAll();SEL={id:selBase().id,a:a,b:b};reg('parou para repetir o que errou: '+selNome());selRepetir()}
 /* fim de uma volta: conta, mostra e começa de novo (o resultado completo não abre a cada volta) */
-function loopVolta(c,pct){LOOP.volta++;var nvL=nivelAgora(),rkL=recKey(),anL=recNivel(rkL,nvL),novoL=!!(anL&&pct>anL.pct&&pct>=40);recnLer();recnPoe(rkL,nvL,pct,Date.now());recnSalva();if(novoL)reg('novo recorde do trecho: '+pct+'% (antes '+anL.pct+'%)');LOOP.limpas=(!c.bad&&!c.miss)?LOOP.limpas+1:0;LOOP.melhor=Math.max(LOOP.melhor||0,LOOP.limpas);reg('volta '+LOOP.volta+' de '+selNome()+': '+pct+'%');
- var msg='Volta '+LOOP.volta+': '+pct+'%'+(novoL?' · novo recorde do trecho! (antes '+anL.pct+'%)':'')+(LOOP.limpas?' · '+LOOP.limpas+(LOOP.limpas>1?' seguidas':'')+' sem erro':'');
+function loopVolta(c,pct){LOOP.volta++;var nvL=nivelAgora(),rkL=recKey(),anL=recNivel(rkL,nvL),novoL=!!(anL&&pct>anL.pct&&pct>=40);var rdL=recdHoje(rkL,nvL);recnLer();recnPoe(rkL,nvL,pct,Date.now());recnSalva();recdPoe(rkL,nvL,pct);var novoD=!novoL&&!!(rdL&&pct>rdL.pct&&pct>=40);if(novoL)reg('novo recorde do trecho: '+pct+'% (antes '+anL.pct+'%)');LOOP.limpas=(!c.bad&&!c.miss)?LOOP.limpas+1:0;LOOP.melhor=Math.max(LOOP.melhor||0,LOOP.limpas);reg('volta '+LOOP.volta+' de '+selNome()+': '+pct+'%');
+ var msg='Volta '+LOOP.volta+': '+pct+'%'+(novoL?' · novo recorde do trecho! (antes '+anL.pct+'%)':'')+(novoD?' · novo recorde de hoje! (antes '+rdL.pct+'%)':'')+(LOOP.limpas?' · '+LOOP.limpas+(LOOP.limpas>1?' seguidas':'')+' sem erro':'');
  if(LOOP.limpas===3)msg='3 voltas seguidas sem erro! Pode subir o andamento ou escolher um trecho maior.';
  show(msg,true);document.getElementById('go').textContent='Parar';LOOP.pausa=true;selPinta(true);
  LOOP.tm=setTimeout(function(){if(!LOOP)return;LOOP.pausa=false;LOOP.tm=0;document.getElementById('go').click()},LOOP.limpas===3?2500:700)}
@@ -526,7 +528,7 @@ var SELH='';
 var SIC={guarda:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg>',guardado:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M7 4h10v16l-5-4-5 4z"/></svg>',rep:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>',x:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="ch" d="M8 5.5v13l10.5-6.5z"/></svg>',stop:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect class="ch" x="6.5" y="6.5" width="11" height="11" rx="2"/></svg>'};
 function selIc(a,n,i,on){return '<button data-sel="'+a+'" class="selic'+(on?' selgo':'')+'" aria-label="'+n+'" title="'+n+'">'+SIC[i]+'</button>'}
 function selPinta(f){var b=document.getElementById('selBox');if(!b)return;var h='';
- if(OPT.trc&&CUR){var er=run&&!LOOP&&Object.keys(errMs()).length;
+ if(trcOn()&&CUR){var er=run&&!LOOP&&Object.keys(errMs()).length;
   if(LOOP)h='<span class="selt"><b>Repetindo '+selNome()+'</b> · volta '+(LOOP.volta+1)+(LOOP.limpas?' · '+LOOP.limpas+(LOOP.limpas>1?' seguidas':'')+' sem erro':'')+'</span>'+selIc('parar','Parar de repetir','stop');
   else if(er)h='<span class="selt lb">Errou? Repita só esse pedaço:</span>'+selIc('erros','Parar e repetir o que errei','rep',1);
   else if(SEL&&SEL.id===selBase().id&&!run)h='<span class="selt"><b>'+selNome().replace(/^c/,'C')+'</b></span>'+selIc('rep','Repetir sem parar','rep',1)+selIc('uma','Treinar uma vez','play')+(trAqui()?selIc('guardar','Trecho guardado para treinar depois (tocar para tirar)','guardado'):selIc('guardar','Guardar este trecho para treinar depois','guarda'))+selIc('limpar','Desmarcar o trecho','x');
@@ -554,23 +556,23 @@ function trAbrir(k){var t=trLer().filter(function(x){return x.k===k})[0];if(!t)r
  if(!e){show('Não achei mais esta música no app.',true);return}if(run||PAUSA)resetAll();if(JG.on)jParar();JG.vis=false;
  if(!CUR||selBase().id!==e.id)load_ex(e);if(t.mao!=null&&t.mao!==(MAO||'')&&typeof setMao==='function')setMao(t.mao);if(t.modo==='time'||t.modo==='wait'){MODE=t.modo;paint()}
  if(+t.bpm){var b=document.getElementById('bpm');b.value=t.bpm;b.oninput()}SEL={id:e.id,a:t.a,b:t.b};reg('abriu o trecho guardado: '+t.ti+' · '+trNome(t));selRepetir()}
-function trHtml(){var l=trLer();if(!l.length||!OPT.trc)return '';
+function trHtml(){var l=trLer();if(!l.length||!(OPT.trc||OPT.trcP))return '';
  return '<h2>Trechos para treinar</h2><div class="lb" style="margin-bottom:8px">Os trechos que você repetiu. Toque em repetir para continuar de onde parou.</div><div class="trs">'+l.map(function(t){
   return '<div class="tr-i'+(t.dom?' dom':'')+'"><div><b>'+esc(t.ti)+'</b><span class="lb">'+trNome(t)+' · '+trInfo(t)+' · '+quando(t.u)+'</span></div>'+
    '<button class="selic selgo" data-tr="abrir" data-k="'+esc(t.k)+'" aria-label="Repetir este trecho" title="Repetir este trecho">'+SIC.rep+'</button>'+
    '<button class="selic" data-tr="tirar" data-k="'+esc(t.k)+'" aria-label="Tirar da lista" title="Tirar da lista">'+SIC.x+'</button></div>'}).join('')+'</div>'}
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-tr]');if(!b)return;if(b.dataset.tr==='abrir')trAbrir(b.dataset.k);else if(b.dataset.tr==='tirar')trTirar(b.dataset.k)});
-function trCel(){if(!OPT.trc)return null;return trLer().slice(0,8).map(function(t){return [t.k,t.ti,trNome(t)+' · '+trInfo(t),t.dom?1:0]})}
+function trCel(){if(!(OPT.trc||OPT.trcP))return null;return trLer().slice(0,8).map(function(t){return [t.k,t.ti,trNome(t)+' · '+trInfo(t),t.dom?1:0]})}
 /* na partitura: a faixa azul do trecho fica atrás das notas; os compassos com erro ganham o número em vermelho; uma área invisível por compasso recebe o toque */
-function selFundo(s,sy,per,nm_,x0,mw,tt,bt){if(!OPT.trc)return;for(var mi=0;mi<per&&sy*per+mi<nm_;mi++){var gi=sy*per+mi;if(!selTem(gi))continue;var xa=mi?x0+mi*mw:x0-34;
+function selFundo(s,sy,per,nm_,x0,mw,tt,bt){if(!OPT.trcP)return;for(var mi=0;mi<per&&sy*per+mi<nm_;mi++){var gi=sy*per+mi;if(!selTem(gi))continue;var xa=mi?x0+mi*mw:x0-34;
  el(s,'rect',{x:xa,y:tt-30,width:x0+(mi+1)*mw-xa,height:bt+92-tt,style:'fill:#378ADD;opacity:0.14'})}}
-function selTopo(s,sy,per,nm_,x0,mw,tt,bt){if(!OPT.trc)return;var er=errMs();for(var mi=0;mi<per&&sy*per+mi<nm_;mi++){var gi=sy*per+mi,xa=mi?x0+mi*mw:x0-34,n=selNum(gi);
+function selTopo(s,sy,per,nm_,x0,mw,tt,bt){if(!OPT.trcP)return;var er=errMs();for(var mi=0;mi<per&&sy*per+mi<nm_;mi++){var gi=sy*per+mi,xa=mi?x0+mi*mw:x0-34,n=selNum(gi);
  if(er[gi]){el(s,'rect',{x:xa+2,y:tt-30,width:x0+(mi+1)*mw-xa-4,height:4,rx:2,style:'fill:#E24B4A'});el(s,'text',{x:xa+(mi?5:38),y:tt-16,style:'font-size:12px;font-weight:700;fill:#E24B4A'},String(n))}
  else if(selTem(gi)&&(n===SEL.a||n===SEL.b))el(s,'text',{x:xa+(mi?5:38),y:tt-16,style:'font-size:12px;font-weight:700;fill:#378ADD'},String(n));
  el(s,'rect',{x:xa,y:tt-30,width:x0+(mi+1)*mw-xa,height:bt+92-tt,'data-mm':String(n),style:'fill:transparent;cursor:pointer'})}}
 document.getElementById('score').addEventListener('click',function(e){var r=e.target.closest&&e.target.closest('[data-mm]');if(r)selToque(+r.dataset.mm)});
 /* para o celular */
-function selSnap(){if(!OPT.trc)return {off:1};return {a:SEL&&CUR&&SEL.id===selBase().id?SEL.a:null,b:SEL&&CUR&&SEL.id===selBase().id?SEL.b:null,loop:LOOP?{v:LOOP.volta+1,l:LOOP.limpas}:null,er:run&&!LOOP&&Object.keys(errMs()).length>0}}
+function selSnap(){if(!trcOn())return {off:1};return {a:SEL&&CUR&&SEL.id===selBase().id?SEL.a:null,b:SEL&&CUR&&SEL.id===selBase().id?SEL.b:null,loop:LOOP?{v:LOOP.volta+1,l:LOOP.limpas}:null,er:run&&!LOOP&&Object.keys(errMs()).length>0}}
 /* na queda de notas: faixa do trecho, compassos errados e o número de cada compasso */
 function selQueda(){if(!CUR||!OPT.trc)return null;var B=CUR.beats,s=null,er=[],e=errMs();for(var i=0;i<CUR.ms.length;i++){if(selTem(i)){if(!s)s=[i*B,(i+1)*B];else s[1]=(i+1)*B}if(e[i])er.push([i*B,(i+1)*B])}
  return {sel:s,err:er,mn:CUR.mmap||null}}
@@ -595,7 +597,7 @@ function finish(){if(!run)return;FIMT=Date.now();run=false;timers.forEach(clearA
  var rid=CUR.id+(CUR._mao?'_'+CUR._mao:''),prev=(day().done[rid]||{}).best,nvA=nivelAgora(),rnA=recNivel(recKey(),nvA),antes=rnA?rnA.pct:null;
  reg('resultado '+(CUR&&CUR.id)+' '+pct+'% · '+MODE+' '+(+document.getElementById('bpm').value)+' BPM · mão '+MAO);
  document.getElementById('res').innerHTML=report(c,pct,prev);try{repPrepara(c,pct,pgParar())}catch(e){reg('ERRO ao preparar o replay: '+e)}try{ultSalva()}catch(e){}
- record(rid,pct,MODE);recnLer();recnPoe(recKey(),nvA,pct,Date.now());recnSalva();fbGuardar();if(antes!=null&&pct>antes&&pct>=40)celebrar('Novo recorde!',tDesc(CUR.title)+' '+nivelNome(nvA)+': '+pct+'% (antes '+antes+'%)');falar(pct+'%.'+(antes!=null&&pct>antes&&pct>=40?' Novo recorde!':'')+(FOCO_T?' Próxima tentativa: '+FOCO_T+'.':''));document.getElementById('go').textContent='Começar';show('<span class="lb">Fim. Aperte "Começar" para repetir</span>',true);render();showPanel();(function(g){setTimeout(function(){if(GOID===g&&!run)RECON=false},1500)})(GOID)/* só desliga a gravação DESTA tentativa: com "Tentar de novo" rápido, desligava a gravação da próxima (Ouvir, Assistir e Salvar ficavam sem teclas) */;subirDepois(pct)}
+ record(rid,pct,MODE);var rdA=recdHoje(recKey(),nvA);recnLer();recnPoe(recKey(),nvA,pct,Date.now());recnSalva();recdPoe(recKey(),nvA,pct);if(antes!=null&&!(pct>antes)&&rdA&&pct>rdA.pct&&pct>=40)show('<b>Novo recorde de hoje: '+pct+'%</b> (antes '+rdA.pct+'% hoje; o de sempre é '+antes+'%)',true);fbGuardar();if(antes!=null&&pct>antes&&pct>=40)celebrar('Novo recorde!',tDesc(CUR.title)+' '+nivelNome(nvA)+': '+pct+'% (antes '+antes+'%)');falar(pct+'%.'+(antes!=null&&pct>antes&&pct>=40?' Novo recorde!':'')+(FOCO_T?' Próxima tentativa: '+FOCO_T+'.':''));document.getElementById('go').textContent='Começar';show('<span class="lb">Fim. Aperte "Começar" para repetir</span>',true);render();showPanel();(function(g){setTimeout(function(){if(GOID===g&&!run)RECON=false},1500)})(GOID)/* só desliga a gravação DESTA tentativa: com "Tentar de novo" rápido, desligava a gravação da próxima (Ouvir, Assistir e Salvar ficavam sem teclas) */;subirDepois(pct)}
 document.getElementById('go').onclick=function(){if(!CUR)return;if(ASS){assParar();return}if(LOOP&&LOOP.pausa&&!run){loopParar();return}if(run&&LOOP){loopParar();resetAll();return}reg((run?'parou ':'começou ')+CUR.id+' · '+MODE+' · mão '+MAO+(curIn?'':pianoIphone()?' · piano no iPhone':' · sem cabo no Mac'));if(JG.on)jParar();JG.vis=false;if(!run&&!curIn&&!pianoIphone())avisar('O app não está ouvindo o piano. Ligue o piano, confira o cabo USB atrás dele e aperte "Conectar ao piano". Sem piano, dá para tocar no teclado do computador (A S D F G H J K).');if(run){pausar();return}if(PAUSA){continuar();return}resetAll();run=true;REC=[];RECP=[[performance.now(),SUS]];RECON=true;pgComecar();this.textContent='Parar';
  if(MODE==='wait'){ESPINI=Date.now();if(OPT.espT)wtLigar();show(OPT.espT?'Modo Espera no tempo: a música anda no andamento e espera você em cada nota':'Toque a nota acesa em azul, no seu ritmo',true);render();return}
  agendaTempo(0)};
@@ -678,6 +680,50 @@ function agendaTempo(nb0){
 document.getElementById('reset').onclick=recomecar;document.getElementById('assBtn').onclick=function(){if(ASS)assParar();else assistir()};
 /* ---------- histórico e dia ---------- */
 var H={days:{}},lastAct=0;
+/* ---------- histórico em calendário: cada dia mostra os minutos; clicar abre o que foi tocado, o tempo e as melhores notas ---------- */
+var HISTM=0,HISTD;
+function calNomeEx(id){var e=byId(id)||USERS.filter(function(u){return u.id===id})[0];return e?tDesc(e.title):id}
+/* nome legível de uma chave de recorde: música[_mão][|c2,3,4] */
+function calNomeChave(k){var p=k.split('|c'),m=/_(d|e)$/.exec(p[0]),id=m?p[0].slice(0,-2):p[0],n=calNomeEx(id);
+ if(m)n+=' (mão '+(m[1]==='d'?'direita':'esquerda')+')';if(p[1]){var l=p[1].split(',');n+=' · '+(l.length>1?'compassos '+l[0]+' a '+l[l.length-1]:'compasso '+l[0])}return n}
+function calNivel(m){return m.modo==='wait'?'modo Espera':m.bpm+' BPM'}
+function calHtml(){var hoje=dkey(),base=new Date();base.setDate(1);base.setMonth(base.getMonth()+HISTM);var ano=base.getFullYear(),mes=base.getMonth();
+ var tot=0,dias=0,mx=1;Object.keys(H.days).forEach(function(k){var v=H.days[k];if(v.ms>mx)mx=v.ms});
+ var dIni=new Date(ano,mes,1),nd=new Date(ano,mes+1,0).getDate(),cel='';
+ for(var i=0;i<dIni.getDay();i++)cel+='<span class="cal-v"></span>';
+ for(var d=1;d<=nd;d++){var k=ano+'-'+String(mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),v=H.days[k],min=v?Math.round(v.ms/60000):0,tem=v&&(v.ms>30000||Object.keys(v.done).length);
+  if(tem){tot+=min;dias++}var it=tem?Math.max(0.12,Math.min(1,v.ms/mx)):0;
+  cel+='<button class="cal-d'+(tem?' tem':'')+(k===hoje?' hoje':'')+(k===HISTD?' sel':'')+'" data-hd="'+k+'" style="--i:'+it.toFixed(2)+'" aria-label="'+d+(tem?', '+min+' minutos':', sem treino')+'"><span class="cal-n">'+d+'</span>'+(tem?'<span class="cal-m">'+(min?min+' min':'·')+'</span>':'')+'</button>'}
+ var nomeMes=dIni.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ var h='<h2>Histórico de '+esc(perfilNome())+'</h2><div class="cal-res"><span><b>'+streak()+'</b> '+(streak()===1?'dia seguido':'dias seguidos')+'</span><span><b>'+tot+' min</b> em '+dias+(dias===1?' dia':' dias')+' neste mês</span></div>'+
+  '<div class="cal-nav"><button data-hm="-1" aria-label="Mês anterior">‹</button><b>'+nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1)+'</b><button data-hm="1" aria-label="Próximo mês"'+(HISTM>=0?' disabled':'')+'>›</button></div>'+
+  '<div class="cal"><span class="cal-s">D</span><span class="cal-s">S</span><span class="cal-s">T</span><span class="cal-s">Q</span><span class="cal-s">Q</span><span class="cal-s">S</span><span class="cal-s">S</span>'+cel+'</div>'+calDia();
+ return h}
+function calDia(){var k=HISTD;if(!k)return '<p class="lb cal-dica">Toque num dia para ver o que você tocou.</p>';var v=H.days[k]||{ms:0,done:{},test:null},dt=new Date(k+'T12:00:00');
+ var tit=dt.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+ if(!TENT){tentCarregar().then(function(){if(TAB==='hist')showPanel()}).catch(function(){});}
+ var ts=(TENT||[]).filter(function(m){return dkey(new Date(m.t))===k}).sort(function(a,b){return a.t-b.t});
+ var melhor=ts.length?Math.max.apply(null,ts.map(function(m){return m.pct})):null,rd=recdLer()[k]||{};
+ if(melhor==null)Object.keys(v.done).forEach(function(r){melhor=Math.max(melhor||0,v.done[r].best||0)});
+ var h='<div class="cal-det"><h3>'+tit.charAt(0).toUpperCase()+tit.slice(1)+'</h3><div class="cal-num">'+
+  '<div><b>'+Math.round(v.ms/60000)+' min</b><span>tocando</span></div><div><b>'+Object.keys(v.done).length+'</b><span>exercícios</span></div>'+
+  '<div><b>'+(ts.length||Object.keys(v.done).reduce(function(a,r){return a+(v.done[r].n||0)},0))+'</b><span>tentativas</span></div>'+
+  (melhor!=null?'<div><b>'+melhor+'%</b><span>melhor nota</span></div>':'')+(v.test!=null?'<div><b>'+v.test+'%</b><span>teste do dia</span></div>':'')+'</div>';
+ /* melhores notas do dia por música/trecho e nível; ★ quando também é o recorde de sempre */
+ var rks=Object.keys(rd).sort(function(a,b){return rd[b].pct-rd[a].pct});
+ if(rks.length){h+='<h4>Melhores notas do dia</h4><div class="cal-lista">'+rks.slice(0,12).map(function(x){var mt=/^(.*)\|(wait|time\|\d+)$/.exec(x)||[x,x,''],ch=mt[1],nv=mt[2],sempre=(recnLer()[ch]||{})[nv],top=sempre&&sempre.pct===rd[x].pct;
+   return '<div><span>'+esc(calNomeChave(ch))+' <span class="lb">'+nivelNome(nv)+'</span></span><b>'+(top?'★ ':'')+rd[x].pct+'%</b></div>'}).join('')+'</div>'+(rks.some(function(x){var mt=/^(.*)\|(wait|time\|\d+)$/.exec(x)||[x,x,''],s=(recnLer()[mt[1]]||{})[mt[2]];return s&&s.pct===rd[x].pct})?'<p class="lb">★ = também é o seu recorde de sempre.</p>':'')}
+ /* o que tocou: por música/trecho e nível */
+ if(ts.length){var gs={},ord=[];ts.forEach(function(m){var g=m.titulo+'|'+(m.mao||'')+'|'+calNivel(m);if(!gs[g]){gs[g]=[];ord.push(g)}gs[g].push(m)});
+  h+='<h4>O que você tocou</h4><div class="cal-lista">'+ord.map(function(g){var l=gs[g],u=l[0],b=Math.max.apply(null,l.map(function(m){return m.pct}));
+   return '<div><span>'+esc(u.titulo)+' <span class="lb">'+calNivel(u)+(u.mao&&u.mao!=='ambas'?' · mão '+(u.mao==='d'?'direita':'esquerda'):'')+' · '+l.length+(l.length>1?' vezes':' vez')+'</span></span><b>'+b+'%</b></div>'}).join('')+'</div>';
+  h+='<h4>Ao longo do dia</h4><div class="cal-linha">'+ts.map(function(m){var hr=new Date(m.t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<span title="'+esc(m.titulo)+' · '+calNivel(m)+'"><i>'+hr+'</i><b>'+m.pct+'%</b></span>'}).join('')+'</div>'}
+ else if(Object.keys(v.done).length){h+='<h4>O que você tocou</h4><div class="cal-lista">'+Object.keys(v.done).map(function(r){var x=v.done[r],id=r.replace(/_(d|e)$/,'');return '<div><span>'+esc(calNomeEx(id.replace(/_parte$/,'')))+(/_parte/.test(id)?' <span class="lb">trecho</span>':'')+' <span class="lb">'+(x.n||1)+(x.n>1?' vezes':' vez')+'</span></span><b>'+x.best+'%</b></div>'}).join('')+'</div>'}
+ else h+='<p class="lb">Nenhum treino neste dia.</p>';
+ return h+'</div>'}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-hm],[data-hd]');if(!b||TAB!=='hist')return;
+ if(b.dataset.hm){HISTM=Math.min(0,HISTM+(+b.dataset.hm));HISTD=null}else HISTD=HISTD===b.dataset.hd?null:b.dataset.hd;showPanel()});
+
 try{H=JSON.parse(localStorage.getItem('piano_hist'))||H}catch(e){}
 function save(){try{localStorage.setItem('piano_hist',JSON.stringify(H))}catch(e){}}
 function dkey(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -718,9 +764,7 @@ function showPanel(){var p=document.getElementById('panel'),h='';if(TAB!=='leit'
   r.forEach(function(s,i){var x=d.done[s.id],ok=s.test?(d.test!=null):!!x;if(ok)done++;h+='<div class="step'+(ok?' done':'')+'"><span class="n">'+(ok?'✓':i+1)+'</span><div class="t"><b>'+s.t+'</b><div class="lb">'+s.w+(x?' · melhor hoje: '+x.best+'%':'')+(s.test&&d.test!=null?' · teste: '+d.test+'%':'')+'</div></div>'+(s.jogo?'<button data-jogoir="1">Abrir</button>':'<button data-open="'+s.id+'"'+(s.test?' data-time="1"':'')+'>Abrir</button>')+'</div>'});
   h+='</div><div class="lb" style="margin-top:8px">'+done+' de '+r.length+' etapas feitas hoje.</div>'}
  else if(TAB==='rep'){REPS=null;TENT=null;h='<div id="repBox"><p class="lb">Carregando os replays…</p></div>'}
- else if(TAB==='hist'){var ks=[],dd=new Date();for(var i=13;i>=0;i--){var x=new Date(dd);x.setDate(dd.getDate()-i);ks.push(dkey(x))}var mx=1;ks.forEach(function(k){var v=H.days[k];if(v)mx=Math.max(mx,v.ms)});
-  h='<h2>Últimos 14 dias de '+perfilNome()+'</h2><div class="days">'+ks.map(function(k){var v=H.days[k],m=v?v.ms:0;return '<div><i style="height:'+Math.round(55*m/mx)+'px"></i>'+k.slice(8)+'</div>'}).join('')+'</div><div class="lb" style="margin-top:4px">Altura = minutos tocando no dia.</div><h2 style="margin-top:14px">Testes do dia</h2>';
-  var rows=Object.keys(H.days).sort().reverse().slice(0,14).map(function(k){var v=H.days[k];return '<div class="lb">'+k.split('-').reverse().join('/')+': '+Math.round(v.ms/60000)+' min'+(v.test!=null?' · teste '+v.test+'%':'')+' · '+Object.keys(v.done).length+' exercícios</div>'});h+=rows.join('')||'<div class="lb">Ainda sem registros.</div>'}
+ else if(TAB==='hist'){if(HISTD===undefined)HISTD=H.days[dkey()]?dkey():null;h=calHtml()}
  else if(TAB==='mus'){var todas=EX.filter(function(e){return e.g==='mus'}).concat(USERS),vis=todas.filter(function(e){return !oculta(e.id)}),ocl=todas.filter(function(e){return oculta(e.id)});
   h='<h2>Músicas</h2><div class="list">'+(vis.map(function(e){return exCard(e,true)}).join('')||'<div class="lb">Nenhuma música à mostra.</div>')+'</div>'+
   (ocl.length?'<details class="ocl" style="margin-top:10px"><summary>Músicas ocultas ('+ocl.length+')</summary><div class="list" style="margin-top:8px">'+ocl.map(function(e){return exCard(e,true)}).join('')+'</div></details>':'')+
@@ -980,7 +1024,7 @@ function instHtml(i){var ipu='http://'+i.ip+':'+i.port+'/celular.html',u=i.host?
  function snap(){var g=function(id){return document.getElementById(id)};
   return JSON.stringify({title:g('exTitle').textContent+(CUR&&CUR.parcial?' · ⚠ Incompleta':''),cd:g('cd').innerHTML,score:VIS==='fall'?'':g('score').outerHTML,scoreFull:celFull(),recv:+document.getElementById('recVol').value,alvo:+document.getElementById('alvo').value,perfis:PERFIS,perfil:PERFIL,pre:document.getElementById('pre').value,preS:+document.getElementById('preS').value,preN:+document.getElementById('preN').value,tr:(function(){var n=linhas();if(n<2)return null;var src=CUR.base||CUR,per=perTr(src),l=[];for(var i=1;i<=n;i++)l.push('Linha '+i+' (comp. '+((i-1)*per+1)+'–'+Math.min(i*per,src.ms.length)+')');return {l:l,v:trAtual()}})(),mao:MAO,celv:CELV,
    /* queda de notas: as notas e o relógio da música (hora do Mac em que começa o tempo 0); o iPhone anima sozinho */
-   rel:seguro(relSnap),sel:seguro(selSnap),pausa:!!PAUSA,somk:(typeof PG!=='undefined'&&PG.somk)||null,somenv:(typeof PG!=='undefined'&&PG.somenv)||null,fall:VIS==='fall'?{m:fallSnap(),t0:startPerf?Date.now()-performance.now()+startPerf:0,spb:spb,run:run||!!ASS,mode:ASS?'time':MODE,wb:run&&MODE==='wait'?waitBeat():null,nbP:PAUSA?PAUSA.nb:null,played:played}:null,kb:OPT.kb?g('kb').outerHTML:'',errs:(function(){var h=g('errs').innerHTML,i=h.lastIndexOf(' · ');return i<0?h:h.slice(i+3)})(),res:ASS?'':g('res').innerHTML,saida:typeof JG!=='undefined'&&JG?JG.saida:'piano',som:typeof SOMCEL!=='undefined'&&SOMCEL&&Date.now()-SOMCEL.t<4000?SOMCEL:null,ult:run?'':g('exUlt').innerHTML,jogo:seguro(jSnap),conc:seguro(concCel),ini:run?null:seguro(celInicio),ritn:seguro(function(){return Object.keys(RITN).map(function(k){return [k,RITN[k].t]})}),festa:FESTA&&Date.now()-FESTA.ts<6000?FESTA:null,
+   rel:seguro(relSnap),sel:seguro(selSnap),pausa:!!PAUSA,somk:(typeof PG!=='undefined'&&PG.somk)||null,somenv:(typeof PG!=='undefined'&&PG.somenv)||null,seg:COMMAC?seguro(segSnap):null,fall:VIS==='fall'?{m:fallSnap(),t0:startPerf?Date.now()-performance.now()+startPerf:0,spb:spb,run:run||!!ASS,mode:ASS?'time':MODE,wb:run&&MODE==='wait'?waitBeat():null,nbP:PAUSA?PAUSA.nb:null,played:played}:null,kb:OPT.kb?g('kb').outerHTML:'',errs:(function(){var h=g('errs').innerHTML,i=h.lastIndexOf(' · ');return i<0?h:h.slice(i+3)})(),res:ASS?'':g('res').innerHTML,saida:typeof JG!=='undefined'&&JG?JG.saida:'piano',som:typeof SOMCEL!=='undefined'&&SOMCEL&&Date.now()-SOMCEL.t<4000?SOMCEL:null,ult:run?'':g('exUlt').innerHTML,jogo:seguro(jSnap),conc:seguro(concCel),ini:run?null:seguro(celInicio),ritn:seguro(function(){return Object.keys(RITN).map(function(k){return [k,RITN[k].t]})}),festa:FESTA&&Date.now()-FESTA.ts<6000?FESTA:null,
    run:run||!!ASS,ass:!!ASS,ver:assPode(),mode:ASS?'time':MODE,show:SHOW,opt:OPT,bpm:+g('bpm').value,midi:g('midiStat').innerHTML,cur:CUR&&CUR.id,ink:getComputedStyle(document.body).getPropertyValue('--ink').trim()||'#1f1f1d',
    sy:curSys(),hid:document.hidden,tol:document.getElementById('tol').value,out:document.getElementById('outdev').value,clk:document.getElementById('clkdev').value,cs:document.getElementById('clksnd').value,nomes:NOMES,lin:seguro(linSnap),esp:seguro(espSnap),celaj:seguro(function(){return JSON.parse(localStorage.getItem('piano_celaj')||'null')}),pv:+document.getElementById('pnoVol').value,pcv:+document.getElementById('pclkVol').value,ex:allEx().filter(function(e){return !oculta(e.id)&&livroVisivel(e)}).map(function(e){return [e.g,e.id,e.title]})})}
  /* só uma aba do Mac comanda o iPhone: vira dona ao abrir, ao ganhar foco ou ao receber nota do piano */
@@ -1001,6 +1045,8 @@ function instHtml(i){var ipu='http://'+i.ip+':'+i.port+'/celular.html',u=i.host?
  var mo=new MutationObserver(soon);mo.observe(pr,{subtree:true,childList:true,characterData:true,attributes:true});mo.observe(document.getElementById('midiStat'),{subtree:true,childList:true,characterData:true});
  new MutationObserver(mine).observe(document.getElementById('last'),{subtree:true,childList:true,characterData:true});
  function exec(c){var q=function(s){return document.querySelector(s)};/* mexer no celular conta como uso: o Mac não se atualiza nem recarrega no meio */if(c&&c.cmd!=='celaj'&&c.cmd!=='celvista'&&c.cmd!=='celfull')LASTUSE=Date.now();if(c&&c.cmd!=='midi'&&c.cmd!=='celaj'&&c.cmd!=='somfonte'&&c.cmd!=='iphcabo')reg('celular: '+JSON.stringify(c).slice(0,160));
+  if(c.cmd==='clique'){if(c.tab&&c.tab!==TAB&&q('.tab[data-t="'+c.tab+'"]')){TAB=c.tab;showPanel()}var cel=null;try{cel=c.sel?q(c.sel):null}catch(x){}if(!cel&&c.txt)cel=[].filter.call(document.querySelectorAll('button'),function(b){return (b.textContent||'').trim().slice(0,60)===c.txt})[0];if(cel)cel.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));else reg('Mac → iPhone: não achei '+(c.sel||c.txt));return}
+  if(c.cmd==='valor'){var vel=document.getElementById(c.id);if(vel){vel.value=c.v;vel.dispatchEvent(new Event('input',{bubbles:true}));vel.dispatchEvent(new Event('change',{bubbles:true}))}return}
   if(c.cmd==='fallfull'){FSN.t=0;FSN.k='';if(window.CEL_SOON)CEL_SOON();return}if(c.cmd==='repassistir'){repAssistir(+c.v);return}if(c.cmd==='assistir'){assistir();return}if(c.cmd==='go')q('#go').click();else if(c.cmd==='reset')q('#reset').click();
   else if(c.cmd==='ex'){var e=allEx().filter(function(x){return x.id===c.id})[0];if(e){load_ex(e);document.getElementById('practice').scrollIntoView()}}
   else if(c.cmd==='mode'){var b=q('.mode[data-v="'+c.v+'"]');if(b)b.click()}
@@ -1655,6 +1701,17 @@ function recLab(r){return r?r.pct+'% '+(r.mode==='time'?'com tempo a '+r.bpm+' B
    a 55 BPM... — para comparar a melhora no mesmo nível. piano_recs = {música[_mão]: {nível: {pct, t, n}}}; só a música inteira.
    Na primeira vez, monta a partir das tentativas guardadas (piano_fb). */
 var RECN=null;
+/* recorde de HOJE por música/trecho e nível (piano_recd = {dia: {chave|nível: {pct, t}}}, guarda os últimos 90 dias);
+   o recorde de sempre é o piano_recs (RECN) */
+var RECD=null;
+function recdLer(){if(RECD)return RECD;try{RECD=JSON.parse(localStorage.getItem('piano_recd'))||{}}catch(e){RECD={}}return RECD}
+function recdHoje(k,nv){var d=recdLer()[dkey()]||{};return d[k+'|'+nv]||null}
+function recdPoe(k,nv,pct){var R=recdLer(),dk=dkey(),d=R[dk]||(R[dk]={}),x=d[k+'|'+nv];if(!x||pct>x.pct)d[k+'|'+nv]={pct:pct,t:Date.now()};
+ var ds=Object.keys(R).sort();while(ds.length>90)delete R[ds.shift()];try{localStorage.setItem('piano_recd',JSON.stringify(R))}catch(e){}}
+/* texto do resultado: hoje e sempre, com "novo recorde" de cada um (rh/rs = recordes ANTES desta tentativa) */
+function recTexto(pct,rh,rs,nv){var tr=CUR&&CUR.mmap?'deste trecho ':'',s=' · '+tr+nivelNome(nv)+': ';
+ if(!rs)return s+'primeira vez';
+ return s+'hoje '+(rh?rh.pct+'%':'—')+(rh&&pct>rh.pct||!rh?' <b>(novo recorde de hoje!)</b>':'')+' · sempre '+rs.pct+'%'+(pct>rs.pct?' <b>(novo recorde de sempre!)</b>':'')}
 /* chave do recorde: a música (e a mão) e, num treino específico, também os compassos do trecho */
 function recKey(){return fbKey()+(CUR&&CUR.mmap&&CUR.mmap.length?'|c'+CUR.mmap.join(','):'')}
 function recnLer(){if(RECN)return RECN;try{RECN=JSON.parse(localStorage.getItem('piano_recs'))}catch(e){}
@@ -1744,7 +1801,7 @@ function fbGuardar(){if(!RLAST)return;var l=FB[RLAST.k]||[];l.push(RLAST.e);FB[R
 /* embaixo do título: recorde da música e o que ficou da última vez */
 function paintUlt(){var el_=document.getElementById('exUlt');if(!el_)return;if(!CUR){el_.innerHTML='';return}var k=fbKey(),h=fbHist(k),u=h[h.length-1],nv=nivelAgora(),rk=recKey(),rn=recNivel(rk,nv),mb=recMelhor(rk);
  if(!u&&!mb){el_.innerHTML='';return}
- el_.innerHTML=(mb?'<span class="rec">Recorde '+(CUR.mmap?'deste trecho ':'')+nivelNome(nv)+': <b>'+(rn?rn.pct+'%'+(rn.n>1?' ('+rn.n+' tentativas)':''):'ainda não tocou')+'</b>'+(mb.nv!==nv?' · melhor nível: '+mb.pct+'% '+nivelNome(mb.nv):'')+'</span>':'')+(u?'<span>Última vez ('+quando(u.t)+'): <b>'+u.pct+'%</b>'+(u.tr?' num trecho':'')+'. Ficou para treinar: '+u.foco+'.'+(u.act&&!run?' <button data-act="'+u.act+'">Preparar esse treino</button>':'')+'</span>':'')}
+ el_.innerHTML=(mb?'<span class="rec">Recorde '+(CUR.mmap?'deste trecho ':'')+nivelNome(nv)+': '+(rn?(function(){var rh=recdHoje(rk,nv);return 'hoje <b>'+(rh?rh.pct+'%':'—')+'</b> · sempre <b>'+rn.pct+'%</b>'+(rn.n>1?' ('+rn.n+' tentativas)':'')})():'<b>ainda não tocou</b>')+(mb.nv!==nv?' · melhor nível: '+mb.pct+'% '+nivelNome(mb.nv):'')+'</span>':'')+(u?'<span>Última vez ('+quando(u.t)+'): <b>'+u.pct+'%</b>'+(u.tr?' num trecho':'')+'. Ficou para treinar: '+u.foco+'.'+(u.act&&!run?' <button data-act="'+u.act+'">Preparar esse treino</button>':'')+'</span>':'')}
 /* aba Hoje: de onde você parou */
 function ultimaSessao(){var best=null;Object.keys(FB).forEach(function(k){var x=FB[k][FB[k].length-1];if(x&&(!best||x.t>best.e.t))best={k:k,e:x}});return best}
 function retomar(k){var s=FB[k]&&FB[k][FB[k].length-1];if(!s)return;var ex=byId(s.id)||USERS.filter(function(u){return u.id===s.id})[0];if(!ex)return;
@@ -2397,13 +2454,51 @@ try{if(OPT.tut!==false&&!TESTE&&!ENSAIO&&!localStorage.getItem('piano_tutvisto')
 PRONTO=true;sessaoVolta();try{ultVolta()}catch(e){}praticaVis();
 window.APP_OK=true;/* chegou ao fim do início sem erro */
 if(!ENSAIO)connectMidi(true);
-/* ---------- espelho do iPhone: com o cabo no iPhone ("O iPhone corrige" ligado), quem corrige é o iPhone; esta aba mostra a tela
-   dele (celular.html?espelho=1) e os botões comandam o iPhone: play, trocar música, ajustes. Some quando o iPhone para de mandar. ---------- */
-(function(){if(CEREBRO||!/^https?:/.test(location.protocol)||/[?&](teste|ensaio)\b/.test(location.search))return;var on=false,box=null,esc=0;
- function poe(v){if(v===on)return;on=v;
-  if(v){box=document.createElement('div');box.id='espBox';
-   box.innerHTML='<div class="esp-top"><div><b>O iPhone está corrigindo</b><span class="lb">O piano está no cabo do iPhone. Esta é a tela dele: os botões daqui comandam o iPhone.</span></div><button id="espEsc">Esconder por 5 min</button></div><iframe src="celular.html?espelho=1" title="Tela do iPhone"></iframe>';
-   document.body.appendChild(box);document.getElementById('espEsc').onclick=function(){esc=Date.now();poe(false)};reg('espelho do iPhone: aberto')}
-  else{if(box)box.remove();box=null}}
- function confere(){if(run)return;fetch('/api/espelho?info=1',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){poe(j.idade<12&&Date.now()-esc>300000)}).catch(function(){})}
+/* ---------- Mac seguindo o iPhone: com o cabo no iPhone ("O iPhone corrige" ligado), quem corrige é o iPhone. Esta aba continua
+   sendo o app do Mac (abas, partitura, teclado, resultado), mas desenha o que o iPhone manda (/api/stream?espelho=1, campo seg)
+   e os cliques de treino viram comandos para o iPhone ("clique"/"valor" no mesmo botão da página dele). Histórico, conceitos e
+   replays continuam locais. "Usar o Mac" para de seguir por 5 min. ---------- */
+var SEGUE=false,SEGES=null,SEGESC=0,SEGS=null;
+/* o que o iPhone que corrige manda ao Mac que segue */
+function segSnap(){if(!CUR)return null;var cod={ok:'o',warn:'w',bad:'b',miss:'m'};return {cur:CUR.id,mm:CUR.mmap||null,mao:MAO,mode:ASS?'time':MODE,bpm:+document.getElementById('bpm').value,vis:VIS,evs:EV.map(function(e){return cod[e.st]||'.'}).join(''),pl:played,t0:startPerf?Math.round(Date.now()-performance.now()+startPerf):0,spb:spb,wb:run&&MODE==='wait'&&WT?WT.beat:null,pz:PAUSA?{nb:PAUSA.nb,ini:PAUSA.ini,wt:PAUSA.wt,mode:PAUSA.mode}:null}}
+function segCmd(c){fetch('/api/cmd?espelho=1',{method:'POST',body:JSON.stringify(c)}).catch(function(){})}
+function segLiga(v){if(v===SEGUE)return;SEGUE=v;var bar=document.getElementById('segBar');
+ if(v){if(run||PAUSA)resetAll();if(!bar){bar=document.createElement('div');bar.id='segBar';bar.className='seg-bar';
+   bar.innerHTML='<span><b>O iPhone está corrigindo.</b> O piano está no cabo do iPhone: esta tela segue o iPhone e os botões de treino comandam ele.</span><button id="segEsc">Usar o Mac</button>';
+   var p=document.getElementById('practice');p.parentNode.insertBefore(bar,p);document.getElementById('segEsc').onclick=function(){SEGESC=Date.now();segLiga(false)}}
+  SEGES=new EventSource('/api/stream?espelho=1');SEGES.onmessage=function(e){try{segue(JSON.parse(e.data))}catch(x){}};reg('Mac seguindo o iPhone')}
+ else{if(SEGES){SEGES.close();SEGES=null}if(bar)bar.remove();SEGS=null;run=false;startPerf=0;WT=null;PAUSA=null;LOOP=null;played={};render();reg('Mac parou de seguir o iPhone')}}
+var SEGCOD={o:'ok',w:'warn',b:'bad',m:'miss'};
+function segue(s){var g=s&&s.seg;if(!SEGUE||!g)return;SEGS=s;
+ /* música, trecho, mão */
+ if(g.mao&&g.mao!==MAO){MAO=g.mao;paintMao()}
+ var base=String(g.cur||'').replace(/_parte$/,'');if(base&&(!CUR||CUR.id!==g.cur||JSON.stringify(CUR.mmap||null)!==JSON.stringify(g.mm||null))){var e=EX.concat(USERS).filter(function(x){return x.id===base})[0];if(e){load_ex(e);if(g.mm&&g.mm.length)practiceMeasures(g.mm)}}
+ if(g.mode&&g.mode!==MODE){MODE=g.mode;paint()}
+ var b=document.getElementById('bpm');if(+g.bpm&&+b.value!==+g.bpm){b.value=g.bpm;document.getElementById('bv').textContent=g.bpm+' BPM'}
+ if(s.opt)Object.keys(s.opt).forEach(function(k){OPT[k]=s.opt[k]});
+ if(g.vis&&g.vis!==VIS){VIS=g.vis;FNB=null;paintVis()}if(s.show)SHOW=s.show;
+ /* cores, teclas, relógio */
+ if(g.evs)EV.forEach(function(ev,i){var c=g.evs.charAt(i);ev.st=SEGCOD[c]||null});
+ played=g.pl||{};run=!!s.run;spb=g.spb||spb;startPerf=g.t0?g.t0-(Date.now()-performance.now()):0;
+ WT=g.wb!=null?{beat:g.wb,t:performance.now(),ult:-1}:null;PAUSA=g.pz||null;
+ SEL=s.sel&&s.sel.a!=null&&CUR?{id:(CUR.base||CUR).id,a:s.sel.a,b:s.sel.b}:SEL;LOOP=s.sel&&s.sel.loop?{volta:s.sel.loop.v-1,limpas:s.sel.loop.l,id:CUR&&CUR.id,pausa:false}:null;
+ /* resultado, aviso, erros */
+ var r=document.getElementById('res');if(r.innerHTML!==(s.res||''))r.innerHTML=s.res||'';
+ var cd=document.getElementById('cd');if(s.cd!=null&&cd.innerHTML!==s.cd)cd.innerHTML=s.cd;
+ render()}
+/* seletor do mesmo botão na página do iPhone (as duas são o mesmo app) */
+function segSel(el){for(var x=el;x&&x!==document.body;x=x.parentElement){
+  if(x.id&&!/^(panel|practice|scoreBox|res|selBox|kb)$/.test(x.id))return '#'+x.id;
+  var a=[].filter.call(x.attributes||[],function(t){return /^data-/.test(t.name)});
+  if(a.length)return x.tagName.toLowerCase()+a.map(function(t){return '['+t.name+'="'+String(t.value).replace(/"/g,'\\"')+'"]'}).join('')}return null}
+function segLocal(el){return !!(el.closest('#segBar,.tab,#f_con,#perfilBox,#espBox,dialog')||(el.closest('#panel')&&/^(conc|hist|rep)$/.test(TAB)))}
+document.addEventListener('click',function(ev){if(!SEGUE)return;var t=ev.target;if(!t||!t.closest||segLocal(t))return;
+ var el=t.closest('button,a,[data-mm],[data-open],[data-act],[data-sel],[data-tr],[data-retoma],input[type=checkbox],input[type=radio],summary');if(!el||el.tagName==='SUMMARY')return;
+ var c=null;if(el.dataset.open)c={cmd:'ex',id:el.dataset.open};else if(el.dataset.retoma)c={cmd:'retoma',v:el.dataset.retoma};else if(el.dataset.act)c={cmd:'act',v:el.dataset.act};
+ else if(el.dataset.tr==='abrir')c={cmd:'trabrir',v:el.dataset.k};else{var sl=segSel(el);c=sl?{cmd:'clique',sel:sl,tab:TAB}:{cmd:'clique',txt:(el.textContent||'').trim().slice(0,60),tab:TAB}}
+ ev.preventDefault();ev.stopImmediatePropagation();segCmd(c);reg('Mac → iPhone: '+JSON.stringify(c).slice(0,120))},true);
+['input','change'].forEach(function(tipo){document.addEventListener(tipo,function(ev){if(!SEGUE)return;var el=ev.target;if(!el||!el.id||segLocal(el)||!/^(INPUT|SELECT)$/.test(el.tagName)||el.type==='file')return;
+ clearTimeout(segCmd['t'+el.id]);segCmd['t'+el.id]=setTimeout(function(){segCmd({cmd:'valor',id:el.id,v:el.value})},tipo==='input'?150:0)},true)});
+(function(){if(CEREBRO||!/^https?:/.test(location.protocol)||/[?&](teste|ensaio)\b/.test(location.search))return;
+ function confere(){if(run&&!SEGUE)return;fetch('/api/espelho?info=1',{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){segLiga(j.idade<12&&Date.now()-SEGESC>300000)}).catch(function(){})}
  setInterval(confere,3000);confere()})();
