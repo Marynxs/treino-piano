@@ -4,12 +4,12 @@ var ENSAIO=/[?&]ensaio\b/.test(location.search);
    Tudo o que o app guarda com nome "piano_..." passa a ser por perfil (piano_hist@p2...). O 1º perfil usa os nomes antigos,
    então nada do que já estava salvo se perde. Ficam em comum: as músicas importadas e a lista de perfis */
 var PERFIS=[{id:'p0',nome:'Perfil 1'}],PERFIL='p0',RAWDEL=null,RAWSET=null,RAWGET=null;
-(function(){var S=Storage.prototype,g=S.getItem,s=S.setItem,r=S.removeItem;RAWDEL=function(key){r.call(localStorage,key)};RAWSET=function(key,v){s.call(localStorage,key,v)};RAWGET=function(key){return g.call(localStorage,key)};var COMUM={piano_users:1,piano_perfis:1,piano_perfil:1,piano_excluidas:1,piano_celaj:1};
+(function(){var S=Storage.prototype,g=S.getItem,s=S.setItem,r=S.removeItem;RAWDEL=function(key){r.call(localStorage,key)};RAWSET=function(key,v){s.call(localStorage,key,v)};RAWGET=function(key){return g.call(localStorage,key)};var COMUM={piano_users:1,piano_perfis:1,piano_perfil:1,piano_excluidas:1,piano_celaj:1,piano_transf:1};
  try{PERFIS=JSON.parse(g.call(localStorage,'piano_perfis'))||PERFIS;PERFIL=g.call(localStorage,'piano_perfil')||'p0'}catch(e){}
  if(!PERFIS.some(function(p){return p.id===PERFIL}))PERFIL=PERFIS[0].id;
  function k(key){return this===localStorage&&/^piano_/.test(key)&&!COMUM[key]&&PERFIL!=='p0'?key+'@'+PERFIL:key}
  /* hora de cada mudança (piano_mod): ao juntar Mac e iPhone, o ajuste mudado por último vale */
- var MODC=null;function marca(rk){if(rk==='piano_mod'||!/^(piano_|tema_app$)/.test(rk))return;try{if(!MODC)MODC=JSON.parse(g.call(localStorage,'piano_mod')||'{}')||{};MODC[rk]=Date.now();s.call(localStorage,'piano_mod',JSON.stringify(MODC))}catch(e){}}
+ var MODC=null;function marca(rk){if(rk==='piano_mod'||!/^(piano_|tema_app$)/.test(rk))return;try{if(!MODC)MODC=JSON.parse(g.call(localStorage,'piano_mod')||'{}')||{};MODC[rk]=Date.now();s.call(localStorage,'piano_mod',JSON.stringify(MODC))}catch(e){}}window.MARCA=marca;
  S.getItem=function(key){return g.call(this,k.call(this,key))};
  S.setItem=function(key,v){var rk=k.call(this,key);if(this===localStorage&&g.call(this,rk)===String(v))return;var x=s.call(this,rk,v);if(this===localStorage)marca(rk);return x};
  S.removeItem=function(key){var rk=k.call(this,key);if(this===localStorage&&g.call(this,rk)!==null)marca(rk);return r.call(this,rk)}})();
@@ -23,6 +23,8 @@ window.addEventListener('error',function(e){reg('ERRO '+(e.message||'')+' '+Stri
 window.addEventListener('unhandledrejection',function(e){reg('ERRO promessa '+((e.reason&&e.reason.message)||e.reason))});
 window.addEventListener('pagehide',function(){reg('página fechada ou recarregada');regEnvia()});
 reg('abriu '+location.pathname+location.search+' · arquivo de '+document.lastModified);
+try{ptReaplicar()}catch(e){reg("ERRO transferência: "+e)}
+if(!CEREBRO)setTimeout(function(){try{ptLista().forEach(function(o){if(Date.now()-o.t<30*864e5)ptServidor(o)})}catch(e){}},8000);
 function perfilNome(){return (PERFIS.filter(function(p){return p.id===PERFIL})[0]||PERFIS[0]).nome}
 function savePerfis(){try{localStorage.setItem('piano_perfis',JSON.stringify(PERFIS));localStorage.setItem('piano_perfil',PERFIL)}catch(e){}}
 /* trocar de perfil recarrega a página: tudo é lido de novo com os dados da outra pessoa */
@@ -35,6 +37,88 @@ function excluirPerfil(){if(PERFIS.length<2){alert('Precisa ter pelo menos um pe
  PERFIS=PERFIS.filter(function(x){return x.id!==PERFIL});PERFIL=PERFIS[0].id;savePerfis();
  ks.forEach(RAWDEL);location.reload()}
 function paintPerfil(){var s=document.getElementById('perfilSel');if(!s)return;s.innerHTML=PERFIS.map(function(p){return '<option value="'+p.id+'">'+p.nome.replace(/</g,'&lt;')+'</option>'}).join('');s.value=PERFIL;document.title='Treino de piano · '+perfilNome()}
+/* ---------- passar treinos de uma música para outro perfil (alguém treinou no perfil errado) ----------
+   Fica anotado em piano_transf (comum aos perfis e juntado entre Mac e iPhone): cada aparelho aplica de novo ao abrir,
+   então o que o outro aparelho ainda tinha no perfil errado também muda de lugar. Só move o que foi feito até a hora da transferência. */
+function ptK(key,pf){return pf==='p0'?key:key+'@'+pf}
+function ptDe(k,x){k=String(k);return k===x||k.indexOf(x+'_')===0||k.indexOf(x+'|')===0}
+function ptLer(key,pf,vazio){try{return JSON.parse(RAWGET(ptK(key,pf)))||vazio}catch(e){return vazio}}
+function ptPor(key,pf,v){var rk=ptK(key,pf),j=JSON.stringify(v);if(RAWGET(rk)===j)return;RAWSET(rk,j);try{window.MARCA&&MARCA(rk)}catch(e){}}
+function ptDia(t){return dkeyT(new Date(t))}
+function dkeyT(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+/* move tudo de x (até a hora T) do perfil de para o perfil para; o = a anotação (guarda o que já foi movido do histórico) */
+function ptAplicar(o){var x=o.ex,de=o.de,pa=o.para,T=o.t,mud=0;if(!x||!de||!pa||de===pa)return 0;o.dias=o.dias||{};
+ /* tentativas (o que errou em cada vez) */
+ var fa=ptLer('piano_fb',de,{}),fb=ptLer('piano_fb',pa,{}),m1=0;Object.keys(fa).forEach(function(k){if(!ptDe(k,x)||!Array.isArray(fa[k]))return;
+  var fica=[],vai=[];fa[k].forEach(function(e){(e&&e.t&&e.t<=T?vai:fica).push(e)});if(!vai.length)return;m1+=vai.length;
+  var ja={};(fb[k]||[]).forEach(function(e){ja[e&&e.t]=1});fb[k]=(fb[k]||[]).concat(vai.filter(function(e){return !ja[e.t]})).sort(function(a,b){return a.t-b.t});
+  if(fica.length)fa[k]=fica;else delete fa[k]});if(m1){ptPor('piano_fb',de,fa);ptPor('piano_fb',pa,fb);mud+=m1}
+ /* recordes por nível */
+ var ra=ptLer('piano_recs',de,{}),rb=ptLer('piano_recs',pa,{}),m2=0;Object.keys(ra).forEach(function(k){if(!ptDe(k,x))return;var na=ra[k]||{},nb=rb[k]=rb[k]||{};
+  Object.keys(na).forEach(function(nv){var a=na[nv];if(!a||(a.t||0)>T)return;var b=nb[nv];if(b&&b.t===a.t&&b.pct===a.pct){}else if(!b||a.pct>b.pct)nb[nv]={pct:a.pct,t:a.t,n:(a.n||0)+(b&&b.n||0)};else b.n=(b.n||0)+(a.n||0);/* o mesmo recorde já tinha passado (voltou do outro aparelho): não soma de novo */delete na[nv];m2++});
+  if(!Object.keys(na).length)delete ra[k];if(!Object.keys(nb).length)delete rb[k]});if(m2){ptPor('piano_recs',de,ra);ptPor('piano_recs',pa,rb);mud+=m2}
+ /* recordes de cada dia */
+ var da=ptLer('piano_recd',de,{}),db=ptLer('piano_recd',pa,{}),m3=0;Object.keys(da).forEach(function(d){var A=da[d]||{},B=db[d]=db[d]||{};
+  Object.keys(A).forEach(function(k){if(!ptDe(k,x)||(A[k]&&A[k].t||0)>T)return;if(!B[k]||A[k].pct>B[k].pct)B[k]=A[k];delete A[k];m3++});
+  if(!Object.keys(A).length)delete da[d];if(!Object.keys(B).length)delete db[d]});if(m3){ptPor('piano_recd',de,da);ptPor('piano_recd',pa,db);mud+=m3}
+ /* trechos guardados */
+ var ta=ptLer('piano_trechos',de,[]),tb=ptLer('piano_trechos',pa,[]),m4=0;if(Array.isArray(ta)&&Array.isArray(tb)){var fica=[];
+  ta.forEach(function(e){if(e&&ptDe(e.ex||'',x)&&(e.t||0)<=T){var j=-1;tb.forEach(function(b,i){if(b&&b.k===e.k)j=i});if(j<0)tb.push(e);else if((e.u||0)>(tb[j].u||0))tb[j]=e;m4++}else fica.push(e)});
+  if(m4){ptPor('piano_trechos',de,fica);ptPor('piano_trechos',pa,tb);mud+=m4}}
+ /* histórico do dia: a nota e o número de vezes; o tempo do dia vai na proporção das tentativas */
+ var ha=ptLer('piano_hist',de,{days:{}}),hb=ptLer('piano_hist',pa,{days:{}}),m5=0,ate=ptDia(T);ha.days=ha.days||{};hb.days=hb.days||{};
+ Object.keys(ha.days).forEach(function(d){if(d>ate)return;var A=ha.days[d],dn=A&&A.done||{},ks=Object.keys(dn).filter(function(k){return ptDe(k,x)});if(!ks.length)return;
+  var tot=0,meu=0;Object.keys(dn).forEach(function(k){tot+=dn[k]&&dn[k].n||0});ks.forEach(function(k){meu+=dn[k]&&dn[k].n||0});
+  var a0={},F=o.dias[d],B=hb.days[d]=hb.days[d]||{ms:0,done:{},test:null};B.done=B.done||{};
+  ks.forEach(function(k){var a=dn[k],s=F&&F.d[k];a0[k]=JSON.parse(JSON.stringify(a));if(!(s&&JSON.stringify(s)===JSON.stringify(a))){var n=(a.n||0)-(s?s.n||0:0),b=B.done[k];
+    if(!b)B.done[k]=JSON.parse(JSON.stringify(a));else{b.best=Math.max(b.best||0,a.best||0);b.n=(b.n||0)+Math.max(0,n)}}delete dn[k];m5++});
+  if(!F){var ms=Math.round((A.ms||0)*(tot?meu/tot:1));o.dias[d]=F={ms:ms,msOrig:A.ms||0,d:{}};A.ms=(A.ms||0)-ms;B.ms=(B.ms||0)+ms}
+  else if((A.ms||0)>=F.msOrig)A.ms=Math.max(0,A.ms-F.ms);/* voltou o dia inteiro do outro aparelho: tira de novo o tempo que já passou */
+  ks.forEach(function(k){F.d[k]=a0[k]});
+  if(!Object.keys(dn).length&&!A.ms)delete ha.days[d]});
+ if(m5){ptPor('piano_hist',de,ha);ptPor('piano_hist',pa,hb);mud+=m5}
+ return mud}
+function ptLista(){try{return JSON.parse(RAWGET('piano_transf'))||[]}catch(e){return []}}
+/* ao abrir: aplica de novo as transferências (o outro aparelho pode ter devolvido algo no perfil antigo) */
+function ptReaplicar(){var l=ptLista();if(!l.length)return;var n=0;l.forEach(function(o){if(PERFIS.some(function(p){return p.id===o.para}))n+=ptAplicar(o)});
+ if(n){RAWSET('piano_transf',JSON.stringify(l));try{window.MARCA&&MARCA('piano_transf')}catch(e){}reg('transferência: '+n+' itens que tinham voltado ao perfil antigo foram para o perfil certo')}}
+/* replays e estatística (no Mac): idempotente, roda na transferência e ao abrir o Mac */
+function ptServidor(o){if(CEREBRO&&!COMMAC||!/^https?:/.test(location.protocol)||/[?&](teste|ensaio)\b/.test(location.search))return Promise.resolve(0);
+ var q='ex='+encodeURIComponent(o.ex)+'&de='+encodeURIComponent(o.de)+'&para='+encodeURIComponent(o.para)+'&ate='+o.t;
+ var a=fetch('/api/tentativas?acao=perfil&'+q,{method:'POST',body:'{}'}).then(function(r){return r.ok?r.json():{n:0}}).catch(function(){return {n:0}});
+ var b=fetch('/api/replays',{cache:'no-store'}).then(function(r){return r.json()}).then(function(l){var vai=(l||[]).filter(function(m){return m&&ptDe(m.ex||'',o.ex)&&(m.perfil||'p0')===o.de&&(m.t||0)<=o.t});
+  return Promise.all(vai.map(function(m){var n=JSON.parse(JSON.stringify(m));n.perfil=o.para;return fetch('/api/replays?id='+m.id+'&acao=meta',{method:'POST',body:JSON.stringify(n)})})).then(function(){return vai.length})}).catch(function(){return 0});
+ return Promise.all([a,b]).then(function(x){var n=(x[0]&&x[0].n||0)+x[1];if(n)reg('transferência no Mac: '+(x[0]&&x[0].n||0)+' tentativas e '+x[1]+' replays para o perfil '+o.para);return n})}
+/* o que dá para passar: as músicas com algo guardado no perfil escolhido */
+function ptMusicas(pf){var c={},base=function(k){return String(k).split('|')[0].replace(/_parte(?=_|$)/,'').replace(/_(d|e)$/,'').replace(/_parte$/,'')};
+ var fb=ptLer('piano_fb',pf,{});Object.keys(fb).forEach(function(k){var b=base(k);c[b]=(c[b]||0)+(fb[k]||[]).length});
+ var h=ptLer('piano_hist',pf,{days:{}});Object.keys(h.days||{}).forEach(function(d){Object.keys(h.days[d].done||{}).forEach(function(k){var b=base(k);if(b!=='jogo'&&!(b in c))c[b]=0})});
+ Object.keys(ptLer('piano_recs',pf,{})).forEach(function(k){var b=base(k);if(!(b in c))c[b]=0});
+ var todos=EX.concat(USERS);return Object.keys(c).map(function(id){var e=todos.filter(function(x){return x.id===id})[0];return {id:id,n:c[id],ti:e?tDesc(e.title):id}}).sort(function(a,b){return b.n-a.n})}
+function ptAbrir(){if(run){alert('Pare a música antes.');return}if(PERFIS.length<2){alert('Precisa ter pelo menos dois perfis.');return}
+ var d=document.getElementById('ptDlg');if(d)d.remove();d=document.createElement('dialog');d.id='ptDlg';
+ var op=function(sel){return PERFIS.map(function(p){return '<option value="'+p.id+'"'+(p.id===sel?' selected':'')+'>'+p.nome.replace(/</g,'&lt;')+'</option>'}).join('')};
+ var outro=(PERFIS.filter(function(p){return p.id!==PERFIL})[0]||PERFIS[0]).id;
+ d.innerHTML='<div class="dlghead"><b>Passar treinos para outro perfil</b><button id="ptX" aria-label="Fechar">✕</button></div><div class="pt-in">'+
+  '<p class="lb">Para quando alguém treinou no perfil errado. Passam o histórico, os recordes, os trechos guardados, os replays e a evolução da música escolhida.</p>'+
+  '<div class="pt-row"><label>De<select id="ptDe" class="pill">'+op(PERFIL)+'</select></label><label>Para<select id="ptPara" class="pill">'+op(outro)+'</select></label></div>'+
+  '<label class="pt-mus">Música<select id="ptMus" class="pill"></select></label>'+
+  '<label class="pt-chk"><input type="checkbox" id="ptUsar" checked> Depois, usar o perfil de destino'+(typeof SEGUE!=='undefined'&&SEGUE?' (aqui e no iPhone)':'')+'</label>'+
+  '<div class="pt-fim"><span id="ptMsg" class="lb"></span><button id="ptOk" class="primary">Passar</button></div></div>';
+ document.body.appendChild(d);var $p=function(i){return document.getElementById(i)};
+ function lista(){var l=ptMusicas($p('ptDe').value);$p('ptMus').innerHTML=l.length?l.map(function(m){return '<option value="'+m.id+'">'+m.ti.replace(/</g,'&lt;')+(m.n?' · '+m.n+(m.n>1?' tentativas':' tentativa'):'')+'</option>'}).join(''):'<option value="">Nada guardado neste perfil</option>';ok()}
+ function ok(){var b=$p('ptOk'),igual=$p('ptDe').value===$p('ptPara').value;b.disabled=igual||!$p('ptMus').value;$p('ptMsg').textContent=igual?'Escolha dois perfis diferentes.':''}
+ $p('ptDe').onchange=function(){if($p('ptDe').value===$p('ptPara').value){var o=PERFIS.filter(function(p){return p.id!==$p('ptDe').value})[0];if(o)$p('ptPara').value=o.id}lista()};$p('ptPara').onchange=ok;$p('ptMus').onchange=ok;$p('ptX').onclick=function(){d.close();d.remove()};
+ $p('ptOk').onclick=function(){var o={ex:$p('ptMus').value,de:$p('ptDe').value,para:$p('ptPara').value,t:Date.now(),id:Date.now()};if(!o.ex||o.de===o.para)return;
+  var nm=function(id){return (PERFIS.filter(function(p){return p.id===id})[0]||{}).nome||id},ti=$p('ptMus').selectedOptions[0].textContent.split(' · ')[0];
+  if(!confirm('Passar "'+ti+'" de '+nm(o.de)+' para '+nm(o.para)+'?'))return;
+  try{if(bkPode())bkSalvar('manual').catch(function(){})}catch(e){}
+  var n=ptAplicar(o),l=ptLista();l.push(o);RAWSET('piano_transf',JSON.stringify(l));try{window.MARCA&&MARCA('piano_transf')}catch(e){}
+  reg('transferência: '+o.ex+' de '+o.de+' para '+o.para+' ('+n+' itens)');$p('ptOk').disabled=true;$p('ptMsg').textContent='Passando os replays…';
+  var usar=$p('ptUsar').checked;ptServidor(o).then(function(r){$p('ptMsg').textContent='Pronto: '+(n+r)+' itens passaram para '+nm(o.para)+'.';
+   if(usar&&typeof SEGUE!=='undefined'&&SEGUE)segCmd({cmd:'perfil',v:o.para});
+   setTimeout(function(){if(usar&&o.para!==PERFIL){PERFIL=o.para;savePerfis()}location.reload()},1200)})};
+ lista();if(d.showModal)d.showModal();else d.setAttribute('open','')}
 /* ---------- notas ---------- */
 var L=['C','D','E','F','G','A','B'],PT=['Dó','Ré','Mi','Fá','Sol','Lá','Si'];
 var CHR=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],CHRP=['Dó','Dó♯','Ré','Mi♭','Mi','Fá','Fá♯','Sol','Lá♭','Lá','Si♭','Si'];
@@ -81,7 +165,7 @@ add({id:'r_mista',g:'ritmo',title:'Mínima pontuada em 3/4',src:'Conceito',bpm:6
 /* ---------- estado ---------- */
 var OPT={cnt:true,hl:true,kb:true,pno:false,clk:true,live:true,outra:true,subir:false,simples:false,ini:true,voz:false,pcmd:false,avisos:true,tut:true,letra:1,trc:true,trcP:false,espT:true,somR:true},MODE='time',SHOW='f',run=false,timers=[],played={},startPerf=0,spb=1,CUR=null,EV=[],TAB='hoje';
 /* cada mão conta seus tempos no compasso (mãos juntas); com ex.seq as mãos se revezam e contam no mesmo relógio */
-function load_ex(ex){if(run)resetAll();CUR=ex;EV=[];var b=0;ex.ms.forEach(function(me,mi){var pos={};me.forEach(function(ev){var h=ev[3],k=ex.seq?'_':h;pos[k]=pos[k]||0;var notes=ev[1]===ANY?null:ev[1];
+function load_ex(ex){if(run||PAUSA||(typeof ASS!=='undefined'&&ASS))resetAll();/* pausado e trocou de música, mão ou trecho: a pausa antiga não vale mais (continuava de um ponto que não existia) */CUR=ex;EV=[];var b=0;ex.ms.forEach(function(me,mi){var pos={};me.forEach(function(ev){var h=ev[3],k=ex.seq?'_':h;pos[k]=pos[k]||0;var notes=ev[1]===ANY?null:ev[1];
   EV.push({dur:ev[0],notes:notes,midis:notes?notes.map(mid):null,f:ev[2],h:h,m:mi,dyn:ex.dynm?ex.dynm[mi]:null,pos:pos[k],beat:b+pos[k],st:null,info:'',got:{},t0:null});pos[k]+=ev[0]});b+=ex.beats});
  EV.sort(function(a,b){return a.beat-b.beat||(a.h==='e'?-1:1)});afterLoad();
  document.getElementById('exTitle').textContent=tDesc(ex.title)+maoTag();document.getElementById('exDesc').innerHTML=parcialHtml(ex)+(ex.src?'<b>'+ex.src+'.</b> ':'')+tDesc(ex.desc);
@@ -680,6 +764,9 @@ function agendaTempo(nb0){
 document.getElementById('reset').onclick=recomecar;document.getElementById('assBtn').onclick=function(){if(ASS)assParar();else assistir()};
 /* ---------- histórico e dia ---------- */
 var H={days:{}},lastAct=0;
+/* tempo em horas e minutos: 739 → "12 h 19 min"; curto (no quadrinho do dia): "12h19" */
+function hmTxt(min){min=Math.round(min)||0;if(min<60)return min+' min';var h=Math.floor(min/60),m=min%60;return h+' h'+(m?' '+m+' min':'')}
+function hmCurto(min){min=Math.round(min)||0;if(min<60)return min+' min';var m=min%60;return Math.floor(min/60)+'h'+(m?String(m).padStart(2,'0'):'')}
 /* ---------- histórico em calendário: cada dia mostra os minutos; clicar abre o que foi tocado, o tempo e as melhores notas ---------- */
 var HISTM=0,HISTD;
 function calNomeEx(id){var e=byId(id)||USERS.filter(function(u){return u.id===id})[0];return e?tDesc(e.title):id}
@@ -693,9 +780,9 @@ function calHtml(){var hoje=dkey(),base=new Date();base.setDate(1);base.setMonth
  for(var i=0;i<dIni.getDay();i++)cel+='<span class="cal-v"></span>';
  for(var d=1;d<=nd;d++){var k=ano+'-'+String(mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),v=H.days[k],min=v?Math.round(v.ms/60000):0,tem=v&&(v.ms>30000||Object.keys(v.done).length);
   if(tem){tot+=min;dias++}var it=tem?Math.max(0.12,Math.min(1,v.ms/mx)):0;
-  cel+='<button class="cal-d'+(tem?' tem':'')+(k===hoje?' hoje':'')+(k===HISTD?' sel':'')+'" data-hd="'+k+'" style="--i:'+it.toFixed(2)+'" aria-label="'+d+(tem?', '+min+' minutos':', sem treino')+'"><span class="cal-n">'+d+'</span>'+(tem?'<span class="cal-m">'+(min?min+' min':'·')+'</span>':'')+'</button>'}
+  cel+='<button class="cal-d'+(tem?' tem':'')+(k===hoje?' hoje':'')+(k===HISTD?' sel':'')+'" data-hd="'+k+'" style="--i:'+it.toFixed(2)+'" aria-label="'+d+(tem?', '+hmTxt(min).replace(' h',' horas').replace(' min',' minutos'):', sem treino')+'"><span class="cal-n">'+d+'</span>'+(tem?'<span class="cal-m">'+(min?hmCurto(min):'·')+'</span>':'')+'</button>'}
  var nomeMes=dIni.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
- var h='<h2>Histórico de '+esc(perfilNome())+'</h2><div class="cal-res"><span><b>'+streak()+'</b> '+(streak()===1?'dia seguido':'dias seguidos')+'</span><span><b>'+tot+' min</b> em '+dias+(dias===1?' dia':' dias')+' neste mês</span></div>'+
+ var h='<h2>Histórico de '+esc(perfilNome())+'</h2><div class="cal-res"><span><b>'+streak()+'</b> '+(streak()===1?'dia seguido':'dias seguidos')+'</span><span><b>'+hmTxt(tot)+'</b> em '+dias+(dias===1?' dia':' dias')+' neste mês</span>'+(dias?'<span><b>'+hmTxt(tot/dias)+'</b> por dia, em média</span>':'')+'</div>'+
   '<div class="cal-nav"><button data-hm="-1" aria-label="Mês anterior">‹</button><b>'+nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1)+'</b><button data-hm="1" aria-label="Próximo mês"'+(HISTM>=0?' disabled':'')+'>›</button></div>'+
   '<div class="cal"><span class="cal-s">D</span><span class="cal-s">S</span><span class="cal-s">T</span><span class="cal-s">Q</span><span class="cal-s">Q</span><span class="cal-s">S</span><span class="cal-s">S</span>'+cel+'</div>'+calDia();
  return h}
@@ -706,7 +793,7 @@ function calDia(){var k=HISTD;if(!k)return '<p class="lb cal-dica">Toque num dia
  var melhor=ts.length?Math.max.apply(null,ts.map(function(m){return m.pct})):null,rd=recdLer()[k]||{};
  if(melhor==null)Object.keys(v.done).forEach(function(r){melhor=Math.max(melhor||0,v.done[r].best||0)});
  var h='<div class="cal-det"><h3>'+tit.charAt(0).toUpperCase()+tit.slice(1)+'</h3><div class="cal-num">'+
-  '<div><b>'+Math.round(v.ms/60000)+' min</b><span>tocando</span></div><div><b>'+Object.keys(v.done).length+'</b><span>exercícios</span></div>'+
+  '<div><b>'+hmTxt(v.ms/60000)+'</b><span>tocando</span></div><div><b>'+Object.keys(v.done).length+'</b><span>exercícios</span></div>'+
   '<div><b>'+(ts.length||Object.keys(v.done).reduce(function(a,r){return a+(v.done[r].n||0)},0))+'</b><span>tentativas</span></div>'+
   (melhor!=null?'<div><b>'+melhor+'%</b><span>melhor nota</span></div>':'')+(v.test!=null?'<div><b>'+v.test+'%</b><span>teste do dia</span></div>':'')+'</div>';
  /* melhores notas do dia por música/trecho e nível; ★ quando também é o recorde de sempre */
@@ -750,7 +837,7 @@ function listaLivro(vis){var cs=vis.map(function(e,i){return {p:TAB==='livro'?pa
  return cs.sort(function(a,b){return a.p-b.p||a.i-b.i}).map(function(c){return c.h}).join('')}
 function byId(id){return EX.filter(function(e){return e.id===id})[0]}
 var shownDay=dkey();
-function updToday(){var d=day(),min=Math.round(d.ms/60000);document.getElementById('today').innerHTML='<b>'+perfilNome()+'</b> · Hoje, '+new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+' · <b>'+min+' min tocando</b> · sequência: <b>'+streak()+' dia'+(streak()===1?'':'s')+'</b>'}
+function updToday(){var d=day(),min=Math.round(d.ms/60000);document.getElementById('today').innerHTML='<b>'+perfilNome()+'</b> · Hoje, '+new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})+' · <b>'+hmTxt(min)+' tocando</b> · sequência: <b>'+streak()+' dia'+(streak()===1?'':'s')+'</b>'}
 setInterval(function(){if(dkey()!==shownDay){shownDay=dkey();updToday();if(TAB==='hoje')showPanel();show('<b>Começou um dia novo.</b> A rotina de hoje foi reiniciada.',true)}else updToday()},30000);
 /* ---------- painéis ---------- */
 /* ger=true (aba Músicas): botões Ocultar / Mostrar de novo e, nas importadas, Excluir */
@@ -1092,7 +1179,7 @@ function instHtml(i){var ipu='http://'+i.ip+':'+i.port+'/celular.html',u=i.host?
   else if(c.cmd==='clktest')document.getElementById('clkTest').click();
   else if(c.cmd==='out'){var o=document.getElementById('outdev');o.value=c.v==='piano'?'piano':'mac';o.onchange();ajVis()}
   else if(c.cmd==='tol'&&TOL[c.v]){document.getElementById('tol').value=c.v;saveSet()}
-  else if(c.cmd==='bpm'&&!run){var r=q('#bpm');r.value=Math.max(30,Math.min(140,+c.v));r.oninput()}
+  else if(c.cmd==='bpm'){var r=q('#bpm');/* também tocando: vale ao recomeçar (antes era ignorado e o ↻ voltava no andamento antigo) */r.value=Math.max(30,Math.min(140,+c.v));r.oninput()}
   soon()}
  /* espera comandos do iPhone; o servidor responde na hora em que chega um (ou após 20 s, que serve de sinal de vida) */
  function poll(){fetch('/api/cmd?wait=1&src='+SRC+(since!=null?'&id='+since:''),{cache:'no-store'}).then(function(r){return r.json()}).then(function(j){
@@ -1225,7 +1312,7 @@ document.getElementById('trAll').onclick=function(){trecho(1,linhas())};
 document.getElementById('trA').onchange=function(){var b=document.getElementById('trB');if(+b.value<+this.value)b.value=this.value};
 document.getElementById('trB').onchange=function(){var a=document.getElementById('trA');if(+a.value>+this.value)a.value=this.value};
 document.getElementById('vistaBtn').onclick=function(){VISTA=VISTA==='inteira'?'linhas':'inteira';try{localStorage.setItem('piano_vista',VISTA)}catch(e){}render()};
-document.getElementById('perfilSel').onchange=function(){usarPerfil(this.value)};document.getElementById('perfilNovo').onclick=novoPerfil;document.getElementById('perfilRen').onclick=renomearPerfil;document.getElementById('perfilDel').onclick=excluirPerfil;paintPerfil();
+document.getElementById('perfilSel').onchange=function(){usarPerfil(this.value)};document.getElementById('perfilNovo').onclick=novoPerfil;document.getElementById('perfilRen').onclick=renomearPerfil;document.getElementById('perfilDel').onclick=excluirPerfil;document.getElementById('perfilPassa').onclick=function(){var m=this.closest('details');if(m)m.open=false;ptAbrir()};paintPerfil();
 /* ---------- onde você está no livro ----------
    Cada perfil guarda a página em que está (aba Livro: "Estou na página"). Exercícios do livro de páginas depois dela ficam escondidos.
    O arquivo livro-progresso.json (na pasta do app) é atualizado pelo Claude quando você conta em que página está; o mais recente vale */

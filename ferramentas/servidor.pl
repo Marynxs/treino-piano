@@ -233,6 +233,19 @@ while (my $c = $srv->accept) {
     my $nuvem = !$ENV{PIANO_SEM_NUVEM} && -d "$ENV{HOME}/Library/Mobile Documents/com~apple~CloudDocs" ? "$ENV{HOME}/Library/Mobile Documents/com~apple~CloudDocs/Treino de Piano/replays" : '';
     if ($meth eq 'POST') {
       my $body = ''; read($c, $body, $len) if $len && $len < 100_000;
+      # ?acao=perfil&ex=ID&de=P&para=Q&ate=MS: as tentativas desta música feitas no perfil errado passam para o certo (botão "Passar treinos para outro perfil")
+      if (($q{acao} // '') eq 'perfil') {
+        my ($ex, $de, $pa, $ate) = map { $q{$_} // '' } qw(ex de para ate);
+        if ($ex !~ /^[\w-]{1,80}$/ || $de !~ /^\w{1,40}$/ || $pa !~ /^\w{1,40}$/ || $ate !~ /^\d{1,15}$/ || $de eq $pa) { reply($c, '400 Bad Request', 'text/plain', 'pedido inválido'); close $c; exit 0 }
+        my $n = 0; my @l = split /\n/, (-f $f ? (slurp($f) // '') : '');
+        for (@l) {
+          next unless /^\{/; my ($e) = /"ex":"([^"]*)"/; next unless defined $e && ($e eq $ex || index($e, "${ex}_") == 0 || index($e, "$ex|") == 0);
+          my ($p) = /"perfil":"([^"]*)"/; $p //= 'p0'; next unless $p eq $de; my ($t) = /"t":(\d+)/; next unless defined $t && $t <= $ate;
+          if (/"perfil":"[^"]*"/) { s/"perfil":"[^"]*"/"perfil":"$pa"/ } else { s/^\{/{"perfil":"$pa",/ } $n++;
+        }
+        if ($n) { spit($f, join("\n", @l) . "\n"); if ($nuvem) { mkdir "$ENV{HOME}/Library/Mobile Documents/com~apple~CloudDocs/Treino de Piano"; mkdir $nuvem; spit("$nuvem/tentativas.jsonl", join("\n", @l) . "\n") } }
+        reply($c, '200 OK', 'application/json', "{\"n\":$n}"); close $c; exit 0;
+      }
       $body =~ s/[\r\n]+/ /g;
       if ($body !~ /^\{.*\}\s*$/) { reply($c, '400 Bad Request', 'text/plain', 'tentativa inválida'); close $c; exit 0 }
       if (open(my $o, '>>', $f)) { binmode $o; print $o "$body\n"; close $o }
